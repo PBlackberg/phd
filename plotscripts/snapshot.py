@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 
-a = 5
-b= 6
-c= a+b
 
-print('c is', c)
+path_data = '/c/Users/carlp/data/'
+project = 'cmip5'
+percentile= '97th_percentile'
+the_type= ['domain', 'convective_objects', 'aggregation_index']
+
+
 
 
