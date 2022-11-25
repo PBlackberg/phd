@@ -4,7 +4,7 @@
 
 PBS -l ncpus = 47
 PBS -l mem = 190 GB
-PBS -l jobfs = 200 GB
+PBS -l jobfs = 200 GB # paralellisation
 PBS -q normal
 PBS -P k10
 PBS -l walltime = 2:00:00
