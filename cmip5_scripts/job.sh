@@ -2,7 +2,7 @@
 
 !/bin/bash
 
-PBS -l ncpus = 47
+PBS -l ncpus = 1
 PBS -l mem = 190 GB
 PBS -l jobfs = 200 GB # paralellisation
 PBS -q normal
