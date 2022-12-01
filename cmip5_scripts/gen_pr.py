@@ -8,16 +8,16 @@ def get_pr_snapshot_tMean(precip):
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
-    rx1day_tMean = rx1day.mean(dim=('time'),keep_attrs=True)
-    rx1day_sMean = rx1day.mean(dim=('lat','lon'),keep_attrs=True)
+    # rx1day_tMean = rx1day.mean(dim=('time'),keep_attrs=True)
+    # rx1day_sMean = rx1day.mean(dim=('lat','lon'),keep_attrs=True)
 
 
     precip5day = precip.resample(time='5D').mean(dim='time')
     rx5day = precip5day.resample(time='Y').max(dim='time')
-    rx5day_tMean = rx5day.mean(dim=('time'),keep_attrs=True) # give year time variable
-    rx5day_sMean = rx5day.mean(dim=('lat','lon'),keep_attrs=True) # give year time variable
+    # rx5day_tMean = rx5day.mean(dim=('time'),keep_attrs=True) # give year time variable
+    # rx5day_sMean = rx5day.mean(dim=('lat','lon'),keep_attrs=True) # give year time variable
 
-    return rx1day_tMean, rx1day_sMean, rx5day_tMean, rx5day_sMean
+    return rx1day, rx5day
 
 
 
