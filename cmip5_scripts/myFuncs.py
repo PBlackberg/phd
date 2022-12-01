@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
 import intake
-#import xesmf as xe
-
+import xesmf as xe
+import os
 
 
 
@@ -72,6 +72,19 @@ def regrid_conserv(ds_in, haveDsOut, path='/g/data/k10/cb4968/data/cmip5/FGOALS-
         
     return regrid(ds_in)
 
+
+
+
+
+def save_file(dataSet, folder, fileName):
+    
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
+
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataSet.to_netcdf(path)
 
 
 
