@@ -1,10 +1,6 @@
 import xarray as xr
 
 
-def get_pr_snapshot_tMean(precip):
-    return precip.isel(time=0), precip.mean(dim='time', keep_attrs=True)
-
-
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
@@ -14,8 +10,6 @@ def calc_rxday(precip):
 
     precip5day = precip.resample(time='5D').mean(dim='time')
     rx5day = precip5day.resample(time='Y').max(dim='time')
-    # rx5day_tMean = rx5day.mean(dim=('time'),keep_attrs=True) # give year time variable
-    # rx5day_sMean = rx5day.mean(dim=('lat','lon'),keep_attrs=True) # give year time variable
 
     return rx1day, rx5day
 

@@ -22,9 +22,5 @@ python3 cmip5_super.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.l
 
 
 
-# ARE.nci.org.au
-
-
-
 
 

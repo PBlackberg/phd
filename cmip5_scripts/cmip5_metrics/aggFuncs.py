@@ -8,22 +8,22 @@ import myFuncs
 def calc_rome(precip, listOfdays, conv_threshold):
     rome = []
 
-    lat = pr_day.lat.data
-    lon = pr_day.lon.data
+    lat = precip.lat.data
+    lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
-    aream3d = np.expand_dims(aream,axis=2) # (usef later for n largest)
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
-    
+    aream3d = np.expand_dims(aream,axis=2) # (usef later for n largest)    
+
 
     for day in listOfdays:
         pr_day = precip.isel(time=day)
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2) # the greater than zero turns ones and zeros to True/False
+        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         myFuncs.connect_boundary(L)
         
         labels = np.unique(L)[1:]
@@ -31,7 +31,9 @@ def calc_rome(precip, listOfdays, conv_threshold):
         rome = np.append(rome, rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d))
     
     rome = xr.DataArray(
-        data={'rome': rome},
+        data=rome,
+        dims=['time'],
+        coords={'time': precip.time.data[0:len(listOfdays)]},
         attrs={'units':'km^2'}
         )
 
@@ -88,7 +90,7 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
 
                 # ROME of unique pair
                 large_area = np.maximum(oi_area, oj_area)
-                small_area = np.maximum(oi_area, oj_area)
+                small_area = np.minimum(oi_area, oj_area)
                 rome_pair = large_area + np.minimum(small_area, (small_area/np.amin(distancem[I,J]))**2)
                 rome_allPairs = np.append(rome_allPairs, rome_pair)
                 
@@ -104,36 +106,35 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
 def calc_rome_n(n, precip, listOfdays, conv_threshold): 
     rome_n = []
 
-    lat = pr_day.lat.data
-    lon = pr_day.lon.data
+    lat = precip.lat.data
+    lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
-    aream3d = np.expand_dims(aream,axis=2) # (usef later for n largest)
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
-
+    aream3d = np.expand_dims(aream,axis=2)
 
     for day in listOfdays:
         pr_day = precip.isel(time=day)
         
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2) # the greater than zero turns ones and zeros to True/False
+        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         myFuncs.connect_boundary(L)
         labels = np.unique(L)[1:]
 
-        obj3d = np.stack([(L==label) for label in labels],axis=2)*1 # might not need to define o_areaScene in this function, as it will be calculated for the area distribution index
+        obj3d = np.stack([(L==label) for label in labels],axis=2)*1
         o_areaScene = np.sum(obj3d * aream3d, axis=(0,1))
 
         rome_n = np.append(rome_n, rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d))
     
 
     rome_n = xr.DataArray(
-        data={'rome_n': rome_n},
+        data=rome_n,
         dims=['time'],
-        coords={'time': precip.time.data[0,len(listOfdays)]},
+        coords={'time': precip.time.data[0:len(listOfdays)]},
         attrs={'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
         'units': 'km^2'}
         )
@@ -159,8 +160,8 @@ def rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d):
 def calc_numberIndex(precip, listOfdays, conv_threshold):
     numberIndex, areaf = [], []
 
-    lat = pr_day.lat.data
-    lon = pr_day.lon.data
+    lat = precip.lat.data
+    lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
@@ -170,7 +171,7 @@ def calc_numberIndex(precip, listOfdays, conv_threshold):
 
     for day in listOfdays:
         pr_day = precip.isel(time=day)
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2) # the greater than zero turns ones and zeros to True/False
+        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         myFuncs.connect_boundary(L)
         labels = np.unique(L)[1:]
 
@@ -184,16 +185,16 @@ def calc_numberIndex(precip, listOfdays, conv_threshold):
 
 
     numberIndex = xr.DataArray(
-        data={'numberIndex': numberIndex},
+        data=numberIndex,
         dims=['time'],
-        coords={'time': precip.time.data},
+        coords={'time': precip.time.data[0:len(listOfdays)]},
         attrs={'units':'Nb'}
         )
 
     areaf = xr.DataArray(
-        data={'areaf': areaf},
+        data=areaf,
         dims=['time'],
-        coords={'time': precip.time.data}
+        coords={'time': precip.time.data[0:len(listOfdays)]}
         )
 
     return numberIndex, areaf
@@ -207,22 +208,22 @@ def calc_numberIndex(precip, listOfdays, conv_threshold):
 def calc_area_pr(precip, listOfdays, conv_threshold):
     o_pr, o_area = [], []
 
-    lat = pr_day.lat.data
-    lon = pr_day.lon.data
+    lat = precip.lat.data
+    lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
-    aream3d = np.expand_dims(aream,axis=2) # (usef later for n largest)
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
+    aream3d = np.expand_dims(aream,axis=2)
 
     for day in listOfdays:
         pr_day = precip.isel(time=day)
-        pr_day3d = np.expand_dims(pr_day,axis=2) # used for broadcasting
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2) # the greater than zero turns ones and zeros to True/False
+        pr_day3d = np.expand_dims(pr_day,axis=2)
+        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         myFuncs.connect_boundary(L)
         labels = np.unique(L)[1:]
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1 # 3d matrix with each object in a scene being a binary 2d slice
@@ -234,17 +235,18 @@ def calc_area_pr(precip, listOfdays, conv_threshold):
         o_pr = np.append(o_pr, o_prScene)
         
     o_area = xr.DataArray(
-        data={'o_area': o_area},
-        attrs={'units':'km^2'}
+        data = o_area,
+        attrs = {'units':'km^2'}
         )
 
     o_pr = xr.DataArray(
-        data={'o_pr': o_pr},
-        attrs={'descrption': 'area weighted precipitation in contiguous convective region',
+        data = o_pr,
+        attrs = {'descrption': 'area weighted precipitation in contiguous convective region',
                 'units':'mm/day'}
         )
 
     return o_area, o_pr
+
 
 
 
