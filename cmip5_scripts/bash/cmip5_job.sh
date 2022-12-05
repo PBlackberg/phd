@@ -8,8 +8,8 @@
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
-module load conda/analysis3-unstable
-python3 cmip5_super.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.log
+module load /conda/analysis3-unstable
+python3 cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.log
 
 
 
@@ -34,7 +34,7 @@ python3 cmip5_super.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.l
 # express, normal, copyq(internet access), hugemem, megamem, gpuvolta(volta gpu) 
 
 # submitting
-# submitting job: qsub job.sh 
+# submitting job: qsub cmip5_job.sh 
 # check status: qstat -swx jobID (or qstat -s)
 # check utilisation rate (%gpu): nqstat_anu jobID
 # remove job from queue: qdel jobID 

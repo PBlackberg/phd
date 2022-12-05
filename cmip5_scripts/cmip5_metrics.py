@@ -4,9 +4,9 @@ import numpy as np
 import timeit
 
 import myFuncs
-import gen_pr
-import gen_agg
-import gen_hus
+import cmip5_metrics.prFuncs as prFuncs
+import cmip5_metrics.aggFuncs as aggFuncs
+import cmip5_metrics.husFuncs as husFuncs
 
 
 models = [
@@ -147,7 +147,7 @@ for model in models:
 
                 if metricFiles['pr_percentiles']:
                     fileName = model + '_pr_percentiles_' + experiment + '.nc'
-                    pr95, pr97, pr99, pr999 = gen_pr.calc_percentiles(precip)
+                    pr95, pr97, pr99, pr999 = prFuncs.calc_percentiles(precip)
                     dataSet = xr.Dataset(
                             {'pr95': pr95, 
                              'pr97': pr97, 
@@ -164,7 +164,7 @@ for model in models:
 
                     if metricFiles['numberIndex']:
                         fileName = model + '_number_index_' + experiment + '.nc'
-                        numberIndex, areaf = gen_agg.calc_numberIndex(precip, listOfdays, conv_threshold)
+                        numberIndex, areaf = aggFuncs.calc_numberIndex(precip, listOfdays, conv_threshold)
 
                         dataSet = xr.Dataset(
                                             {'numberIndex': numberIndex,
@@ -174,7 +174,7 @@ for model in models:
 
                     if metricFiles['pwad']:
                         fileName = model + '_pwad_' + experiment + '.nc'
-                        o_area, o_pr = gen_agg.calc_area_pr(precip, listOfdays, conv_threshold)
+                        o_area, o_pr = aggFuncs.calc_area_pr(precip, listOfdays, conv_threshold)
 
                         dataSet = xr.Dataset(
                                             {'o_area': o_area,
@@ -185,7 +185,7 @@ for model in models:
                     if metricFiles['rome']:
                         fileName = model + '_rome_' + experiment + '.nc'
                         dataSet = xr.Dataset(
-                                            {'rome': gen_agg.calc_rome(precip, listOfdays, conv_threshold)})
+                                            {'rome': aggFuncs.calc_rome(precip, listOfdays, conv_threshold)})
                         myFuncs.save_file(dataSet, folder, fileName)
 
 
@@ -193,7 +193,7 @@ for model in models:
                         n = 8
                         fileName = model + '_rome_n_' + experiment + '.nc'
                         dataSet = xr.Dataset(
-                                            {'rome_n': gen_agg.calc_rome_n(n, precip, listOfdays, conv_threshold)})
+                                            {'rome_n': aggFuncs.calc_rome_n(n, precip, listOfdays, conv_threshold)})
                         myFuncs.save_file(dataSet, folder, fileName)
 
                     
@@ -230,7 +230,7 @@ for model in models:
                 if metricFiles['hus_examples']:
                     fileName = model + '_hus_examples' + experiment + '.nc'
 
-                    hus_day, hus_tMean = gen_hus.get_hus_snapshot_tMean(hus)
+                    hus_day, hus_tMean = husFuncs.get_hus_snapshot_tMean(hus)
                     dataSet = xr.Dataset(
                         {'hus_day': hus_day, 
                         'hus_tMean': hus_tMean})
@@ -241,10 +241,10 @@ for model in models:
                 if metricFiles['hus_sMean']:
                     fileName = model + '_hus_sMean' + experiment + '.nc'
 
-                    hus_sMean = gen_hus.calc_hus_sMean(hus)
+                    hus_sMean = husFuncs.calc_hus_sMean(hus)
                     fileName = model + '_hus_examples' + experiment + '.nc'
                     dataSet = xr.Dataset(
-                        {'hus_day': hus_sMean})
+                        {'hus_sMean': hus_sMean})
                     myFuncs.save_file(dataSet, folder, fileName)
 
 
