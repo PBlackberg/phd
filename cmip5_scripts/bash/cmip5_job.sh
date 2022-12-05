@@ -3,13 +3,13 @@
 #PBS -l mem=20GB 
 #PBS -q normal         
 #PBS -P k10
-#PBS -l walltime=24:00:00
+#PBS -l walltime=10:00:00
 #PBS -l storage=gdata/al33+gdata/k10+gdata/hh5         
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
-module load /conda/analysis3-unstable
-python3 cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.log
+module load /g/data/hh5/public/modules/conda/analysis3-unstable 
+python3 /cmip5_scripts/cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log
 
 
 
@@ -34,7 +34,7 @@ python3 cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID
 # express, normal, copyq(internet access), hugemem, megamem, gpuvolta(volta gpu) 
 
 # submitting
-# submitting job: qsub cmip5_job.sh 
+# submitting job: qsub cmip5_scripts/bash/cmip5_job.sh 
 # check status: qstat -swx jobID (or qstat -s)
 # check utilisation rate (%gpu): nqstat_anu jobID
 # remove job from queue: qdel jobID 
