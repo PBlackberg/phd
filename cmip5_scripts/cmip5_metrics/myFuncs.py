@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 import intake
-#import xesmf as xe
+import xesmf as xe
 import os
 
 

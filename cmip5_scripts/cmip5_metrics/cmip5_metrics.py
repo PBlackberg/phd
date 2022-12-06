@@ -4,9 +4,9 @@ import numpy as np
 import timeit
 
 import myFuncs
-import cmip5_metrics.prFuncs as prFuncs
-import cmip5_metrics.aggFuncs as aggFuncs
-import cmip5_metrics.husFuncs as husFuncs
+import prFuncs # cmip5_metrics.prFuncs as 
+import aggFuncs
+import husFuncs
 
 
 models = [

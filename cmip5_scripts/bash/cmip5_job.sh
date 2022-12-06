@@ -8,8 +8,10 @@
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
-module load /g/data/hh5/public/modules/conda/analysis3-unstable 
-python3 /cmip5_scripts/cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log
+
+module use /g/data/hh5/public/modules
+module load analysis3-unstable
+python cmip5_scripts/cmip5_metrics/cmip5_metrics.py $PBS_NCPUS 
 
 
 
@@ -24,7 +26,7 @@ python3 /cmip5_scripts/cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip
 # directories to use
 # data: /g/data/al33/replicas/CMIP5/combined/
 # scipts run from: /g/data/k10/cb4968/phd/cmip5_scripts
-# anaconda environemt: /g/data/hh5/public/modules/conda/analysis3-unstable    
+# anaconda environemt: /g/data/hh5/public/modules/conda/analysis3-unstable    $
 
 # general
 # the bash line needs to be on line 1
@@ -38,3 +40,6 @@ python3 /cmip5_scripts/cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip
 # check status: qstat -swx jobID (or qstat -s)
 # check utilisation rate (%gpu): nqstat_anu jobID
 # remove job from queue: qdel jobID 
+
+
+# > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log
