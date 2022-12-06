@@ -8,7 +8,19 @@
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
+#PBS -I
 module load conda/analysis3-unstable
-python3 cmip5_super.py $PBS_NCPUS > /g/data/k10/cb4968/phd/job_logs/$PBS_JOBID.log
+python3 cmip5_super.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip6_scripts/$PBS_JOBID.log
+
+
+
+
+
+
+
+
+
+
+
 
 

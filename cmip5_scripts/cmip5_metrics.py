@@ -11,7 +11,7 @@ import cmip5_metrics.husFuncs as husFuncs
 
 models = [
         # 'IPSL-CM5A-MR', # 1
-        # 'GFDL-CM3',     # 2
+         'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
