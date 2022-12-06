@@ -224,7 +224,8 @@ for model in models:
 
 
             if var == 'hus':
-                hus = ds_regrid.hus
+                hus = ds_regrid.hus*1000
+                hus.attrs['units']= 'g/kg'
 
 
                 if metricFiles['hus_examples']:

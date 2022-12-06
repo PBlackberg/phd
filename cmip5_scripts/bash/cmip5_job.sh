@@ -8,9 +8,10 @@
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
-module load /g/data/hh5/public/modules/conda/analysis3-unstable 
-python3 /cmip5_scripts/cmip5_metrics.py $PBS_NCPUS > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log
 
+module use /g/data/hh5/public/modules
+module load analysis3-unstable
+python cmip5_scripts/cmip5_metrics/cmip5_metrics.py $PBS_NCPUS 
 
 
 

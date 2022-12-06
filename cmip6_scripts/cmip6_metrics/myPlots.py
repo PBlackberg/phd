@@ -33,8 +33,6 @@ def plot_snapshot(var, cmap, variable_name, model):
     plt.tight_layout()
 
 
-# def onPlus(a):
-#     return a+1
 
     
 
