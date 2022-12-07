@@ -59,7 +59,7 @@ metricFiles = {
 
 
 for model in models:
-    folder = '/g/data/k10/cb4968/cmip5/' + model
+    folder = '/g/data/k10/cb4968/data/cmip5/' + model
     start = timeit.default_timer()
 
     for var in variables:
