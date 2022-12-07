@@ -1,0 +1,16 @@
+
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█
+======================================================================================
+                  Resource Usage on 2022-12-07 14:30:18:
+   Job Id:             66060889.gadi-pbs
+   Project:            k10
+   Exit Status:        271 (Linux Signal 15 SIGTERM Termination)
+   Service Units:      0.24
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:00:29        
+   Memory Requested:   20.0GB                Memory Used: 2.96GB          
+   Walltime requested: 00:01:00            Walltime Used: 00:01:28        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================
