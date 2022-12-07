@@ -16,7 +16,6 @@ python cmip5_scripts/cmip5_metrics/cmip5_metrics.py $PBS_NCPUS
 
 
 
-
 # other specifications
 # not sure what this means: +scratch/k10
 # how large to use hugemem or megamem ?
