@@ -1,17 +1,17 @@
 #!/bin/bash
 #PBS -l ncpus=1
-#PBS -l mem=20GB 
+#PBS -l mem=50GB 
 #PBS -q normal         
 #PBS -P k10
-#PBS -l walltime=10:00:00
-#PBS -l storage=gdata/al33+gdata/k10+gdata/hh5         
+#PBS -l walltime=03:00:00
+#PBS -l storage=gdata/oi10+gdata/k10+gdata/hh5         
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.10
-python cmip5_scripts/cmip5_metrics/cmip5_metrics.py $PBS_NCPUS 
+python cmip6_scripts/cmip6_metrics/sefFuncs.py $PBS_NCPUS 
 
 
 
@@ -43,4 +43,4 @@ python cmip5_scripts/cmip5_metrics/cmip5_metrics.py $PBS_NCPUS
 # remove job from queue: qdel jobID 
 # 
 
-# > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log
+# > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log #project for cmip5 al33
