@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -l ncpus=1
-#PBS -l mem=20GB 
+#PBS -l mem=50GB 
 #PBS -q normal         
 #PBS -P k10
-#PBS -l walltime=10:00:00
+#PBS -l walltime=00:30:00
 #PBS -l storage=gdata/al33+gdata/k10+gdata/hh5         
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
