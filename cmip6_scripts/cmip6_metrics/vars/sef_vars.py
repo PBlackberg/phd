@@ -1,6 +1,6 @@
 import intake
 import xarray as xr
-
+import os
 
 model='MPI-ESM1-2-HR'
 experiment_id='historical'
@@ -46,10 +46,20 @@ netsef = hfls + hfss
 
 del netsef.encoding['chunksizes']
 
-folder = '/g/data/k10/cb4968/data/cmip6/' + model
+folder = '/g/data/k10/cb4968/data/cmip6/ds'
 fileName = model + '_netsef_' + experiment_id + '.nc'
 path = folder + '/' + fileName
-xr.Dataset({'netsef': netsef}).to_netcdf(path, encoding=netsef.encoding.update({'zlib': True, 'complevel': 4}))
+
+
+
+save = True
+if save:
+    os.makedirs(folder, exist_ok=True)
+    if os.path.exists(path):
+        os.remove(path)   
+
+
+    xr.Dataset({'netsef': netsef}).to_netcdf(path, encoding=netsef.encoding.update({'zlib': True, 'complevel': 4}))
 
 
 

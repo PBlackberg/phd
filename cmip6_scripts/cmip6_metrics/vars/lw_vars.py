@@ -1,5 +1,7 @@
 import intake
 import xarray as xr
+import os
+
 
 model='MPI-ESM1-2-HR'
 experiment_id='historical'
@@ -21,7 +23,8 @@ ds = ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=sli
 rlut_3hr=ds.rlut
 rlut = rlut_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
-
+del ds
+del rlut_3hr
 
 
 table_id='3hr'
@@ -37,7 +40,8 @@ ds = ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=sli
 rlds_3hr=ds.rlds
 rlds = rlds_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
-
+del ds
+del rlds_3hr
 
 
 table_id='3hr'
@@ -53,18 +57,27 @@ ds = ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(43800*8+8*28+8, (43800+10
 rlus_3hr=ds.rlus
 rlus = rlus_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
-
+del ds
+del rlus_3hr
 
 
 netlw = rlus - rlds - rlut
 
-folder = '/g/data/k10/cb4968/data/cmip6/' + model
+
+
+
+
+
+folder = '/g/data/k10/cb4968/data/cmip6/ds'
 fileName = model + '_netlw_' + experiment_id + '.nc'
 path = folder + '/' + fileName
-xr.Dataset({'netlw': netlw}).to_netcdf(path, encoding=netlw.encoding.update({'zlib': True, 'complevel': 4}))
 
-
-
+save = True
+if save:
+    os.makedirs(folder, exist_ok=True)
+    if os.path.exists(path):
+        os.remove(path)    
+    xr.Dataset({'netlw': netlw}).to_netcdf(path, encoding=netlw.encoding.update({'zlib': True, 'complevel': 4}))
 
 
 
