@@ -1,5 +1,6 @@
 import intake
 import xarray as xr
+import scipy
 
 
 model='MPI-ESM1-2-HR'
@@ -62,10 +63,28 @@ mse = c_p*ta + zg + L_v*hus
 
 
 
+mse_vInt = xr.DataArray(
+    data=-scipy.integrate.simpson(mse.data, mse.plev.data, axis=1, even='last')/mse.plev.data[0], # units of g/kg
+    dims=['time','lat', 'lon'],
+    coords={'time': mse.time.data, 'lat': mse.lat.data, 'lon': mse.lon.data}
+    ,attrs={'units':''}
+    )
+
+
+
+
+
+
 
 
 mse_year = mse.sel(time = slice('1987-01-31','1999-12-31'))
 xr.Dataset({'mse_year': mse_year}).to_netcdf('/g/data/k10/cb4968/data/cmip6/' + model + '/' + model + '_mse_' + experiment_id + '.nc', encoding=mse.encoding.update({'zlib': True, 'complevel': 4}))
+
+
+
+
+
+
 
 
 
