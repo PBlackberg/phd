@@ -3,7 +3,7 @@
 #PBS -l mem=50GB 
 #PBS -q normal         
 #PBS -P k10
-#PBS -l walltime=00:30:00
+#PBS -l walltime=00:20:00
 #PBS -l storage=gdata/oi10+gdata/k10+gdata/hh5         
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
@@ -11,7 +11,7 @@
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.10
-python cmip6_scripts/cmip6_metrics/vars/lw_vars.py $PBS_NCPUS 
+python cmip6_scripts/cmip6_metrics/vars/sw_vars.py $PBS_NCPUS 
 
 
 # submitting job: qsub cmip6_scripts/bash/cmip6_job.sh 

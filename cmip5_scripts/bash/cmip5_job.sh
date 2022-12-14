@@ -4,43 +4,23 @@
 #PBS -q normal         
 #PBS -P k10
 #PBS -l walltime=03:00:00
-#PBS -l storage=gdata/oi10+gdata/k10+gdata/hh5         
+#PBS -l storage=gdata/al33+gdata/k10+gdata/hh5         
 #PBS -l wd
 #PBS -M <philip.blackberg@monash.edu> 
 #PBS -m abe	
+#PBS -I
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.10
-python cmip6_scripts/cmip6_metrics/sefFuncs.py $PBS_NCPUS 
+python cmip5_scripts/cmip5_metrics/funcs/vars/pr_vars.py $PBS_NCPUS 
 
 
 
 
-# other specifications
-# not sure what this means: +scratch/k10
-# how large to use hugemem or megamem ?
-##PBS -l jobfs=20GB ## parallellisation (local disk on a compute node)
-
-
-# directories to use
-# data: /g/data/al33/replicas/CMIP5/combined/
-# scipts run from: /g/data/k10/cb4968/phd/cmip5_scripts
-# anaconda environemt: /g/data/hh5/public/modules/conda/analysis3-unstable
-
-# general
-# the bash line needs to be on line 1
-# remove spaces between + and =
-
-# 
-
-# Queues
-# express, normal, copyq(internet access), hugemem, megamem, gpuvolta(volta gpu) 
-
-# submitting
 # submitting job: qsub cmip5_scripts/bash/cmip5_job.sh 
+
+
+
 # check status: qstat -swx jobID (or qstat -s)
 # check utilisation rate (%gpu): nqstat_anu jobID
 # remove job from queue: qdel jobID 
-# 
-
-# > /g/data/k10/cb4968/phd/cmip5_scripts/bash/$PBS_JOBID.log #project for cmip5 al33
