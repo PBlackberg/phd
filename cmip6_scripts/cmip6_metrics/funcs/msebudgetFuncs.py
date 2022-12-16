@@ -13,7 +13,8 @@ import cartopy.feature as cfeat
 import os
 #from cmip6_metrics.funcs import myPlots
 
-
+from funcs.vars import myFuncs
+from funcs.vars import myPlots
 
 
 model='MPI-ESM1-2-HR'
@@ -28,7 +29,8 @@ mse = ds.mse_vInt
 
 
 
-mse.isel(time=0).plot()
+myPlots.plot_snapshot(mse.isel(time=0), 'viridis', 'mse_vInt', model)
+plt.show()
 
 
 

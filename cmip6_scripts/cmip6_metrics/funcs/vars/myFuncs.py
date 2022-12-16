@@ -72,15 +72,13 @@ def haversine_dist(lat1, lon1, lat2, lon2):
 
 
 
-def save_file(dataSet, folder, fileName):
+def save_file(dataset, folder, fileName):
     
     os.makedirs(folder, exist_ok=True)
     path = folder + '/' + fileName
-
     if os.path.exists(path):
         os.remove(path)    
-    
-    dataSet.to_netcdf(path)
+    dataset.to_netcdf(path, encoding=dataset.encoding.update({'zlib': True, 'complevel': 4}))
 
 
 

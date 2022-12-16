@@ -1,39 +1,39 @@
 import xarray as xr
 import numpy as np
 
-from vars.hus_vars import *
+from vars.tas_vars import *
 from vars.myFuncs import *
 
 
 
-def calc_hus_tmean(hus):
-    hus_tMean = hus.mean(dim='time', keep_attrs=True)
+def calc_tas_tmean(tas):
+    tas_tMean = tas.mean(dim='time', keep_attrs=True)
 
-    hus_tMean = xr.Dataset(
-        data = {'tas_tMean': hus_tMean}
+    tas_tMean = xr.Dataset(
+        data = {'tas_tMean': tas_tMean}
                 )
 
-    return hus_tMean
+    return tas_tMean
 
 
 
-def calc_hus_sMean(hus):
-    aWeights = np.cos(np.deg2rad(hus.lat))
-    hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
+def calc_tas_sMean(tas):
+    aWeights = np.cos(np.deg2rad(tas.lat))
+    tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'))
     
-    hus_sMean = xr.Dataset(
-    data = {'hus_sMean': hus_sMean}
+    tas_sMean = xr.Dataset(
+    data = {'tas_sMean': tas_sMean}
             )
 
-    return hus_sMean
+    return tas_sMean
 
 
 
-def calc_hus_annual(hus):
-    aWeights = np.cos(np.deg2rad(hus.lat))
-    hus_annual= hus.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
+def calc_tas_annual(tas):
+    aWeights = np.cos(np.deg2rad(tas.lat))
+    tas_annual= tas.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
     
-    return hus_annual
+    return tas_annual
 
 
 
@@ -77,20 +77,22 @@ if __name__ == '__main__':
             haveData = False
             if haveData:
                 folder = '/g/data/k10/cb4968/data/cmip5/ds'
-                fileName = model + '_hus_' + experiment + '.nc'
+                fileName = model + '_tas_' + experiment + '.nc'
                 path = folder + '/' + fileName
-                precip = xr.open_dataset(path).hus
+                precip = xr.open_dataset(path).tas
             else:
-                hus = get_hus(model, experiment).hus
+                tas = get_tas(model, experiment).tas
 
 
 
 
-            hus_tMean = hus.mean(dim='time', keep_attrs=True)
+
+
+            tas_tMean = tas.mean(dim='time', keep_attrs=True)
 
             saveit = False            
             if saveit:                
-                dataSet = hus_tMean
+                dataSet = tas_tMean
                 myFuncs.save_file(dataSet, folder, fileName)
 
 
@@ -98,26 +100,26 @@ if __name__ == '__main__':
 
 
 
-
-            aWeights = np.cos(np.deg2rad(hus.lat))
-            hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
+            aWeights = np.cos(np.deg2rad(tas.lat))
+            tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'))
 
             saveit = False            
             if saveit:                
-                dataSet = hus_sMean
+                dataSet = tas_sMean
                 myFuncs.save_file(dataSet, folder, fileName)
 
 
 
 
 
-
-            hus_annual= hus.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
+            tas_annual= tas.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
 
             saveit = False            
             if saveit:                
-                dataSet = hus_annual
+                dataSet = tas_annual
                 myFuncs.save_file(dataSet, folder, fileName)
+
+
 
 
 

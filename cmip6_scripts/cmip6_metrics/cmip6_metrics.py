@@ -1,13 +1,12 @@
 import intake
 import xarray as xr
-import numpy as np
 import timeit
 
-import myFuncs
-import mseFuncs
-import lwFuncs
-import swFuncs
-import sefFuncs
+from funcs.vars.myFuncs import *
+from funcs.lwFuncs import *
+from funcs.swFuncs import *
+from funcs.sefFuncs import *
+from funcs.mseFuncs import *
 
 
 models = [
@@ -28,18 +27,18 @@ experiments = [
             ]
 
 metricFiles = {
-                    'mse_test':True, 
-                    'mse_tMean':True, 
-                    'mse_var': True, 
-                    'lw_test':True, 
-                    'lw_tMean':True,
-                    'lw_anom':True,
-                    'sw_test':True,
-                    'sw_tMean':True,
-                    'sw_anom':True,
-                    'sef_test':True,
-                    'sef_tMean':True,
-                    'sef_anom':True
+                    'mse_test': False, 
+                    'mse_tMean': False, 
+                    'mse_var': False, 
+                    'lw_test': False, 
+                    'lw_tMean': False,
+                    'lw_anom': False,
+                    'sw_test': False,
+                    'sw_tMean': False,
+                    'sw_anom': False,
+                    'sef_test': False,
+                    'sef_tMean': False,
+                    'sef_anom': False
     }
 
 

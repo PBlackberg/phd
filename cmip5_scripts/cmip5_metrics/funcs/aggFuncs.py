@@ -1,11 +1,12 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
-import myFuncs
+
+from vars.myFuncs import *
+from vars.pr_vars import *
 
 
-
-def calc_rome(precip, listOfdays, conv_threshold):
+def calc_rome(precip, conv_threshold):
     rome = []
 
     lat = precip.lat.data
@@ -15,26 +16,24 @@ def calc_rome(precip, listOfdays, conv_threshold):
     dlon = (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
-
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
-    aream3d = np.expand_dims(aream,axis=2) # (usef later for n largest)    
 
 
-    for day in listOfdays:
+    for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
-        myFuncs.connect_boundary(L)
         
+        connect_boundary(L)
         labels = np.unique(L)[1:]
 
         rome = np.append(rome, rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d))
     
     rome = xr.DataArray(
-        data=rome,
-        dims=['time'],
-        coords={'time': precip.time.data[0:len(listOfdays)]},
-        attrs={'units':'km^2'}
+        data = rome,
+        dims = ['time'],
+        coords = {'time': precip.time.data},
+        attrs = {'units':'km^2'}
         )
 
     return rome
@@ -42,6 +41,7 @@ def calc_rome(precip, listOfdays, conv_threshold):
 
 def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
     rome_allPairs = []
+
     shape_L = np.shape(L)
     
     if len(labels) ==1:
@@ -73,7 +73,7 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
 
 
             # distance from gridboxes of object i to every other point in the domain
-            distancei3d = myFuncs.haversine_dist(lati3d,loni3d,latm3d[:,:,0:Ni],lonm3d[:,:,0:Ni])
+            distancei3d = haversine_dist(lati3d,loni3d,latm3d[:,:,0:Ni],lonm3d[:,:,0:Ni])
 
             # minimum in the third dimension gives shortest distance from object i to every other point in the domain
             distancem = np.amin(distancei3d, axis=2)
@@ -101,9 +101,7 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
 
 
 
-
-
-def calc_rome_n(n, precip, listOfdays, conv_threshold): 
+def calc_rome_n(n, precip, conv_threshold): 
     rome_n = []
 
     lat = precip.lat.data
@@ -118,11 +116,12 @@ def calc_rome_n(n, precip, listOfdays, conv_threshold):
     lonm3d = np.expand_dims(lonm,axis=2)
     aream3d = np.expand_dims(aream,axis=2)
 
-    for day in listOfdays:
+    for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
-        myFuncs.connect_boundary(L)
+        
+        connect_boundary(L)
         labels = np.unique(L)[1:]
 
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1
@@ -132,11 +131,11 @@ def calc_rome_n(n, precip, listOfdays, conv_threshold):
     
 
     rome_n = xr.DataArray(
-        data=rome_n,
-        dims=['time'],
-        coords={'time': precip.time.data[0:len(listOfdays)]},
-        attrs={'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
-        'units': 'km^2'}
+        data = rome_n,
+        dims = ['time'],
+        coords = {'time': precip.time.data},
+        attrs = {'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
+                 'units': 'km^2'}
         )
 
     return rome_n
@@ -155,10 +154,8 @@ def rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d):
 
 
 
-
-
-def calc_numberIndex(precip, listOfdays, conv_threshold):
-    numberIndex, areaf = [], []
+def calc_numberIndex(precip, conv_threshold):
+    o_number, areaf = [], []
 
     lat = precip.lat.data
     lon = precip.lon.data
@@ -169,43 +166,48 @@ def calc_numberIndex(precip, listOfdays, conv_threshold):
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
 
-    for day in listOfdays:
+    for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
-        myFuncs.connect_boundary(L)
+        
+        connect_boundary(L)
         labels = np.unique(L)[1:]
 
-        numberIndex_scene = len(labels)
+        o_numberScene = len(labels)
         
         conv_day = (pr_day.where(pr_day>=conv_threshold,0)>0)*1
         areaf_scene = np.sum(conv_day * aream)/np.sum(aream)
         
-        numberIndex = np.append(numberIndex, numberIndex_scene)
+        o_number = np.append(o_number, o_numberScene)
         areaf = np.append(areaf, areaf_scene)
 
 
-    numberIndex = xr.DataArray(
-        data=numberIndex,
+    o_number = xr.DataArray(
+        data=o_number,
         dims=['time'],
-        coords={'time': precip.time.data[0:len(listOfdays)]},
+        coords={'time': precip.time.data},
         attrs={'units':'Nb'}
         )
 
     areaf = xr.DataArray(
         data=areaf,
         dims=['time'],
-        coords={'time': precip.time.data[0:len(listOfdays)]}
+        coords={'time': precip.time.data}
         )
 
-    return numberIndex, areaf
+
+    numberIndex = xr.Dataset(
+        data = {'o_number': o_number, 
+                'areaf': areaf}
+                ) 
+
+    return numberIndex
 
 
 
 
 
-
-
-def calc_area_pr(precip, listOfdays, conv_threshold):
+def calc_o_area_and_o_pr(precip, conv_threshold):
     o_pr, o_area = [], []
 
     lat = precip.lat.data
@@ -216,16 +218,16 @@ def calc_area_pr(precip, listOfdays, conv_threshold):
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
-    latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
-    lonm3d = np.expand_dims(lonm,axis=2)
-    aream3d = np.expand_dims(aream,axis=2)
+    aream3d = np.expand_dims(aream,axis=2) # used for broadcasting
 
-    for day in listOfdays:
+    for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         pr_day3d = np.expand_dims(pr_day,axis=2)
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
-        myFuncs.connect_boundary(L)
+        
+        connect_boundary(L)
         labels = np.unique(L)[1:]
+        
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1 # 3d matrix with each object in a scene being a binary 2d slice
         
         o_areaScene = np.sum(obj3d * aream3d, axis=(0,1))
@@ -245,7 +247,12 @@ def calc_area_pr(precip, listOfdays, conv_threshold):
                 'units':'mm/day'}
         )
 
-    return o_area, o_pr
+    o_area_pr = xr.Dataset(
+        data = {'o_area': o_area, 
+                'o_pr': o_pr}
+                ) 
+
+    return o_area_pr
 
 
 
@@ -253,11 +260,92 @@ def calc_area_pr(precip, listOfdays, conv_threshold):
 
 
 
+if __name__ == '__main__':
+
+    models = [
+            # 'IPSL-CM5A-MR', # 1
+            'GFDL-CM3',     
+            # 'GISS-E2-H',    # 3
+            # 'bcc-csm1-1',   # 4
+            # 'CNRM-CM5',     # 5
+            # 'CCSM4',        # 6 # cannot concatanate files for historical run
+            # 'HadGEM2-AO',   # 7
+            # 'BNU-ESM',      # 8
+            # 'EC-EARTH',     # 9
+            # 'FGOALS-g2',    # 10
+            # 'MPI-ESM-MR',   # 11
+            # 'CMCC-CM',      # 12
+            # 'inmcm4',       # 13
+            # 'NorESM1-M',    # 14
+            # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+            # 'MIROC5',       # 16
+            # 'HadGEM2-CC',   # 17
+            # 'MRI-CGCM3',    # 18
+            # 'CESM1-BGC'     # 19
+            ]
+    
+    experiments = [
+                'historical',
+                # 'rcp85'
+                ]
+
+
+    for model in models:
+        for experiment in experiments:
+
+            haveData = False
+            if haveData:
+                folder = '/g/data/k10/cb4968/data/cmip5/ds'
+                fileName = model + '_precip_' + experiment + '.nc'
+                path = folder + '/' + fileName
+                precip = xr.open_dataset(path).precip
+            else:
+                precip = get_pr(model, experiment).precip
+
+            conv_threshold = pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
+            n = 8
+
+
+
+            rome = calc_rome(precip, conv_threshold)
+
+            saveit = False            
+            if saveit:                
+                dataSet = rome
+                myFuncs.save_file(dataSet, folder, fileName)
+
+            
+
+
+
+            rome_n = calc_rome_n(n, precip, conv_threshold)
+
+            saveit = False
+            if saveit:
+                dataSet = rome_n
+                myFuncs.save_file(dataSet, folder, fileName)
 
 
 
 
 
+            numberIndex = calc_numberIndex(precip, conv_threshold)
+
+            saveit = False
+            if saveit:
+                dataSet = numberIndex
+                myFuncs.save_file(dataSet, folder, fileName)
+
+
+
+
+
+            o_area_pr = calc_o_area_and_o_pr(precip, conv_threshold)
+
+            saveit = False
+            if saveit:
+                dataSet = o_area_pr
+                myFuncs.save_file(dataSet, folder, fileName)
 
 
 
