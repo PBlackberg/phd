@@ -11,7 +11,7 @@
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.10
-python cmip6_scripts/cmip6_metrics/vars/sw_vars.py $PBS_NCPUS 
+python cmip6_scripts/cmip6_metrics/funcs/vars/mseVars.py $PBS_NCPUS 
 
 
 # submitting job: qsub cmip6_scripts/bash/cmip6_job.sh 

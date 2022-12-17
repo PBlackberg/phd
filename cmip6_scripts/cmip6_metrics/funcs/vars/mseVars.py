@@ -67,14 +67,6 @@ def get_mse(model, experiment_id):
     #     )
     # del ds, ta, zg, hus
 
-
-    mse_year = mse.sel(time = slice('1987-01-01','1999-12-30'))
-    if saveit:
-        folder = '/g/data/k10/cb4968/data/cmip6/ds'
-        fileName = model + '_mse_' + experiment_id + '.nc'
-        dataset = xr.Dataset({'mse_year': mse_year})
-        myFuncs.save_file(dataset, folder, fileName)
-
     return mse
 
 
@@ -149,8 +141,8 @@ if __name__ == '__main__':
     # del ds, ta, zg, hus
 
 
-    mse_year = mse.sel(time = slice('1987-01-01','1999-12-30'))
-    saveit=False
+    mse_year = mse.sel(time = slice('1987-01-01','1987-12-30'))
+    saveit=True
     if saveit:
         folder = '/g/data/k10/cb4968/data/cmip6/ds'
         fileName = model + '_mse_' + experiment_id + '.nc'
