@@ -145,7 +145,7 @@ if __name__ == '__main__':
     saveit=True
     if saveit:
         folder = '/g/data/k10/cb4968/data/cmip6/ds'
-        fileName = model + '_mse_' + experiment_id + '.nc'
+        fileName = model + '_mse_' + experiment_id + '1987.nc'
         dataset = xr.Dataset({'mse_year': mse_year})
         myFuncs.save_file(dataset, folder, fileName)
 
