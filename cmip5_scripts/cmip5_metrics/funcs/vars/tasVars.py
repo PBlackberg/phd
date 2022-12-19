@@ -1,7 +1,8 @@
 import intake
-import myFuncs
+
 import numpy as np
 import xarray as xr
+
 import matplotlib.pyplot as plt
 
 import myFuncs
@@ -60,8 +61,8 @@ def get_tas(model, experiment):
 
 
     ds_tas = xr.Dataset(
-    data = {'tas': tas}
-            )
+        data = {'tas': tas}
+    )
             
 
     return ds_tas
@@ -93,79 +94,91 @@ if __name__ == '__main__':
             # 'CESM1-BGC'     # 19
             ]
 
-    model = models[0]
-
 
     experiments = [
                 'historical',
-                # 'rcp85'
+                'rcp85'
                 ]
 
-    experiment = experiments[0]
+
+
+    for model in models:
+        for experiment in experiments:
+            
+            if experiment == 'historical':
+                period=slice('1970-01','1999-12')
+                ensemble = 'r1i1p1'
+
+                if model == 'GISS-E2-H':
+                    ensemble = 'r6i1p1'
+
+                if model == 'EC-EARTH':
+                    ensemble = 'r6i1p1'
+
+
+            if experiment == 'rcp85':
+                period=slice('2070-01','2099-12')
+                ensemble = 'r1i1p1'
+
+                if model == 'GISS-E2-H':
+                    ensemble = 'r2i1p1'
+
+                if model == 'EC-EARTH':
+                    ensemble = 'r6i1p1'
 
 
 
-    if experiment == 'historical':
-        period=slice('1970-01','1999-12')
-        ensemble = 'r1i1p1'
-
-        if model == 'GISS-E2-H':
-            ensemble = 'r6i1p1'
-
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
+            ds_dict = intake.cat.nci['esgf'].cmip5.search(
+                                                model_id = model, 
+                                                experiment = experiment,
+                                                time_frequency = 'mon', 
+                                                realm = 'atmos', 
+                                                ensemble = ensemble, 
+                                                variable= 'tas').to_dataset_dict()
 
 
-    if experiment == 'rcp85':
-        period=slice('2070-01','2099-12')
-        ensemble = 'r1i1p1'
+            if not (model == 'FGOALS-g2' or model == 'CNRM-CM5'):
+                ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
 
-        if model == 'GISS-E2-H':
-            ensemble = 'r2i1p1'
-
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
+            elif model == 'FGOALS-g2':
+                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*120, 12*120 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
+                
+            elif model == 'CNRM-CM5':
+                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*64, 12*64 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
 
 
 
-
-    ds_dict = intake.cat.nci['esgf'].cmip5.search(
-                                        model_id = model, 
-                                        experiment = experiment,
-                                        time_frequency = 'mon', 
-                                        realm = 'atmos', 
-                                        ensemble = ensemble, 
-                                        variable= 'tas').to_dataset_dict()
+            haveDsOut = True
+            ds_tas = myFuncs.regrid_conserv(ds_orig, haveDsOut) # path='', model'')
 
 
-    if not (model == 'FGOALS-g2' or model == 'CNRM-CM5'):
-        ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
-
-    elif model == 'FGOALS-g2':
-        ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*120, 12*120 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
-        
-    elif model == 'CNRM-CM5':
-        ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*64, 12*64 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
+            myPlots.plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
+            plt.show()
+            myPlots.plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'surface temperature', model)
+            plt.show()
 
 
 
-    haveDsOut = True
-    ds_tas = myFuncs.regrid_conserv(ds_orig, haveDsOut) # path='', model'')
+            saveit = True
+            if saveit:
+                folder = '/g/data/k10/cb4968/data/cmip5/' + model
+                fileName = model + '_tas_' + experiment + '.nc'
+                dataset = xr.Dataset({'tas': ds_tas.tas})
+                myFuncs.save_file(dataset, folder, fileName)
 
 
-    myPlots.plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'precipitation', model)
-    plt.show()
-    myPlots.plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'precipitation', model)
-    plt.show()
+            saveit = True
+            if saveit:
+                folder = '/g/data/k10/cb4968/data/cmip5/' + model
+                fileName = model + '_tas_orig_' + experiment + '.nc'
+                dataset = xr.Dataset({'tas_day': ds_orig.tas.isel(time=0)})
+                myFuncs.save_file(dataset, folder, fileName)
 
 
 
-    saveit =False
-    if saveit:
-        folder = '/g/data/k10/cb4968/data/cmip5/ds'
-        fileName = model + '_tas_' + experiment + '.nc'
-        dataset = xr.Dataset({'tas': ds_tas.tas})
-        myFuncs.save_file(dataset, folder, fileName)
+
+
+
 
 
 

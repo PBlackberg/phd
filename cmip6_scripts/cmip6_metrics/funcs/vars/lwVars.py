@@ -1,6 +1,10 @@
 import intake
+
 import xarray as xr
 import numpy as np
+
+import matplotlib.pyplot as plt
+
 import myFuncs
 import myPlots
 
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     rlut = rlut_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
     myPlots.plot_snapshot(rlut.isel(time=0), 'Purples', 'rlut', model)
-
+    plt.show()
 
 
 
@@ -113,7 +117,7 @@ if __name__ == '__main__':
     rlds = rlds_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
     myPlots.plot_snapshot(rlds.isel(time=0), 'Purples', 'rlds', model)
-
+    plt.show()
 
 
 
@@ -131,13 +135,13 @@ if __name__ == '__main__':
     rlus = rlus_3hr.resample(time='1D').mean(dim='time', keep_attrs=True)
 
     myPlots.plot_snapshot(rlus.isel(time=0), 'Purples', 'rlus', model)
-
+    plt.show()
 
 
     netlw = rlus - rlds - rlut
 
 
-    saveit = False
+    saveit = True
     if saveit:
         folder = '/g/data/k10/cb4968/data/cmip6/ds'
         fileName = model + '_netlw_' + experiment_id + '.nc'

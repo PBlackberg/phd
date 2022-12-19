@@ -1,7 +1,11 @@
 import intake
+
 import xarray as xr
 import scipy
+import numpy as np
+
 import matplotlib.pyplot as plt
+
 import myFuncs
 import myPlots
 
@@ -58,16 +62,18 @@ def get_mse(model, experiment_id):
     L_v = 2.256e6
     mse = c_p*ta + zg + L_v*hus
 
+    del ds, ta, zg, hus
 
-    # mse_vInt = xr.DataArray(
-    #     data= -scipy.integrate.simpson(mse.data, mse.plev.data, axis=1, even='last'),
-    #     dims= ['time','lat', 'lon'],
-    #     coords= {'time': mse.time.data, 'lat': mse.lat.data, 'lon': mse.lon.data}
-    #     ,attrs= {'units':''}
-    #     )
-    # del ds, ta, zg, hus
 
-    return mse
+    mse_vInt = xr.DataArray(
+        data= -scipy.integrate.simpson(mse.data, mse.plev.data, axis=1, even='last'),
+        dims= ['time','lat', 'lon'],
+        coords= {'time': mse.time.data, 'lat': mse.lat.data, 'lon': mse.lon.data}
+        ,attrs= {'units':''}
+        )
+    
+    
+    return mse_vInt
 
 
 
@@ -132,21 +138,20 @@ if __name__ == '__main__':
     mse = c_p*ta + zg + L_v*hus
 
 
-    # mse_vInt = xr.DataArray(
-    #     data= -scipy.integrate.simpson(mse.data, mse.plev.data, axis=1, even='last'),
-    #     dims= ['time','lat', 'lon'],
-    #     coords= {'time': mse.time.data, 'lat': mse.lat.data, 'lon': mse.lon.data}
-    #     ,attrs= {'units':''}
-    #     )
-    # del ds, ta, zg, hus
+    mse_vInt = xr.DataArray(
+        data= -scipy.integrate.simpson(mse.data, mse.plev.data, axis=1, even='last'),
+        dims= ['time','lat', 'lon'],
+        coords= {'time': mse.time.data, 'lat': mse.lat.data, 'lon': mse.lon.data}
+        ,attrs= {'units':''}
+        )
+    
 
 
-    mse_year = mse.sel(time = slice('1987-01-01','1987-12-30'))
     saveit=True
     if saveit:
-        folder = '/g/data/k10/cb4968/data/cmip6/ds'
-        fileName = model + '_mse_' + experiment_id + '_1987.nc'
-        dataset = xr.Dataset({'mse_year': mse_year})
+        folder = '/g/data/k10/cb4968/data/cmip6/' + model
+        fileName = model + '_mse_vInt' + experiment_id + '.nc'
+        dataset = xr.Dataset({'mse_vInt': mse_vInt})
         myFuncs.save_file(dataset, folder, fileName)
 
 
