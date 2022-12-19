@@ -36,6 +36,33 @@ def plot_snapshot(var, cmap, variable_name, model):
 
 
 
+def plot_axMap(ax, var, cmap, variable_name, model):
+    lat = var.lat
+    lon = var.lon
+    var.plot(ax = ax, transform=ccrs.PlateCarree(), cbar_kwargs={'orientation': 'horizontal','pad':0.2, 'aspect':50,'fraction':0.055}, cmap=cmap)
+    ax.add_feature(cfeat.COASTLINE)
+    ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
+    ax.set_title(variable_name + ',' + 'model:' + model)
+    ax.set_xticks([-180, -90, 0, 90, 180])
+    ax.set_xticklabels([0, 90, 180, 270, 360])
+    ax.set_yticks([-20, 0, 20])
+    ax.set_xlabel('lon')
+    ax.set_ylabel('lat')
+
+
+    #plt.tight_layout()
+
+
+
+
+def plot_timeseries(var, variable_name, model):
+    
+    f, ax = plt.subplots(figsize=(20, 3))
+    var.plot()
+    ax.set_title(variable_name + ', model:' + model)
+    ax.set_ylabel(variable_name)
+    plt.tight_layout()
+
     
 
 
