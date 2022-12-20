@@ -2,8 +2,42 @@ import numpy as np
 import xarray as xr
 import skimage.measure as skm
 
-from vars.myFuncs import *
-from vars.pr_vars import *
+
+# Connect objects across boundary (objects that touch across lon=0, lon=360 boundary are the same object) (takes array(lat, lon))
+def connect_boundary(array):
+    s = np.shape(array)
+    for row in np.arange(0,s[0]):
+        if array[row,0]>0 and array[row,-1]>0:
+            array[array==array[row,0]] = min(array[row,0],array[row,-1])
+            array[array==array[row,-1]] = min(array[row,0],array[row,-1])
+
+
+
+# Haversine formula (Great circle distance) (takes vectorized input)
+def haversine_dist(lat1, lon1, lat2, lon2):
+
+   # radius of earth in km
+    R = 6371
+
+    lat1 = np.deg2rad(lat1)                       
+    lon1 = np.deg2rad(lon1-180)     
+    lat2 = np.deg2rad(lat2)                       
+    lon2 = np.deg2rad(lon2-180)
+
+    # Haversine formula
+    h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2
+
+    # distance from Haversine function:
+    # (1) h = sin(theta/2)^2
+
+    # central angle, theta:
+    # (2) theta = d_{great circle} / R
+    
+    # (1) in (2) and rearrange for d gives
+    # d = R * sin^-1(sqrt(h))*2 
+
+    return 2 * R * np.arcsin(np.sqrt(h))
+
 
 
 def calc_rome(precip, conv_threshold):
@@ -197,9 +231,9 @@ def calc_numberIndex(precip, conv_threshold):
 
 
     numberIndex = xr.Dataset(
-        data = {'o_number': o_number, 
-                'areaf': areaf}
-                ) 
+        data_vars = {'o_number': o_number, 
+                     'areaf': areaf}
+        ) 
 
     return numberIndex
 
@@ -207,7 +241,14 @@ def calc_numberIndex(precip, conv_threshold):
 
 
 
-def calc_o_area_and_o_pr(precip, conv_threshold):
+def calc_rEff(area): # input as m^2
+    return np.sqrt(area/np.pi)*1e-3
+
+def calc_pwad_bin(idx, o_area, o_pr): #, obj_area, obj_pr
+    return np.sum(idx*o_area*o_pr)/(np.sum(o_area*o_pr))
+
+
+def calc_pwad(precip, conv_threshold):
     o_pr, o_area = [], []
 
     lat = precip.lat.data
@@ -236,6 +277,28 @@ def calc_o_area_and_o_pr(precip, conv_threshold):
         o_area = np.append(o_area, o_areaScene)
         o_pr = np.append(o_pr, o_prScene)
         
+
+    o_r = calc_rEff(o_area)
+
+    # define the bin width of the mean gridbox area (as effective radius)
+    bin_width = calc_rEff(np.mean(aream))
+    bin_end = calc_rEff(np.max(o_area))
+    bins = np.arange(0, bin_end+bin_width, bin_width)
+    bins_mid = np.append(0,bins*0.5*bin_width) # place the datapoints in the middle of a bin
+
+
+    # place fractional amount of precipitation fallling in respective bin
+    pwad_bins = []
+    for i in np.arange(0,len(bins)-1):
+        idx = (o_r>bins[i]) & (o_r<=bins[i+1])
+        pwad_bins = np.append(pwad_bins, calc_pwad_bin(idx, o_area, o_pr))
+
+    # close the distribution by describing zero objects in bins smaller or greater than min, max
+    pwad_bins = np.append(0, pwad_bins)
+    pwad_bins = np.append(pwad_bins,0)
+
+
+
     o_area = xr.DataArray(
         data = o_area,
         attrs = {'units':'km^2'}
@@ -247,12 +310,26 @@ def calc_o_area_and_o_pr(precip, conv_threshold):
                 'units':'mm/day'}
         )
 
-    o_area_pr = xr.Dataset(
-        data = {'o_area': o_area, 
-                'o_pr': o_pr}
-                ) 
+    pwad_bins = xr.DataArray(
+        data = pwad_bins,
+        attrs = {'descrption': 'fractional distribution of precipitation into bins of area in terms of effective radius',
+                'units':''}
+        )
 
-    return o_area_pr
+    bins_mid = xr.DataArray(
+        data = bins_mid,
+        attrs = {'descrption': 'datapoints for middle of effective radius bins',
+                'units':'km'}
+        )
+
+    pwad = xr.Dataset(
+        data_vars = {'pwad': pwad_bins, 
+                     'bins_mid': bins_mid}
+        )
+                    #  'o_area': o_area,
+                    #  'o_pr': o_pr}
+        
+    return pwad
 
 
 
@@ -261,6 +338,10 @@ def calc_o_area_and_o_pr(precip, conv_threshold):
 
 
 if __name__ == '__main__':
+
+    from vars.myFuncs import *
+    from vars.prVars import *
+
 
     models = [
             # 'IPSL-CM5A-MR', # 1

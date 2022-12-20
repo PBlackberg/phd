@@ -1,12 +1,6 @@
 import intake
-
-import numpy as np
 import xarray as xr
 
-import matplotlib.pyplot as plt
-
-import myFuncs
-import myPlots
 
 
 def get_pr(model, experiment):
@@ -42,11 +36,11 @@ def get_pr(model, experiment):
 
     haveDsOut = True
     precip = myFuncs.regrid_conserv(ds_orig, haveDsOut).pr*60*60*24
-    precip = precip.attrs['units']= 'mm/day'
+    precip.attrs['units']= 'mm/day'
 
 
     ds_pr = xr.Dataset(
-        data = {'precip': precip}
+        data_vars = {'precip': precip}
     )
             
     return ds_pr
@@ -55,7 +49,15 @@ def get_pr(model, experiment):
 
 
 
+
 if __name__ == '__main__':
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import myFuncs
+    import myPlots
+
 
     models = [
             # 'IPSL-CM5A-MR', # 1

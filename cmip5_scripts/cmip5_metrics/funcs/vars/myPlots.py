@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 
-
-
-
+import warnings
+from shapely.errors import ShapelyDeprecationWarning
+warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning) 
 
 
 
@@ -23,6 +23,16 @@ def plot_snapshot(var, cmap, variable_name, model):
     ax.set_xticks([-180, -90, 0, 90, 180])
     ax.set_xticklabels([0, 90, 180, 270, 360])
     ax.set_yticks([-20, 0, 20])
+    plt.tight_layout()
+
+
+
+def plot_timeseries(var, variable_name, model):
+    
+    f, ax = plt.subplots(figsize=(20, 3))
+    var.plot()
+    ax.set_title(variable_name + ', model:' + model)
+    ax.set_ylabel(variable_name)
     plt.tight_layout()
 
 

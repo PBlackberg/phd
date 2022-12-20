@@ -1,9 +1,5 @@
 import xarray as xr
-import numpy as np
-
-from vars.pr_vars import *
-from vars.myFuncs import *
-
+import pandas as pd
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
@@ -16,20 +12,21 @@ def calc_rxday(precip):
 
 
     rxday = xr.Dataset(
-        data = {'rx1day': rx1day, 
-                'rx5day': rx5day}
-                )
+        data_vars = {'rx1day': rx1day, 
+                     'rx5day': rx5day}
+        )
 
     return rxday
 
 
 
 def calc_pr_percentiles(precip):
+
     pr95 = precip.quantile(0.95,dim=('lat','lon'),keep_attrs=True)
     pr95 = xr.DataArray(
         data = pr95.data,
         dims = ['time'],
-        coords = {'time': precip.time.data},
+        coords = {'time': precip.time.data}, 
         attrs = {'units':'mm/day'}
         )
 
@@ -59,11 +56,11 @@ def calc_pr_percentiles(precip):
         
 
     pr_percentiles = xr.Dataset(
-        data = {'pr95': pr95, 
-                'pr97': pr97, 
-                'pr99': pr99, 
-                'pr999': pr999}
-                ) 
+        data_vars = {'pr95': pr95, 
+                     'pr97': pr97, 
+                     'pr99': pr99, 
+                     'pr999': pr999}
+        ) 
 
     return pr_percentiles
 
@@ -71,6 +68,13 @@ def calc_pr_percentiles(precip):
 
 
 if __name__ == '__main__':
+
+    import numpy as np
+
+    from vars.prVars import *
+    from vars.myFuncs import *
+    from vars.myPlots import *
+
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -119,9 +123,9 @@ if __name__ == '__main__':
             rx5day = precip5day.resample(time='Y').max(dim='time')
 
             rxday = xr.Dataset(
-                data = {'rx1day': rx1day, 
-                        'rx5day': rx5day}
-                        )
+                data_vars = {'rx1day': rx1day, 
+                             'rx5day': rx5day}
+                )
 
             saveit =False
             if saveit:
@@ -165,11 +169,11 @@ if __name__ == '__main__':
                 )
             
             pr_percentiles = xr.Dataset(
-                data = {'pr95': pr95, 
-                        'pr97': pr97, 
-                        'pr99': pr99, 
-                        'pr999': pr999}
-                        ) 
+                data_vars = {'pr95': pr95, 
+                             'pr97': pr97, 
+                             'pr99': pr99, 
+                             'pr999': pr999}
+                ) 
 
             saveit =False
             if saveit:
