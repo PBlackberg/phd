@@ -1,6 +1,8 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
+from os.path import expanduser
+home = expanduser("~")
 
 
 # Connect objects across boundary (objects that touch across lon=0, lon=360 boundary are the same object) (takes array(lat, lon))
@@ -344,67 +346,76 @@ if __name__ == '__main__':
 
 
     models = [
-            # 'IPSL-CM5A-MR', # 1
-            'GFDL-CM3',     
-            # 'GISS-E2-H',    # 3
-            # 'bcc-csm1-1',   # 4
-            # 'CNRM-CM5',     # 5
-            # 'CCSM4',        # 6 # cannot concatanate files for historical run
-            # 'HadGEM2-AO',   # 7
-            # 'BNU-ESM',      # 8
-            # 'EC-EARTH',     # 9
-            # 'FGOALS-g2',    # 10
-            # 'MPI-ESM-MR',   # 11
-            # 'CMCC-CM',      # 12
-            # 'inmcm4',       # 13
-            # 'NorESM1-M',    # 14
-            # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
-            # 'MIROC5',       # 16
-            # 'HadGEM2-CC',   # 17
-            # 'MRI-CGCM3',    # 18
-            # 'CESM1-BGC'     # 19
-            ]
+        'IPSL-CM5A-MR', # 1
+        'GFDL-CM3',     # 2
+        'GISS-E2-H',    # 3
+        'bcc-csm1-1',   # 4
+        'CNRM-CM5',     # 5
+        # 'CCSM4',        # 6 # cannot concatanate files for historical run
+        'HadGEM2-AO',   # 7
+        'BNU-ESM',      # 8
+        'EC-EARTH',     # 9
+        'FGOALS-g2',    # 10
+        'MPI-ESM-MR',   # 11
+        'CMCC-CM',      # 12
+        'inmcm4',       # 13
+        'NorESM1-M',    # 14
+        'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+        'MIROC5',       # 16
+        'HadGEM2-CC',   # 17
+        'MRI-CGCM3',    # 18
+        'CESM1-BGC'     # 19
+        ]
     
     experiments = [
-                'historical',
-                # 'rcp85'
-                ]
+        'historical',
+        'rcp85'
+        ]
+
+
+    switch = {
+        'local_files': True, 
+        'nci_files': False, 
+    }
 
 
     for model in models:
         for experiment in experiments:
 
-            haveData = False
-            if haveData:
-                folder = '/g/data/k10/cb4968/data/cmip5/ds'
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/' + model
                 fileName = model + '_precip_' + experiment + '.nc'
                 path = folder + '/' + fileName
-                precip = xr.open_dataset(path).precip
-            else:
-                precip = get_pr(model, experiment).precip
+                ds = xr.open_dataset(path)
+                precip = ds.precip*60*60*24
+                precip.attrs['units']= 'mm/day'
 
-            conv_threshold = pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
+            if switch['nci_files']:
+                precip = get_pr(model, experiment).precip # from prVars
+                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+
+
+
+            conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
 
 
 
+
             rome = calc_rome(precip, conv_threshold)
-
-            saveit = False            
-            if saveit:                
-                dataSet = rome
-                myFuncs.save_file(dataSet, folder, fileName)
-
-            
-
-
-
             rome_n = calc_rome_n(n, precip, conv_threshold)
 
-            saveit = False
-            if saveit:
-                dataSet = rome_n
-                myFuncs.save_file(dataSet, folder, fileName)
+            saveit = False            
+            if saveit:  
+                fileName = model + '_rome_' + experiment + '.nc'              
+                dataset = xr.Dataset(
+                    data_vars = {'rome':rome, 
+                                 'rome_n':rome_n},
+                    attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n),
+                             'units':'km^2'}                  
+                        )
+
+                save_file(dataset, folder, fileName)
 
 
 
@@ -414,19 +425,23 @@ if __name__ == '__main__':
 
             saveit = False
             if saveit:
-                dataSet = numberIndex
-                myFuncs.save_file(dataSet, folder, fileName)
+                fileName = model + '_numberIndex_' + experiment + '.nc'
+                dataset = numberIndex
+
+                save_file(dataset, folder, fileName) # from vars.myFuncs
 
 
 
 
 
-            o_area_pr = calc_o_area_and_o_pr(precip, conv_threshold)
+            pwad = calc_pwad(precip, conv_threshold)
 
             saveit = False
             if saveit:
-                dataSet = o_area_pr
-                myFuncs.save_file(dataSet, folder, fileName)
+                fileName = model + '_pwad_' + experiment + '.nc'
+                dataset = pwad
+
+                save_file(dataset, folder, fileName) # from vars.myFuncs
 
 
 
