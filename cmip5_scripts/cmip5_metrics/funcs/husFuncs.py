@@ -1,8 +1,7 @@
 import xarray as xr
 import numpy as np
-
-from vars.hus_vars import *
-from vars.myFuncs import *
+from os.path import expanduser
+home = expanduser("~")
 
 
 
@@ -29,19 +28,17 @@ def calc_hus_sMean(hus):
 
 
 
-def calc_hus_annual(hus):
-    aWeights = np.cos(np.deg2rad(hus.lat))
-    hus_annual= hus.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
-    
-    return hus_annual
-
-
 
 
 
 
 
 if __name__ == '__main__':
+
+
+    from vars.myFuncs import *
+    from vars.husVars import *
+
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -71,55 +68,46 @@ if __name__ == '__main__':
                 ]
 
 
+    switch = {
+        'local_files': True, 
+        'nci_files': False, 
+    }
+
+
     for model in models:
         for experiment in experiments:
 
-            haveData = False
-            if haveData:
-                folder = '/g/data/k10/cb4968/data/cmip5/ds'
+
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/' + model
                 fileName = model + '_hus_' + experiment + '.nc'
                 path = folder + '/' + fileName
-                precip = xr.open_dataset(path).hus
-            else:
-                hus = get_hus(model, experiment).hus
+                ds = xr.open_dataset(path)
+                hus = ds.hus
+
+
+            if switch['nci_files']:
+                hus = get_hus(model, experiment).hus # from husVars
+                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
 
+            hus_tMean = calc_hus_tmean(hus)
 
-            hus_tMean = hus.mean(dim='time', keep_attrs=True)
+
+            hus_sMean = calc_hus_sMean(hus)
+
+
+
 
             saveit = False            
             if saveit:                
                 dataSet = hus_tMean
-                myFuncs.save_file(dataSet, folder, fileName)
+                save_file(dataSet, folder, fileName)
 
 
-
-
-
-
-
-            aWeights = np.cos(np.deg2rad(hus.lat))
-            hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
 
             saveit = False            
             if saveit:                
                 dataSet = hus_sMean
-                myFuncs.save_file(dataSet, folder, fileName)
-
-
-
-
-
-
-            hus_annual= hus.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
-
-            saveit = False            
-            if saveit:                
-                dataSet = hus_annual
-                myFuncs.save_file(dataSet, folder, fileName)
-
-
-
-
-
+                save_file(dataSet, folder, fileName)

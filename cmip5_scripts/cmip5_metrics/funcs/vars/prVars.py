@@ -107,21 +107,8 @@ if __name__ == '__main__':
                     ensemble = 'r2i1p1'
 
 
-            ds_dict = intake.cat.nci['esgf'].cmip5.search(
-                                            model_id = model, 
-                                            experiment = experiment,
-                                            time_frequency = 'day', 
-                                            realm = 'atmos', 
-                                            ensemble = ensemble, 
-                                            variable= 'pr').to_dataset_dict()
 
-            if not (model == 'CanESM2' and experiment == 'historical'):
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
-            else:
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(43800, 43800+10950)).sel(lon=slice(0,360),lat=slice(-35,35))
-
-            haveDsOut = True
-            ds_pr = myFuncs.regrid_conserv(ds_orig, haveDsOut) # path='', model'')
+            ds_pr = get_pr(model, experiment)
 
 
             
@@ -131,7 +118,7 @@ if __name__ == '__main__':
             plt.show()
 
 
-            saveit = True
+            saveit = False
             if saveit:
                 folder = '/g/data/k10/cb4968/data/cmip5/'+ model
                 fileName = model + '_precip_' + experiment + '.nc'

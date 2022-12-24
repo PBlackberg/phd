@@ -87,7 +87,7 @@ if __name__ == '__main__':
             # 'CMCC-CM',      # 12
             # 'inmcm4',       # 13
             # 'NorESM1-M',    # 14
-            # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+            # 'CanESM2',      # 15
             # 'MIROC5',       # 16
             # 'HadGEM2-CC',   # 17
             # 'MRI-CGCM3',    # 18
@@ -128,28 +128,8 @@ if __name__ == '__main__':
 
 
 
-            ds_dict = intake.cat.nci['esgf'].cmip5.search(
-                                                model_id = model, 
-                                                experiment = experiment,
-                                                time_frequency = 'mon', 
-                                                realm = 'atmos', 
-                                                ensemble = ensemble, 
-                                                variable= 'tas').to_dataset_dict()
+            ds_tas = get_tas(model, experiment)
 
-
-            if not (model == 'FGOALS-g2' or model == 'CNRM-CM5'):
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
-
-            elif model == 'FGOALS-g2':
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*120, 12*120 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
-                
-            elif model == 'CNRM-CM5':
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*64, 12*64 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
-
-
-
-            haveDsOut = True
-            ds_tas = myFuncs.regrid_conserv(ds_orig, haveDsOut) # path='', model'')
 
 
             myPlots.plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
@@ -161,19 +141,10 @@ if __name__ == '__main__':
 
             saveit = True
             if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/' + model
+                folder = '/g/data/k10/cb4968/data/cmip5/ds' #+ model
                 fileName = model + '_tas_' + experiment + '.nc'
                 dataset = xr.Dataset({'tas': ds_tas.tas})
                 myFuncs.save_file(dataset, folder, fileName)
-
-
-            saveit = True
-            if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/' + model
-                fileName = model + '_tas_orig_' + experiment + '.nc'
-                dataset = xr.Dataset({'tas_day': ds_orig.tas.isel(time=0)})
-                myFuncs.save_file(dataset, folder, fileName)
-
 
 
 

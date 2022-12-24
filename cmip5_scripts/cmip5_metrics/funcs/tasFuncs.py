@@ -1,8 +1,7 @@
 import xarray as xr
 import numpy as np
-
-from vars.tas_vars import *
-from vars.myFuncs import *
+from os.path import expanduser
+home = expanduser("~")
 
 
 
@@ -29,19 +28,15 @@ def calc_tas_sMean(tas):
 
 
 
-def calc_tas_annual(tas):
-    aWeights = np.cos(np.deg2rad(tas.lat))
-    tas_annual= tas.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
-    
-    return tas_annual
-
-
-
-
 
 
 
 if __name__ == '__main__':
+
+
+    from vars.tasVars import *
+    from vars.myFuncs import *
+
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -71,55 +66,51 @@ if __name__ == '__main__':
                 ]
 
 
+
+    switch = {
+        'local_files': True, 
+        'nci_files': False, 
+    }
+
+
     for model in models:
         for experiment in experiments:
 
-            haveData = False
-            if haveData:
-                folder = '/g/data/k10/cb4968/data/cmip5/ds'
+
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/' + model
                 fileName = model + '_tas_' + experiment + '.nc'
                 path = folder + '/' + fileName
-                precip = xr.open_dataset(path).tas
-            else:
-                tas = get_tas(model, experiment).tas
+                ds = xr.open_dataset(path)
+                tas = ds.tas
+
+
+            if switch['nci_files']:
+                tas = get_tas(model, experiment).tas # from husVars
+                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
 
 
+            tas_tMean = calc_tas_tmean(tas)
 
 
-            tas_tMean = tas.mean(dim='time', keep_attrs=True)
+            tas_sMean= calc_tas_sMean(tas)
+
+
+
+
 
             saveit = False            
             if saveit:                
                 dataSet = tas_tMean
-                myFuncs.save_file(dataSet, folder, fileName)
+                save_file(dataSet, folder, fileName)
 
-
-
-
-
-
-            aWeights = np.cos(np.deg2rad(tas.lat))
-            tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'))
 
             saveit = False            
             if saveit:                
                 dataSet = tas_sMean
-                myFuncs.save_file(dataSet, folder, fileName)
-
-
-
-
-
-            tas_annual= tas.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(aWeights).mean(dim=('lat','lon'))
-
-            saveit = False            
-            if saveit:                
-                dataSet = tas_annual
-                myFuncs.save_file(dataSet, folder, fileName)
-
-
+                save_file(dataSet, folder, fileName)
 
 
 

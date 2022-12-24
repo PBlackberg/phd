@@ -1,11 +1,11 @@
-import numpy as np
-import xarray as xr
 import intake
+import xarray as xr
 #import xesmf as xe
+
 import os
 
 
-# # conservative interpolation
+
 def regrid_conserv(ds_in, haveDsOut, path='/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc', modelDsOut='FGOALS-g2'):
 
     if haveDsOut:
@@ -23,9 +23,11 @@ def regrid_conserv(ds_in, haveDsOut, path='/g/data/k10/cb4968/data/cmip5/FGOALS-
 
         ds_regrid = ds_dict[list(ds_dict.keys())[-1]].sel(time='1970-01-01', lon=slice(0,360),lat=slice(-30,30))
         ds_regrid.to_netcdf(path)
+
+        ds_out = xr.open_dataset(path)
+        regrid = xe.Regridder(ds_in, ds_out, 'conservative', periodic=True)
         
     return regrid(ds_in)
-
 
 
 
@@ -38,6 +40,7 @@ def save_file(dataSet, folder, fileName):
         os.remove(path)    
     
     dataSet.to_netcdf(path)
+
 
 
 

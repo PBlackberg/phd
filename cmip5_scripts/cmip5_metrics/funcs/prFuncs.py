@@ -137,16 +137,21 @@ if __name__ == '__main__':
                 folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
-            rx1day = precip.resample(time='Y').max(dim='time')
-            precip5day = precip.resample(time='5D').mean(dim='time')
-            rx5day = precip5day.resample(time='Y').max(dim='time')
 
-            rxday = xr.Dataset(
-                data_vars = {'rx1day': rx1day, 
-                             'rx5day': rx5day}
-                )
 
-            saveit = True
+
+
+            rxday = calc_rxday(precip)
+
+
+            pr_percentiles = calc_pr_percentiles(precip)
+
+
+
+
+
+
+            saveit = False
             if saveit:
                 fileName = model + '_pr_rxday_' + experiment + '.nc'
                 dataSet = rxday
@@ -154,53 +159,12 @@ if __name__ == '__main__':
 
 
 
-
-
-            pr95 = precip.quantile(0.95,dim=('lat','lon'),keep_attrs=True)
-            pr95 = xr.DataArray(
-                data = pr95.data,
-                dims = ['time'],
-                coords = {'time': precip.time.data},
-                attrs = {'units':'mm/day'}
-                )
-
-            pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True)
-            pr97 = xr.DataArray(
-                data = pr97.data,
-                dims = ['time'],
-                coords = {'time': precip.time.data},
-                attrs = {'units':'mm/day'}
-                )
-
-            pr99 = precip.quantile(0.99,dim=('lat','lon'),keep_attrs=True)
-            pr99 = xr.DataArray(
-                data = pr99.data,
-                dims = ['time'],
-                coords = {'time': precip.time.data},
-                attrs = {'units':'mm/day'}
-                )
-
-            pr999 = precip.quantile(0.999,dim=('lat','lon'),keep_attrs=True)
-            pr999 = xr.DataArray(
-                data = pr999.data,
-                dims = ['time'],
-                coords = {'time': precip.time.data},
-                attrs = {'units':'mm/day'}
-                )
-            
-            pr_percentiles = xr.Dataset(
-                data_vars = {'pr95': pr95, 
-                             'pr97': pr97, 
-                             'pr99': pr99, 
-                             'pr999': pr999}
-                ) 
-
-
-            saveit = True
+            saveit = False
             if saveit:
                 fileName = model + '_pr_percentiles_' + experiment + '.nc'
                 dataSet = pr_percentiles
                 save_file(dataSet, folder, fileName)
+
 
 
 

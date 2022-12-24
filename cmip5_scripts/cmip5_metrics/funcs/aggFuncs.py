@@ -5,6 +5,7 @@ from os.path import expanduser
 home = expanduser("~")
 
 
+
 # Connect objects across boundary (objects that touch across lon=0, lon=360 boundary are the same object) (takes array(lat, lon))
 def connect_boundary(array):
     s = np.shape(array)
@@ -401,9 +402,17 @@ if __name__ == '__main__':
 
 
 
-
             rome = calc_rome(precip, conv_threshold)
+
             rome_n = calc_rome_n(n, precip, conv_threshold)
+
+            numberIndex = calc_numberIndex(precip, conv_threshold)
+
+            pwad = calc_pwad(precip, conv_threshold)
+
+
+
+
 
             saveit = False            
             if saveit:  
@@ -418,11 +427,6 @@ if __name__ == '__main__':
                 save_file(dataset, folder, fileName)
 
 
-
-
-
-            numberIndex = calc_numberIndex(precip, conv_threshold)
-
             saveit = False
             if saveit:
                 fileName = model + '_numberIndex_' + experiment + '.nc'
@@ -431,23 +435,12 @@ if __name__ == '__main__':
                 save_file(dataset, folder, fileName) # from vars.myFuncs
 
 
-
-
-
-            pwad = calc_pwad(precip, conv_threshold)
-
             saveit = False
             if saveit:
                 fileName = model + '_pwad_' + experiment + '.nc'
                 dataset = pwad
 
                 save_file(dataset, folder, fileName) # from vars.myFuncs
-
-
-
-
-
-
 
 
 
