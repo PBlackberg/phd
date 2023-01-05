@@ -1,7 +1,4 @@
 import xarray as xr
-import pandas as pd
-from os.path import expanduser
-home = expanduser("~")
 
 
 def calc_rxday(precip):
@@ -81,7 +78,10 @@ def calc_pr_percentiles(precip):
 if __name__ == '__main__':
 
     import numpy as np
-
+    import pandas as pd
+    
+    from os.path import expanduser
+    home = expanduser("~")
     from vars.prVars import *
     from vars.myFuncs import *
     from vars.myPlots import *

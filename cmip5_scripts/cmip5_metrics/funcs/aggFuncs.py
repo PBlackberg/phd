@@ -1,8 +1,7 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
-from os.path import expanduser
-home = expanduser("~")
+
 
 
 
@@ -342,6 +341,8 @@ def calc_pwad(precip, conv_threshold):
 
 if __name__ == '__main__':
 
+    from os.path import expanduser
+    home = expanduser("~")
     from vars.myFuncs import *
     from vars.prVars import *
 

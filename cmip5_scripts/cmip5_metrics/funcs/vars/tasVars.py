@@ -1,12 +1,6 @@
 import intake
-
-import numpy as np
 import xarray as xr
 
-import matplotlib.pyplot as plt
-
-import myFuncs
-import myPlots
 
 
 def get_tas(model, experiment):
@@ -71,6 +65,13 @@ def get_tas(model, experiment):
 
 
 if __name__ == '__main__':
+
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import myFuncs
+    import myPlots
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -139,9 +140,9 @@ if __name__ == '__main__':
 
 
 
-            saveit = True
+            saveit = False
             if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/ds' #+ model
+                folder = '/g/data/k10/cb4968/data/cmip5/ds'
                 fileName = model + '_tas_' + experiment + '.nc'
                 dataset = xr.Dataset({'tas': ds_tas.tas})
                 myFuncs.save_file(dataset, folder, fileName)

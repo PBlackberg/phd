@@ -1,7 +1,6 @@
 import xarray as xr
 import numpy as np
-from os.path import expanduser
-home = expanduser("~")
+
 
 
 
@@ -9,7 +8,7 @@ def calc_hus_tmean(hus):
     hus_tMean = hus.mean(dim='time', keep_attrs=True)
 
     hus_tMean = xr.Dataset(
-        data = {'tas_tMean': hus_tMean}
+        data_vars = {'tas_tMean': hus_tMean}
                 )
 
     return hus_tMean
@@ -21,7 +20,7 @@ def calc_hus_sMean(hus):
     hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
     
     hus_sMean = xr.Dataset(
-    data = {'hus_sMean': hus_sMean}
+    data_vars = {'hus_sMean': hus_sMean}
             )
 
     return hus_sMean
@@ -35,7 +34,8 @@ def calc_hus_sMean(hus):
 
 if __name__ == '__main__':
 
-
+    from os.path import expanduser
+    home = expanduser("~")
     from vars.myFuncs import *
     from vars.husVars import *
 

@@ -1,18 +1,12 @@
 import intake
 
-import numpy as np
 import scipy
 import xarray as xr
 
-import matplotlib.pyplot as plt
-
-import myFuncs
-import myPlots
 
 
 
 def get_hus(model, experiment):
-
 
     if experiment == 'historical':
         period=slice('1970-01','1999-12')
@@ -76,6 +70,14 @@ def get_hus(model, experiment):
 
 
 if __name__ == '__main__':
+
+
+    import myFuncs
+    import myPlots
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
 
     models = [
         # 'IPSL-CM5A-MR', # 1 # super slow for some reason
