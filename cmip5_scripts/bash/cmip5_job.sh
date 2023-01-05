@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l ncpus=1
-#PBS -l mem=15GB 
+#PBS -l mem=10GB 
 #PBS -q normal         
 #PBS -P k10
 #PBS -l walltime=00:15:00
@@ -12,7 +12,7 @@
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.10
-python /g/data/k10/cb4968/phd/cmip5_scripts/cmip5_metrics/funcs/vars/husVars.py $PBS_NCPUS 
+python /g/data/k10/cb4968/phd/cmip5_scripts/cmip5_metrics/funcs/tasFuncs.py $PBS_NCPUS 
 
 
 

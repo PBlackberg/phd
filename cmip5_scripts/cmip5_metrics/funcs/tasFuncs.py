@@ -18,7 +18,7 @@ def calc_tas_sMean(tas):
     tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'))
     
     tas_sMean = xr.Dataset(
-    data_vars = {'tas_sMean': tas_sMean}
+        data_vars = {'tas_sMean': tas_sMean}
             )
 
     return tas_sMean
@@ -90,21 +90,19 @@ if __name__ == '__main__':
 
 
             tas_tMean = calc_tas_tMean(tas)
-
-
             tas_sMean= calc_tas_sMean(tas)
 
 
 
 
 
-            saveit = True            
+            saveit = False          
             if saveit:                
                 dataSet = tas_tMean
                 save_file(dataSet, folder, fileName)
 
 
-            saveit = True            
+            saveit = False            
             if saveit:                
                 dataSet = tas_sMean
                 save_file(dataSet, folder, fileName)

@@ -48,7 +48,7 @@ def get_hus(model, experiment):
 
 
     haveDsOut = True
-    ds_hus = myFuncs.regrid_conserv(ds_orig, haveDsOut) # path='', model ='')
+    ds_hus = regrid_conserv(ds_orig, haveDsOut) # path='', model ='')
 
 
 
@@ -72,8 +72,8 @@ def get_hus(model, experiment):
 if __name__ == '__main__':
 
 
-    import myFuncs
-    import myPlots
+    from myFuncs import *
+    from myPlots import *
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -138,29 +138,29 @@ if __name__ == '__main__':
             hus_vInt = get_hus(model, experiment)
 
 
-            myPlots.plot_snapshot(hus_vInt.isel(time=0), 'Greens', 'precipitable water', model)
+            plot_snapshot(hus_vInt.isel(time=0), 'Greens', 'precipitable water', model)
             plt.show()
-            myPlots.plot_snapshot(hus_vInt.mean(dim=('time'), keep_attrs=True), 'Greens', 'time mean precipitable water', model)
+            plot_snapshot(hus_vInt.mean(dim=('time'), keep_attrs=True), 'Greens', 'time mean precipitable water', model)
             plt.show()
 
+
+
+
+            # saveit = False
+            # if saveit:
+            #     folder = '/g/data/k10/cb4968/data/cmip5/' + model
+            #     fileName = model + '_hus_' + experiment + '.nc'
+            #     dataset = xr.Dataset({'hus': ds_hus.hus})
+            #     save_file(dataset, folder, fileName)
 
 
 
             saveit = False
             if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/' + model
-                fileName = model + '_hus_' + experiment + '.nc'
-                dataset = xr.Dataset({'hus': ds_hus.hus})
-                myFuncs.save_file(dataset, folder, fileName)
-
-
-
-            saveit = False
-            if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/' + model
+                folder = '/g/data/k10/cb4968/data/cmip5/ds'
                 fileName = model + '_hus_vInt_' + experiment + '.nc'
                 dataset = xr.Dataset({'hus_vInt': hus_vInt})
-                myFuncs.save_file(dataset, folder, fileName)
+                save_file(dataset, folder, fileName)
 
 
 

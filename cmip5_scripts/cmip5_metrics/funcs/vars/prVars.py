@@ -35,7 +35,7 @@ def get_pr(model, experiment):
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(43800, 43800+10950)).sel(lon=slice(0,360),lat=slice(-35,35))
 
     haveDsOut = True
-    precip = myFuncs.regrid_conserv(ds_orig, haveDsOut).pr*60*60*24
+    precip = regrid_conserv(ds_orig, haveDsOut).pr*60*60*24
     precip.attrs['units']= 'mm/day'
 
 
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
 
-    import myFuncs
-    import myPlots
+    from myFuncs import *
+    from myPlots import *
 
 
     models = [
@@ -112,18 +112,18 @@ if __name__ == '__main__':
 
 
             
-            myPlots.plot_snapshot(ds_pr.pr.isel(time=0), 'Blues', 'pr_day', model)
+            plot_snapshot(ds_pr.pr.isel(time=0), 'Blues', 'pr_day', model)
             plt.show()
-            myPlots.plot_snapshot(ds_pr.pr.mean(dim=('time'), keep_attrs=True), 'Blues','pr_mean', model)
+            plot_snapshot(ds_pr.pr.mean(dim=('time'), keep_attrs=True), 'Blues','pr_mean', model)
             plt.show()
 
 
             saveit = False
             if saveit:
-                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+                folder = '/g/data/k10/cb4968/data/cmip5/ds/'
                 fileName = model + '_precip_' + experiment + '.nc'
                 dataset = xr.Dataset({'precip': ds_pr.pr})
-                myFuncs.save_file(dataset, folder, fileName)
+                save_file(dataset, folder, fileName)
 
 
 

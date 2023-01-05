@@ -50,12 +50,12 @@ def get_tas(model, experiment):
 
 
     haveDsOut = True
-    tas = myFuncs.regrid_conserv(ds_orig, haveDsOut).tas-273.15
+    tas = regrid_conserv(ds_orig, haveDsOut).tas-273.15
     tas.attrs['units']= 'deg (C)'
 
 
     ds_tas = xr.Dataset(
-        data = {'tas': tas}
+        data_vars = {'tas': tas}
     )
             
 
@@ -70,8 +70,8 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
 
-    import myFuncs
-    import myPlots
+    from myFuncs import *
+    from myPlots import *
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -133,9 +133,9 @@ if __name__ == '__main__':
 
 
 
-            myPlots.plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
+            plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
             plt.show()
-            myPlots.plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'surface temperature', model)
+            plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'surface temperature', model)
             plt.show()
 
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
                 folder = '/g/data/k10/cb4968/data/cmip5/ds'
                 fileName = model + '_tas_' + experiment + '.nc'
                 dataset = xr.Dataset({'tas': ds_tas.tas})
-                myFuncs.save_file(dataset, folder, fileName)
+                save_file(dataset, folder, fileName)
 
 
 
