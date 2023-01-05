@@ -1,0 +1,67 @@
+
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+--> The keys in the returned dictionary of datasets are constructed as follows:
+	'project.product.institute_id.model_id.experiment.time_frequency.realm.cmor_table.ensemble.version.variable'
+█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
+======================================================================================
+                  Resource Usage on 2023-01-05 21:59:17:
+   Job Id:             69009933.gadi-pbs
+   Project:            k10
+   Exit Status:        1
+   Service Units:      0.19
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:01:08        
+   Memory Requested:   10.0GB                Memory Used: 4.2GB           
+   Walltime requested: 00:20:00            Walltime Used: 00:02:19        
+   JobFS requested:    100.0MB                JobFS used: 8.04MB          
+======================================================================================

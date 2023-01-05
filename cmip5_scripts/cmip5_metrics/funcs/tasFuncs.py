@@ -59,14 +59,14 @@ if __name__ == '__main__':
     
     experiments = [
                 'historical',
-                'rcp85'
+                # 'rcp85'
                 ]
 
 
 
     switch = {
-        'local_files': True, 
-        'nci_files': False, 
+        'local_files': False, 
+        'nci_files': True, 
     }
 
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
             if switch['nci_files']:
                 tas = get_tas(model, experiment).tas # from husVars
-                folder = '/g/data/k10/cb4968/data/cmip5/tasVars' #+ model
+                folder = '/g/data/k10/cb4968/data/cmip5/ds' #+ model
 
 
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
 
 
-            saveit = True          
+            saveit = False          
             if saveit:                
                 folder = home + '/Documents/data/cmip5/' + model
                 fileName = model + '_tas_tMean_' + experiment + '.nc'
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                 save_file(dataSet, folder, fileName)
 
 
-            saveit = True            
+            saveit = False         
             if saveit:         
                 folder = home + '/Documents/data/cmip5/' + model  
                 fileName = model + '_tas_sMean_' + experiment + '.nc'     

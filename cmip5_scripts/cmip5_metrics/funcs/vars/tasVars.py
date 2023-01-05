@@ -1,6 +1,31 @@
 import intake
 import xarray as xr
+import xesmf as xe
 
+
+
+def regrid_conserv(ds_in, haveDsOut, path='/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc', modelDsOut='FGOALS-g2'):
+
+    if haveDsOut:
+        ds_out = xr.open_dataset(path)
+        regrid = xe.Regridder(ds_in, ds_out, 'conservative', periodic=True)
+    
+    else:
+        ds_dict = intake.cat.nci['esgf'].cmip5.search(
+                                        model_id = modelDsOut, 
+                                        experiment = 'historical',
+                                        time_frequency = 'day', 
+                                        realm = 'atmos', 
+                                        ensemble = 'r1i1p1', 
+                                        variable= 'pr').to_dataset_dict()
+
+        ds_regrid = ds_dict[list(ds_dict.keys())[-1]].sel(time='1970-01-01', lon=slice(0,360),lat=slice(-30,30))
+        ds_regrid.to_netcdf(path)
+
+        ds_out = xr.open_dataset(path)
+        regrid = xe.Regridder(ds_in, ds_out, 'conservative', periodic=True)
+        
+    return regrid(ds_in)
 
 
 def get_tas(model, experiment):
@@ -41,10 +66,18 @@ def get_tas(model, experiment):
     if not (model == 'FGOALS-g2' or model == 'CNRM-CM5'):
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
 
-    elif model == 'FGOALS-g2':
+
+    elif model == 'FGOALS-g2' and experiment == 'historical':
+        ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*120, 12*120 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
+
+    elif model == 'FGOALS-g2' and experiment == 'rcp85':
+        ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*64, 12*64 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
+
+
+    elif model == 'CNRM-CM5' and experiment == 'historical':
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*120, 12*120 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
         
-    elif model == 'CNRM-CM5':
+    elif model == 'CNRM-CM5' and experiment == 'rcp85':
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(12*64, 12*64 + 12*30)).sel(lon=slice(0,360), lat=slice(-35,35))
 
 
@@ -83,7 +116,7 @@ if __name__ == '__main__':
             # 'HadGEM2-AO',   # 7
             # 'BNU-ESM',      # 8
             # 'EC-EARTH',     # 9
-            # 'FGOALS-g2',    # 10
+            # 'FGOALS-g2',    # 10 # run from here
             # 'MPI-ESM-MR',   # 11
             # 'CMCC-CM',      # 12
             # 'inmcm4',       # 13
@@ -98,7 +131,7 @@ if __name__ == '__main__':
 
     experiments = [
                 'historical',
-                'rcp85'
+                # 'rcp85'
                 ]
 
 
@@ -133,10 +166,10 @@ if __name__ == '__main__':
 
 
 
-            plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
-            plt.show()
-            plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'surface temperature', model)
-            plt.show()
+            # plot_snapshot(ds_tas.tas.isel(time=0), 'Reds', 'surface temperature', model)
+            # plt.show()
+            # plot_snapshot(ds_tas.tas.mean(dim='time', keep_attrs=True), 'Reds', 'surface temperature', model)
+            # plt.show()
 
 
 
@@ -144,7 +177,7 @@ if __name__ == '__main__':
             if saveit:
                 folder = '/g/data/k10/cb4968/data/cmip5/ds'
                 fileName = model + '_tas_' + experiment + '.nc'
-                dataset = xr.Dataset({'tas': ds_tas.tas})
+                dataset = ds_tas
                 save_file(dataset, folder, fileName)
 
 
