@@ -59,6 +59,7 @@ def get_pr(model, experiment):
 
     if not (model == 'CanESM2' and experiment == 'historical'):
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35,35))
+
     else:
         ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(43800, 43800+10950)).sel(lon=slice(0,360),lat=slice(-35,35))
 
@@ -112,45 +113,28 @@ if __name__ == '__main__':
 
     experiments = [
                 'historical',
-                'rcp85'
+                # 'rcp85'
                 ]
 
 
     for model in models:
         for experiment in experiments:
 
-            if experiment == 'historical':
-                period=slice('1970-01','1999-12')
-                ensemble = 'r1i1p1'
-
-                if model == 'GISS-E2-H':
-                    ensemble = 'r6i1p1'
-
-
-            if experiment == 'rcp85':
-                period=slice('2070-01','2099-12')
-                ensemble = 'r1i1p1'
-
-                if model == 'GISS-E2-H':
-                    ensemble = 'r2i1p1'
-
-
-
             ds_pr = get_pr(model, experiment)
 
 
             
-            plot_snapshot(ds_pr.pr.isel(time=0), 'Blues', 'pr_day', model)
-            plt.show()
-            plot_snapshot(ds_pr.pr.mean(dim=('time'), keep_attrs=True), 'Blues','pr_mean', model)
-            plt.show()
+            # plot_snapshot(ds_pr.pr.isel(time=0), 'Blues', 'pr_day', model)
+            # plt.show()
+            # plot_snapshot(ds_pr.pr.mean(dim=('time'), keep_attrs=True), 'Blues','pr_mean', model)
+            # plt.show()
 
 
             saveit = False
             if saveit:
                 folder = '/g/data/k10/cb4968/data/cmip5/ds/'
                 fileName = model + '_precip_' + experiment + '.nc'
-                dataset = xr.Dataset({'precip': ds_pr.pr})
+                dataset = ds_pr
                 save_file(dataset, folder, fileName)
 
 

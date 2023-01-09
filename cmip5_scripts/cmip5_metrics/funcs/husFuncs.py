@@ -5,10 +5,10 @@ import numpy as np
 
 
 def calc_hus_tmean(hus):
-    hus_tMean = hus.mean(dim='time', keep_attrs=True)
+    hus_tMean = hus.mean(dim='time')
 
     hus_tMean = xr.Dataset(
-        data_vars = {'tas_tMean': hus_tMean}
+        data_vars = {'hus_tMean': hus_tMean}
                 )
 
     return hus_tMean
@@ -29,15 +29,12 @@ def calc_hus_sMean(hus):
 
 
 
-
-
-
 if __name__ == '__main__':
 
     from os.path import expanduser
     home = expanduser("~")
     from vars.myFuncs import *
-    from vars.husVars import *
+
 
 
     models = [
@@ -79,22 +76,22 @@ if __name__ == '__main__':
 
 
             if switch['local_files']:
-                folder = home + '/Documents/data/cmip5/' + model
+                folder = home + '/Documents/data/cmip5/ds'
                 fileName = model + '_hus_' + experiment + '.nc'
                 path = folder + '/' + fileName
                 ds = xr.open_dataset(path)
                 hus = ds.hus
-
+                folder = home + '/Documents/data/cmip5/' + model
 
             if switch['nci_files']:
-                hus = get_hus(model, experiment).hus # from husVars
+                from vars.husVars import *
+                hus = get_hus(model, experiment).hus
                 folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
 
+
             hus_tMean = calc_hus_tmean(hus)
-
-
             hus_sMean = calc_hus_sMean(hus)
 
 
@@ -102,12 +99,13 @@ if __name__ == '__main__':
 
             saveit = False            
             if saveit:                
+                fileName = model + '_hus_tMean_' + experiment + '.nc'
                 dataSet = hus_tMean
                 save_file(dataSet, folder, fileName)
 
 
-
             saveit = False            
             if saveit:                
+                fileName = model + '_hus_sMean' + experiment + '.nc'
                 dataSet = hus_sMean
                 save_file(dataSet, folder, fileName)

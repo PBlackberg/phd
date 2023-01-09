@@ -1,13 +1,13 @@
-import intake
 import xarray as xr
 import numpy as np
 import timeit
+from os.path import expanduser
+home = expanduser("~")
+from funcs.vars.myFuncs import *
 
-import myFuncs
-import prFuncs # cmip5_metrics.prFuncs as 
-import aggFuncs
-import husFuncs
 
+
+# ------------------------------- select data files to generate ---------------------------------------------
 
 models = [
         # 'IPSL-CM5A-MR', # 1
@@ -31,224 +31,182 @@ models = [
         # 'CESM1-BGC'     # 19
         ]
 
-variables = [
-            'pr',
-            'tas', 
-            'hus'
-            ]
-
 experiments = [
                 'historical', 
-                'rcp85'
+                # 'rcp85'
             ]
 
-metricFiles = {
-                    'pr_examples':True, 
-                    'pr_rxday':True, 
-                    'pr_percentiles':True, 
-                    'numberIndex': True, 
-                    'pwad':True, 
-                    'rome':True, 
-                    'rome_n':True,
-                    'tas_examples':True,
-                    'tas_annual':True,
-                    'hus_examples':True,
-                    'hus_sMean':True
+
+dataFiles = {
+                    'pr_rxday': True, 
+                    'pr_percentiles': False,
+                    'numberIndex': False, 
+                    'pwad': False, 
+                    'rome': False, 
+                    'rome_n': False,
+
+                    'tas_tMean': False,
+                    'tas_sMean': False,
+                    
+                    'hus_tMean': False,
+                    'hus_sMean': False
     }
+
+
+switch = {
+    'local_files': True, 
+    'nci_files': False, 
+}
 
 
 
 for model in models:
-    folder = '/g/data/k10/cb4968/data/cmip5/' + model
     start = timeit.default_timer()
+    
+    for experiment in experiments:
 
-    for var in variables:
-        for experiment in experiments:
-
-
-# ------------------------------ load variable data ---------------------------------------------
-
-            if not var =='tas':
-                time_frequency = 'day'
-            else:
-                time_frequency = 'mon'
+# ------------------------------- Calculate metrics and save files ---------------------------------------------
             
-            if experiment == 'historical':
-                period=slice('1970-01','1999-12')
-                ensemble = 'r1i1p1'
+        if (dataFiles['pr_rx1day'] or dataFiles['pr_percentiles'] or dataFiles['NumberIndex'] 
+            or dataFiles['pwad'] or dataFiles['rome'] or dataFiles['rome_n']):
 
-                if model == 'GISS-E2-H':
-                    ensemble = 'r6i1p1'
-
-                if (var=='tas' and model == 'EC-EARTH'):
-                    ensemble = 'r6i1p1'
-
-                if (var == 'hus' and model == 'CCSM4'):
-                    ensemble = 'r5i1p1'
-
-
-            if experiment == 'rcp85':
-                period=slice('2070-01','2099-12')
-                ensemble = 'r1i1p1'
-
-                if model == 'GISS-E2-H':
-                    ensemble = 'r2i1p1'
-
-                if model == 'EC-EARTH':
-                    ensemble = 'r6i1p1'
-
-                if model == (var == 'hus' and model == 'CCSM4'):
-                    ensemble = 'r5i1p1'
-
-
-            
-            ds_dict = intake.cat.nci['esgf'].cmip5.search(
-                                            model_id = model, 
-                                            experiment = experiment,
-                                            time_frequency = 'day', 
-                                            realm = 'atmos', 
-                                            ensemble = ensemble, 
-                                            variable= var).to_dataset_dict()
-
-            if not (model == 'CanESM2' and experiment == 'historical'):
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lon=slice(0,360),lat=slice(-35, 35))
-            else:
-                ds_orig =ds_dict[list(ds_dict.keys())[-1]].isel(time=slice(43800, 43800+10950)).sel(lon=slice(0,360),lat=slice(-35, 35))
-
-
-            haveDsOut = True
-            ds_regrid = myFuncs.regrid_conserv(ds_orig, haveDsOut)
-
-
-
-
-
-# ------------------------------- Calculate metrics ---------------------------------------------
-
-            if var == 'pr':
-                precip = ds_regrid.pr * 60*60*24
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/ds'
+                fileName = model + '_precip_' + experiment + '.nc'
+                path = folder + '/' + fileName
+                ds = xr.open_dataset(path)
+                precip = ds.precip*60*60*24
                 precip.attrs['units']= 'mm/day'
+                folder = home + '/Documents/data/cmip5/' + model
+
+            if switch['nci_files']:
+                from funcs.vars.prVars import *
+                precip = get_pr(model, experiment).precip
+                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+
+
+
+            from funcs.prFuncs import *
+            if dataFiles['pr_rxday']:
+                fileName = model + '_pr_rxday_' + experiment + '.nc'
+                dataSet = calc_rxday(precip)
+                save_file(dataSet, folder, fileName)
+
+
+            if dataFiles['pr_percentiles']:
+                fileName = model + '_pr_percentiles_' + experiment + '.nc'
+                dataSet = calc_pr_percentiles(precip)
+                save_file(dataSet, folder, fileName)
+
+
+
+            from funcs.aggFuncs import *
+            if (dataFiles['numberIndex'] or dataFiles['pwad'] or dataFiles['rome'] or dataFiles['rome_n']):
+                conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
                 
-                if metricFiles['pr_examples']:
-                    fileName = model + '_pr_examples_' + experiment + '.nc'
-                    dataSet = xr.Dataset(
-                                        {'pr_day': precip.isel(time=0), 
-                                         'pr_tMean': precip.mean(dim='time', keep_attrs=True)})
-                    myFuncs.save_file(dataSet, folder, fileName)
+
+            if dataFiles['numberIndex']:
+                fileName = model + '_numberIndex_' + experiment + '.nc'
+                dataset = calc_numberIndex(precip, conv_threshold)
+                save_file(dataset, folder, fileName) 
 
 
-                if metricFiles['pr_rxday']:
-                    fileName = model + '_pr_rxday_' + experiment + '.nc'
-                    dataSet = xr.Dataset(
-                                        {'rx1day': precip.resample(time='Y').max(dim='time', keep_attrs=True), 
-                                         'rx5day': precip.resample(time='5D').mean(dim='time', keep_attrs=True).resample(time='Y').max(dim='time')})
-                    myFuncs.save_file(dataSet, folder, fileName)
+            if dataFiles['pwad']:
+                fileName = model + '_pwad_' + experiment + '.nc'
+                dataset = calc_pwad(precip, conv_threshold)
+                save_file(dataset, folder, fileName) 
 
 
-                if metricFiles['pr_percentiles']:
-                    fileName = model + '_pr_percentiles_' + experiment + '.nc'
-                    pr95, pr97, pr99, pr999 = prFuncs.calc_percentiles(precip)
-                    dataSet = xr.Dataset(
-                            {'pr95': pr95, 
-                             'pr97': pr97, 
-                             'pr99': pr99, 
-                             'pr999': pr999}) 
-                    myFuncs.save_file(dataSet, folder, fileName)
+            if dataFiles['rome']:
+                rome = calc_rome(precip, conv_threshold)
+            else:
+                rome = np.ones(len(precip.time.data))*np.nan
+
+            if dataFiles['rome_n']:
+                n = 8
+                rome_n = calc_rome_n(n, precip, conv_threshold)
+            else:
+                rome_n = np.ones(len(precip.time.data))*np.nan
 
 
-
-                if (metricFiles['numberIndex'] or metricFiles['rome'] or metricFiles['rome_n']):
-                    listOfdays = np.arange(0,len(precip.time.data))
-                    conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time')
-
-
-                    if metricFiles['numberIndex']:
-                        fileName = model + '_number_index_' + experiment + '.nc'
-                        numberIndex, areaf = aggFuncs.calc_numberIndex(precip, listOfdays, conv_threshold)
-
-                        dataSet = xr.Dataset(
-                                            {'numberIndex': numberIndex,
-                                             'areaf':areaf})
-                        myFuncs.save_file(dataSet, folder, fileName)
-
-
-                    if metricFiles['pwad']:
-                        fileName = model + '_pwad_' + experiment + '.nc'
-                        o_area, o_pr = aggFuncs.calc_area_pr(precip, listOfdays, conv_threshold)
-
-                        dataSet = xr.Dataset(
-                                            {'o_area': o_area,
-                                             'o_pr':o_pr})
-                        myFuncs.save_file(dataSet, folder, fileName)
-
-
-                    if metricFiles['rome']:
-                        fileName = model + '_rome_' + experiment + '.nc'
-                        dataSet = xr.Dataset(
-                                            {'rome': aggFuncs.calc_rome(precip, listOfdays, conv_threshold)})
-                        myFuncs.save_file(dataSet, folder, fileName)
-
-
-                    if metricFiles['rome_n']:
-                        n = 8
-                        fileName = model + '_rome_n_' + experiment + '.nc'
-                        dataSet = xr.Dataset(
-                                            {'rome_n': aggFuncs.calc_rome_n(n, precip, listOfdays, conv_threshold)})
-                        myFuncs.save_file(dataSet, folder, fileName)
-
-                    
-
-
-
-            if var == 'tas':
-                tas = ds_regrid.tas-273.15
-                tas.attrs['units']= 'deg (C)'
-                    
-
-                if metricFiles['tas_examples']:
-                    fileName = model + '_tas_' + experiment + '.nc'
-                    dataSet = xr.Dataset({
-                        'tas_day': tas.isel(time=0), 
-                        'tas_tMean': tas.mean(dim='time', keep_attrs=True)})
-                    myFuncs.save_file(dataSet, folder, fileName)
-
-
-                if metricFiles['tas_annual']:                
-                    fileName = model + '_tas_annual_' + experiment + '.nc'
-                    path = folder + '/' + fileName 
-                    dataSet = xr.Dataset({'tas_annual': tas.resample(time='Y').mean(dim='time', keep_attrs=True).weighted(np.cos(np.deg2rad(tas.lat))).mean(dim=('lat','lon'), keep_attrs=True)})
-                    myFuncs.save_file(dataSet, folder, fileName)
+            if (dataFiles['rome'] or dataFiles['rome_n']):
+                fileName = model + '_rome_' + experiment + '.nc'              
+                dataset = xr.Dataset(
+                    data_vars = {'rome': rome, 
+                                 'rome_n':rome_n},
+                    attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n),
+                             'units':'km^2'}                  
+                        )
+                save_file(dataset, folder, fileName)
 
 
 
 
 
-            if var == 'hus':
-                hus = ds_regrid.hus*1000
-                hus.attrs['units']= 'g/kg'
+
+        
+        if (dataFiles['tas_tMean'] or dataFiles['tas_sMean']):
+            
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/ds'
+                fileName = model + '_tas_' + experiment + '.nc'
+                path = folder + '/' + fileName
+                ds = xr.open_dataset(path)
+                tas = ds.tas
+                folder = home + '/Documents/data/cmip5/' + model
 
 
-                if metricFiles['hus_examples']:
-                    fileName = model + '_hus_examples' + experiment + '.nc'
-
-                    hus_day, hus_tMean = husFuncs.get_hus_snapshot_tMean(hus)
-                    dataSet = xr.Dataset(
-                        {'hus_day': hus_day, 
-                        'hus_tMean': hus_tMean})
-                    myFuncs.save_file(dataSet, folder, fileName)
+            if switch['nci_files']:
+                from funcs.vars.tasVars import *
+                tas = get_tas(model, experiment).tas
+                folder = '/g/data/k10/cb4968/data/cmip5/' + model
 
 
-
-                if metricFiles['hus_sMean']:
-                    fileName = model + '_hus_sMean' + experiment + '.nc'
-
-                    hus_sMean = husFuncs.calc_hus_sMean(hus)
-                    fileName = model + '_hus_examples' + experiment + '.nc'
-                    dataSet = xr.Dataset(
-                        {'hus_sMean': hus_sMean})
-                    myFuncs.save_file(dataSet, folder, fileName)
+            from funcs.tasFuncs import *
+            if dataFiles['tas_tMean']:
+                fileName = model + '_tas_tMean_' + experiment + '.nc'
+                dataSet = calc_tas_tMean(tas)
+                save_file(dataSet, folder, fileName)
 
 
+            if dataFiles['tas_sMean']:                
+                fileName = model + '_tas_sMean_' + experiment + '.nc'     
+                dataSet = calc_tas_sMean(tas)
+                save_file(dataSet, folder, fileName)
+
+
+
+
+
+
+        if (dataFiles['hus_tMean'] or dataFiles['hus_sMean']):
+
+            if switch['local_files']:
+                folder = home + '/Documents/data/cmip5/ds'
+                fileName = model + '_hus_' + experiment + '.nc'
+                path = folder + '/' + fileName
+                ds = xr.open_dataset(path)
+                hus = ds.hus
+                folder = home + '/Documents/data/cmip5/' + model
+
+            if switch['nci_files']:
+                from funcs.vars.husVars import *
+                hus = get_hus(model, experiment).hus
+                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+
+
+
+            from funcs.husFuncs import *
+            if dataFiles['hus_tMean']:
+                fileName = model + '_hus_tMean_' + experiment + '.nc'
+                dataSet = calc_hus_tmean(hus)
+                save_file(dataSet, folder, fileName)
+
+
+            if dataFiles['hus_sMean']:
+                fileName = model + '_hus_sMean' + experiment + '.nc'
+                dataSet = calc_hus_sMean(hus)
+                save_file(dataSet, folder, fileName)
 
 
 

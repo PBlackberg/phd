@@ -139,28 +139,6 @@ if __name__ == '__main__':
     for model in models:
         for experiment in experiments:
             
-            if experiment == 'historical':
-                period=slice('1970-01','1999-12')
-                ensemble = 'r1i1p1'
-
-                if model == 'GISS-E2-H':
-                    ensemble = 'r6i1p1'
-
-                if model == 'EC-EARTH':
-                    ensemble = 'r6i1p1'
-
-
-            if experiment == 'rcp85':
-                period=slice('2070-01','2099-12')
-                ensemble = 'r1i1p1'
-
-                if model == 'GISS-E2-H':
-                    ensemble = 'r2i1p1'
-
-                if model == 'EC-EARTH':
-                    ensemble = 'r6i1p1'
-
-
 
             ds_tas = get_tas(model, experiment)
 

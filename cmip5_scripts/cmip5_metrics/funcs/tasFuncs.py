@@ -15,7 +15,7 @@ def calc_tas_tMean(tas):
 
 def calc_tas_sMean(tas):
     aWeights = np.cos(np.deg2rad(tas.lat))
-    tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'))
+    tas_sMean= tas.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
     
     tas_sMean = xr.Dataset(
         data_vars = {'tas_sMean': tas_sMean}
@@ -31,7 +31,6 @@ if __name__ == '__main__':
 
     from os.path import expanduser
     home = expanduser("~")
-    from vars.tasVars import *
     from vars.myFuncs import *
 
 
@@ -59,14 +58,14 @@ if __name__ == '__main__':
     
     experiments = [
                 'historical',
-                # 'rcp85'
+                #  'rcp85'
                 ]
 
 
 
     switch = {
-        'local_files': False, 
-        'nci_files': True, 
+        'local_files': True, 
+        'nci_files': False, 
     }
 
 
@@ -80,11 +79,13 @@ if __name__ == '__main__':
                 path = folder + '/' + fileName
                 ds = xr.open_dataset(path)
                 tas = ds.tas
+                folder = home + '/Documents/data/cmip5/' + model
 
 
             if switch['nci_files']:
-                tas = get_tas(model, experiment).tas # from husVars
-                folder = '/g/data/k10/cb4968/data/cmip5/ds' #+ model
+                from vars.tasVars import *
+                tas = get_tas(model, experiment).tas
+                folder = '/g/data/k10/cb4968/data/cmip5/' + model
 
 
 
@@ -94,19 +95,15 @@ if __name__ == '__main__':
 
 
 
-
-
-            saveit = False          
+            saveit = False       
             if saveit:                
-                folder = home + '/Documents/data/cmip5/' + model
                 fileName = model + '_tas_tMean_' + experiment + '.nc'
                 dataSet = tas_tMean
                 save_file(dataSet, folder, fileName)
 
 
-            saveit = False         
+            saveit = False      
             if saveit:         
-                folder = home + '/Documents/data/cmip5/' + model  
                 fileName = model + '_tas_sMean_' + experiment + '.nc'     
                 dataSet = tas_sMean
                 save_file(dataSet, folder, fileName)

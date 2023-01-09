@@ -344,34 +344,34 @@ if __name__ == '__main__':
     from os.path import expanduser
     home = expanduser("~")
     from vars.myFuncs import *
-    from vars.prVars import *
+
 
 
     models = [
-        'IPSL-CM5A-MR', # 1
+        # 'IPSL-CM5A-MR', # 1
         'GFDL-CM3',     # 2
-        'GISS-E2-H',    # 3
-        'bcc-csm1-1',   # 4
-        'CNRM-CM5',     # 5
+        # 'GISS-E2-H',    # 3
+        # 'bcc-csm1-1',   # 4
+        # 'CNRM-CM5',     # 5
         # 'CCSM4',        # 6 # cannot concatanate files for historical run
-        'HadGEM2-AO',   # 7
-        'BNU-ESM',      # 8
-        'EC-EARTH',     # 9
-        'FGOALS-g2',    # 10
-        'MPI-ESM-MR',   # 11
-        'CMCC-CM',      # 12
-        'inmcm4',       # 13
-        'NorESM1-M',    # 14
-        'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
-        'MIROC5',       # 16
-        'HadGEM2-CC',   # 17
-        'MRI-CGCM3',    # 18
-        'CESM1-BGC'     # 19
+        # 'HadGEM2-AO',   # 7
+        # 'BNU-ESM',      # 8
+        # 'EC-EARTH',     # 9
+        # 'FGOALS-g2',    # 10
+        # 'MPI-ESM-MR',   # 11
+        # 'CMCC-CM',      # 12
+        # 'inmcm4',       # 13
+        # 'NorESM1-M',    # 14
+        # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+        # 'MIROC5',       # 16
+        # 'HadGEM2-CC',   # 17
+        # 'MRI-CGCM3',    # 18
+        # 'CESM1-BGC'     # 19
         ]
     
     experiments = [
         'historical',
-        'rcp85'
+        # 'rcp85'
         ]
 
 
@@ -385,15 +385,17 @@ if __name__ == '__main__':
         for experiment in experiments:
 
             if switch['local_files']:
-                folder = home + '/Documents/data/cmip5/' + model
+                folder = home + '/Documents/data/cmip5/ds'
                 fileName = model + '_precip_' + experiment + '.nc'
                 path = folder + '/' + fileName
                 ds = xr.open_dataset(path)
                 precip = ds.precip*60*60*24
                 precip.attrs['units']= 'mm/day'
+                folder = home + '/Documents/data/cmip5/' + model
 
             if switch['nci_files']:
-                precip = get_pr(model, experiment).precip # from prVars
+                from vars.prVars import *
+                precip = get_pr(model, experiment).precip
                 folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
@@ -404,14 +406,11 @@ if __name__ == '__main__':
 
 
             rome = calc_rome(precip, conv_threshold)
-
             rome_n = calc_rome_n(n, precip, conv_threshold)
 
             numberIndex = calc_numberIndex(precip, conv_threshold)
 
             pwad = calc_pwad(precip, conv_threshold)
-
-
 
 
 
@@ -433,7 +432,7 @@ if __name__ == '__main__':
                 fileName = model + '_numberIndex_' + experiment + '.nc'
                 dataset = numberIndex
 
-                save_file(dataset, folder, fileName) # from vars.myFuncs
+                save_file(dataset, folder, fileName) 
 
 
             saveit = False
@@ -441,7 +440,7 @@ if __name__ == '__main__':
                 fileName = model + '_pwad_' + experiment + '.nc'
                 dataset = pwad
 
-                save_file(dataset, folder, fileName) # from vars.myFuncs
+                save_file(dataset, folder, fileName) 
 
 
 

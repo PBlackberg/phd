@@ -3,21 +3,9 @@ import xarray as xr
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
-    # rx1day_tMean = rx1day.mean(dim=('time'),keep_attrs=True)
-    # rx1day_sMean = rx1day.mean(dim=('lat','lon'),keep_attrs=True)
-
 
     precip5day = precip.resample(time='5D').mean(dim='time')
     rx5day = precip5day.resample(time='Y').max(dim='time')
-    # rx5day_tMean = rx5day.mean(dim=('time'),keep_attrs=True)
-    # rx5day_sMean = rx5day.mean(dim=('lat','lon'),keep_attrs=True)
-
-    # rxday = xr.Dataset(
-    #     data_vars = {'rx1day_tMean': rx1day_tMean, 
-    #                  'rx1day_sMean': rx1day_sMean, 
-    #                  'rx5day_tMean': rx5day_tMean
-    #                  'rx5day_tMean': rx5day_sMean}
-    #     )
 
     rxday = xr.Dataset(
         data_vars = {'rx1day': rx1day, 
@@ -82,36 +70,36 @@ if __name__ == '__main__':
     
     from os.path import expanduser
     home = expanduser("~")
-    from vars.prVars import *
+
     from vars.myFuncs import *
     from vars.myPlots import *
 
 
     models = [
-            'IPSL-CM5A-MR', # 1
-            'GFDL-CM3',     
-            'GISS-E2-H',    # 3
-            'bcc-csm1-1',   # 4
-            'CNRM-CM5',     # 5
+            # 'IPSL-CM5A-MR', # 1
+            'GFDL-CM3',     # 2
+            # 'GISS-E2-H',    # 3
+            # 'bcc-csm1-1',   # 4
+            # 'CNRM-CM5',     # 5
             # 'CCSM4',        # 6 # cannot concatanate files for rcp85 run
-            'HadGEM2-AO',   # 7
-            'BNU-ESM',      # 8
-            'EC-EARTH',     # 9
-            'FGOALS-g2',    # 10
-            'MPI-ESM-MR',   # 11
-            'CMCC-CM',      # 12
-            'inmcm4',       # 13
-            'NorESM1-M',    # 14
-            'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
-            'MIROC5',       # 16
-            'HadGEM2-CC',   # 17
-            'MRI-CGCM3',    # 18
-            'CESM1-BGC'     # 19
+            # 'HadGEM2-AO',   # 7
+            # 'BNU-ESM',      # 8
+            # 'EC-EARTH',     # 9
+            # 'FGOALS-g2',    # 10
+            # 'MPI-ESM-MR',   # 11
+            # 'CMCC-CM',      # 12
+            # 'inmcm4',       # 13
+            # 'NorESM1-M',    # 14
+            # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+            # 'MIROC5',       # 16
+            # 'HadGEM2-CC',   # 17
+            # 'MRI-CGCM3',    # 18
+            # 'CESM1-BGC'     # 19
             ]
     
     experiments = [
                 'historical',
-                'rcp85'
+                # 'rcp85'
                 ]
 
 
@@ -125,29 +113,24 @@ if __name__ == '__main__':
         for experiment in experiments:
 
             if switch['local_files']:
-                folder = home + '/Documents/data/cmip5/' + model
+                folder = home + '/Documents/data/cmip5/ds'
                 fileName = model + '_precip_' + experiment + '.nc'
                 path = folder + '/' + fileName
                 ds = xr.open_dataset(path)
                 precip = ds.precip*60*60*24
                 precip.attrs['units']= 'mm/day'
+                folder = home + '/Documents/data/cmip5/' + model
 
             if switch['nci_files']:
-                precip = get_pr(model, experiment).precip # from prVars
+                from vars.prVars import *
+                precip = get_pr(model, experiment).precip
                 folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
 
 
 
-
-
             rxday = calc_rxday(precip)
-
-
             pr_percentiles = calc_pr_percentiles(precip)
-
-
-
 
 
 
