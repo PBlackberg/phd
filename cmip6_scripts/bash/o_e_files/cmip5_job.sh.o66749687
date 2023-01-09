@@ -1,22 +1,0 @@
-
---> The keys in the returned dictionary of datasets are constructed as follows:
-	'project.activity_id.institution_id.source_id.experiment_id.member_id.table_id.variable_id.grid_label.version'
-█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
---> The keys in the returned dictionary of datasets are constructed as follows:
-	'project.activity_id.institution_id.source_id.experiment_id.member_id.table_id.variable_id.grid_label.version'
-█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
---> The keys in the returned dictionary of datasets are constructed as follows:
-	'project.activity_id.institution_id.source_id.experiment_id.member_id.table_id.variable_id.grid_label.version'
-█ |----------------------------------------| 0.00% [0/1 00:00<?] |████████████████████████████████████████| 100.00% [1/1 00:00<00:00]
-======================================================================================
-                  Resource Usage on 2022-12-13 22:28:46:
-   Job Id:             66749687.gadi-pbs
-   Project:            k10
-   Exit Status:        0
-   Service Units:      1.95
-   NCPUs Requested:    1                      NCPUs Used: 1               
-                                           CPU Time Used: 00:03:31        
-   Memory Requested:   50.0GB                Memory Used: 33.17GB         
-   Walltime requested: 03:00:00            Walltime Used: 00:04:41        
-   JobFS requested:    100.0MB                JobFS used: 0B              
-======================================================================================
