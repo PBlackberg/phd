@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-def calc_hus_tmean(hus):
+def calc_hus_tMean(hus):
     hus_tMean = hus.mean(dim='time')
 
     hus_tMean = xr.Dataset(
