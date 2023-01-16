@@ -32,17 +32,23 @@ for folder in folders:
 
     path_fileList = []
     for file in files:
-        path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+        ds_in = xr.open_dataset(os.path.join(path_folder, file))
+        haveDsOut = True
+        ds_file = regrid_conserv(ds_in, haveDsOut)
 
 
-    ds_in = xr.open_mfdataset(path_fileList, combine='by_coords')
-    haveDsOut = True
-    ds_year = regrid_conserv(ds_in, haveDsOut)
-
-    ds_list.append(ds_year)
 
 
-ds_concat = xr.concat(ds_list, dim='time')
+#         path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+
+#     ds_in = xr.open_mfdataset(path_fileList, combine='by_coords')
+#     haveDsOut = True
+#     ds_year = regrid_conserv(ds_in, haveDsOut)
+
+#     ds_list.append(ds_year)
+
+
+# ds_concat = xr.concat(ds_list, dim='time')
 
 
 
