@@ -72,7 +72,6 @@ if __name__ == '__main__':
     home = expanduser("~")
 
     from vars.myFuncs import *
-    from vars.myPlots import *
 
 
     models = [
