@@ -1,5 +1,7 @@
 import xarray as xr
 import os
+import numpy as np
+
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
@@ -39,16 +41,6 @@ def plot_snapshot(var, cmap, variable_name, model):
 
 
 
-def plot_timeseries(var, variable_name, model):
-    
-    f, ax = plt.subplots(figsize=(20, 3))
-    var.plot()
-    ax.set_title(variable_name + ', model:' + model)
-    ax.set_ylabel(variable_name)
-    plt.tight_layout()
-
-
-
 def to_monthly(da):
     year = da.time.dt.year
     month = da.time.dt.month
@@ -58,6 +50,7 @@ def to_monthly(da):
 
     # reshape the array to (..., "month", "year")
     return da.set_index(time=("year", "month")).unstack("time")
+
 
 
 
