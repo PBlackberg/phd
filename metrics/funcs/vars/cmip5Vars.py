@@ -1,8 +1,10 @@
 import xarray as xr
 import numpy as np
+import os
 import intake
 import xesmf as xe
 import scipy
+
 
 
 def regrid_conserv_xesmf(ds_in, path_dsOut='/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc', model_dsOut='FGOALS-g2'):
@@ -32,11 +34,7 @@ def regrid_conserv_xesmf(ds_in, path_dsOut='/g/data/k10/cb4968/data/cmip5/FGOALS
 
 
 
-
-def regrid_conserv_np(M_in, var, path_dsOut='/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc'):
-
-    # model grid to interpolate to
-    M_out = xr.open_dataset(path_dsOut)[var].data
+def regrid_conserv_np(M_in, M_out):
 
     # dimensions
     dlat = M_in.lat.data[1]-M_in.lat.data[0]
@@ -54,8 +52,6 @@ def regrid_conserv_np(M_in, var, path_dsOut='/g/data/k10/cb4968/data/cmip5/FGOAL
     lonBnds_n = (M_out.lon.data-(dlon_n/2), M_out.lon.data+(dlon_n/2))
     lat_n = np.mean(latBnds_n, axis=0)
     lon_n = np.mean(lonBnds_n, axis=0)
-
-
 
     # weights
     Wlat = np.zeros([len(lat_n), len(lat)])
@@ -90,8 +86,6 @@ def regrid_conserv_np(M_in, var, path_dsOut='/g/data/k10/cb4968/data/cmip5/FGOAL
 
         # weights from individual gridboxes contributing to the new gridbox as fraction of the total combined area contribution
         Wlon[i,:] = II/np.sum(II)
-
-
 
     # interpolation
     M_n = np.zeros([len(M_in.time.data), len(lat_n), len(lon_n)])
@@ -170,7 +164,6 @@ def get_tas(model, experiment):
         if model == 'EC-EARTH':
             ensemble = 'r6i1p1'
 
-
     ds_dict = intake.cat.nci['esgf'].cmip5.search(
                                         model_id = model, 
                                         experiment = experiment,
@@ -202,7 +195,7 @@ def get_tas(model, experiment):
 
     ds_tas = xr.Dataset(
         data_vars = {'tas': tas}
-    )
+        )
             
     return ds_tas
 
@@ -230,7 +223,6 @@ def get_pw(model, experiment):
 
         if model == 'CCSM4':
             ensemble = 'r5i1p1'
-
 
     ds_dict = intake.cat.nci['esgf'].cmip5.search(
                                             model_id = model, 
@@ -281,17 +273,57 @@ def get_pw(model, experiment):
     ds_pw = xr.DataSet(
         data_vars = {'pw':pw, 'pw_lower':pw_lower, 'pw_upper':pw_upper},
         attrs = {'description': 'Precipitable water calculated as the vertically integrated specific humidity (simpson\'s method)'}
-
         )
 
     return ds_pw
 
 
 
+def get_wap500(institute, model, experiment):
+
+    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day/'
+    ensemble = os.listdir(path_gen)[-1]
+    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+    path_folder =  os.path.join(path_gen, ensemble, version,'/wap')
+
+    if experiment == 'historical':
+        yearEnd_first = 1970
+        yearStart_last = 1999
+
+    if experiment == 'rcp85':
+        yearEnd_first = 2070
+        yearStart_last = 2099
 
 
+    files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
+    files = sorted(files, key=lambda x: x[x.index(".nc")-17:x.index(".nc")-13])
+    files = [f for f in files if int(f[f.index(".nc")-17:f.index(".nc")-13]) <= yearStart_last and int(f[f.index(".nc")-8:f.index(".nc")-4]) >= yearEnd_first]
+
+    path_fileList = []
+    for file in files:
+        path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+
+    ds = xr.open_mfdataset(path_fileList, combine='by_coords')
+    wap500 = ds.wap.sel(plev=500e2)
+
+    M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
+    wap500_n = regrid_conserv_np(wap500, M_out)
+
+    wap500_n = xr.DataArray(
+        data = wap500_n,
+        dims = ['time', 'lat', 'lon'],
+        coords = {'time': wap500.time.data, 'lat': M_out.lat.data, 'lon': M_out.lon.data},
+        attrs = wap500.attrs
+        )
+
+    ds_wap500 = xr.Dataset(
+        data_vars = {'wap500': wap500_n}
+        )
+
+    return ds_wap500
 
 
+    
 
 
 
@@ -301,8 +333,29 @@ def get_pw(model, experiment):
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
-    from myFuncs import *
 
+    institutes = {
+        'IPSL-CM5A-MR':'IPSL',
+        'GFDL-CM3':'NOAA-GFDL',
+        'GISS-E2-H':'NASA-GISS',
+        'bcc-csm1-1':'BCC',
+        'CNRM-CM5':'CNRM-CERFACS',
+        'CCSM4':'NCAR',
+        'HadGEM2-AO':'NIMR-KMA',
+        'BNU-ESM':'BNU',
+        'EC-EARTH':'ICHEC',
+        'FGOALS-g2':'LASG-CESS',
+        'MPI-ESM-MR':'MPI-M',
+        'CMCC-CM':'CMCC',
+        'inmcm4':'INM',
+        'NorESM1-M':'NCC',
+        'CanESM2':'CCCma',
+        'MIROC5':'MIROC',
+        'HadGEM2-CC':'MOHC',
+        'MRI-CGCM3':'MRI',
+        'CESM1-BGC':'NSF-DOE-NCAR'
+        }
+    
 
     models = [
             # 'IPSL-CM5A-MR', # 1
@@ -342,8 +395,7 @@ if __name__ == '__main__':
 
             ds_pw = get_pw(model, experiment)
             ds_tas = get_tas(model, experiment)
-
-
+            ds_wap500 = get_wap500(institutes[model], model, experiment)
 
 
 
@@ -352,7 +404,17 @@ if __name__ == '__main__':
             save_precip = False
             save_pw = False
             save_tas = False
+            
 
+
+            def save_file(dataSet, folder, fileName):
+                os.makedirs(folder, exist_ok=True)
+                path = folder + '/' + fileName
+
+                if os.path.exists(path):
+                    os.remove(path)    
+                
+                dataSet.to_netcdf(path)
 
             if save_precip:
                 fileName = model + '_precip_' + experiment + '.nc'
@@ -368,6 +430,7 @@ if __name__ == '__main__':
                 fileName = model + '_tas_' + experiment + '.nc'
                 dataset = ds_tas
                 save_file(dataset, folder, fileName)
+
 
 
 
