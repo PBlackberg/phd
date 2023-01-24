@@ -282,7 +282,7 @@ def get_pw(model, experiment):
 def get_wap500(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day/'
-    ensemble = os.listdir(path_gen)[-1]
+    ensemble = 'r1i1p1'
     version = os.listdir(os.path.join(path_gen, ensemble))[-1]
     path_folder =  os.path.join(path_gen, ensemble, version,'/wap')
 
@@ -304,7 +304,7 @@ def get_wap500(institute, model, experiment):
         path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
 
     ds = xr.open_mfdataset(path_fileList, combine='by_coords')
-    wap500 = ds.wap.sel(plev=500e2)
+    wap500 = ds.wap.sel(plev=500e2, time=slice(yearEnd_first, yearStart_last),lat=slice(-35,35))
 
     M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
     wap500_n = regrid_conserv_np(wap500, M_out)
@@ -325,9 +325,84 @@ def get_wap500(institute, model, experiment):
 
 
 
+def get_clouds(institute, model, experiment):
+    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
+    ensemble = 'r1i1p1'
+    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+    path_folder =  os.path.join(path_gen, ensemble, version,'cl')
+
+    if experiment == 'historical':
+        yearEnd_first = 1970
+        yearStart_last = 1999
+
+    if experiment == 'rcp85':
+        yearEnd_first = 2070
+        yearStart_last = 2099
+
+
+    files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
+    files = sorted(files, key=lambda x: x[x.index(".nc")-13:x.index(".nc")-9])
+    files = [f for f in files if int(f[f.index(".nc")-13:f.index(".nc")-9]) <= yearStart_last and int(f[f.index(".nc")-6:f.index(".nc")-2]) >= yearEnd_first]
+
+    path_fileList = []
+    for file in files:
+        path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+
+    ds = xr.open_mfdataset(path_fileList, combine='by_coords')
+    pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
+    pressureLevels_low = xr.where((pressureLevels<=1000e2) & (pressureLevels>=600), 1, 0)
+    pressureLevels_high = xr.where((pressureLevels<=250e2) & (pressureLevels>=100), 1, 0)
+    clouds = ds.cl
+
+    cloud_low = clouds*pressureLevels_low
+    cloud_low = cloud_low.max(dim='lev').sel(time=slice(yearEnd_first, yearStart_last),lat=slice(-35,35))
+
+    cloud_high = clouds*pressureLevels_high
+    cloud_high = cloud_high.max(dim='lev').sel(time=slice(yearEnd_first, yearStart_last),lat=slice(-35,35))
+
+    M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
+
+
+    cloud_low_n = regrid_conserv_np(cloud_low, M_out)
+    cloud_low_n = xr.DataArray(
+        data = cloud_low_n,
+        dims = ['time', 'lat', 'lon'],
+        coords = {'time': cloud_low.time.data, 'lat': M_out.lat.data, 'lon': M_out.lon.data},
+        attrs = {'description': 'Maximum cloud fraction (%) from plev: 1000-600 hpa'}
+        )
+    cloud_low_n
+
+
+    cloud_high_n = regrid_conserv_np(cloud_high, M_out)
+    cloud_high_n = xr.DataArray(
+        data = cloud_high_n,
+        dims = ['time', 'lat', 'lon'],
+        coords = {'time': cloud_high.time.data, 'lat': M_out.lat.data, 'lon': M_out.lon.data},
+        attrs = {'description': 'Maximum cloud fraction (%) from plev: 250-100 hpa'}
+        )
+
+
+    ds_clouds = xr.Dataset(
+        data_vars = {
+            'cloud_low': cloud_low_n, 
+            'cloud_high': cloud_high_n},
+        attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
+        )
     
 
+    return ds_clouds
 
+
+
+
+def save_file(dataset, folder, fileName):
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
+
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataSet.to_netcdf(path)
 
 
 
@@ -398,6 +473,7 @@ if __name__ == '__main__':
             ds_pw = get_pw(model, experiment)
             ds_tas = get_tas(model, experiment)
             ds_wap500 = get_wap500(institutes[model], model, experiment)
+            ds_clouds = get_clouds(institutes[model], model, experiment)
 
 
 
@@ -406,17 +482,8 @@ if __name__ == '__main__':
             save_precip = False
             save_pw = False
             save_tas = False
-            
-
-
-            def save_file(dataSet, folder, fileName):
-                os.makedirs(folder, exist_ok=True)
-                path = folder + '/' + fileName
-
-                if os.path.exists(path):
-                    os.remove(path)    
-                
-                dataSet.to_netcdf(path)
+            save_wap500 = False
+            save_cl = False
 
             if save_precip:
                 fileName = model + '_precip_' + experiment + '.nc'
@@ -433,6 +500,15 @@ if __name__ == '__main__':
                 dataset = ds_tas
                 save_file(dataset, folder, fileName)
 
+            if save_wap500:
+                fileName = model + '_wap500_' + experiment + '.nc'
+                dataset = ds_tas
+                save_file(dataset, folder, fileName)
+
+            if save_cl:
+                fileName = model + '_cl_' + experiment + '.nc'
+                dataset = ds_tas
+                save_file(dataset, folder, fileName)
 
 
 

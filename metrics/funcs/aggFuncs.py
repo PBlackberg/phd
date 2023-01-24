@@ -286,7 +286,7 @@ def calc_pwad(precip, conv_threshold):
     bin_width = calc_rEff(np.mean(aream))
     bin_end = calc_rEff(np.max(o_area))
     bins = np.arange(0, bin_end+bin_width, bin_width)
-    bins_mid = np.append(0,bins*0.5*bin_width) # place the datapoints in the middle of a bin
+    bins_mid = np.append(0,bins+(0.5*bin_width)) # place the datapoints in the middle of a bin
 
 
     # place fractional amount of precipitation fallling in respective bin
