@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
 
-def save_file(dataSet, folder, fileName):
+def save_file(dataset, folder, fileName):
     
     os.makedirs(folder, exist_ok=True)
     path = folder + '/' + fileName
@@ -20,7 +20,7 @@ def save_file(dataSet, folder, fileName):
     if os.path.exists(path):
         os.remove(path)    
     
-    dataSet.to_netcdf(path)
+    dataset.to_netcdf(path)
 
 
 def plot_snapshot(var, cmap, variable_name, model):
