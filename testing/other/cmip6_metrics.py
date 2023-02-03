@@ -9,6 +9,13 @@ from funcs.sefFuncs import *
 from funcs.mseFuncs import *
 
 
+
+
+
+# --------------------- select datasets to use and datafiles to generate ---------------------------------------------
+
+
+
 models = [
         'MPI-ESM1-2-HR', # 1
         # 'ACCESS',     # 2
@@ -58,6 +65,12 @@ for model in models:
                 period=slice('2070-01','2099-12')
                 member_id='r1i1p1f1'
 
+
+
+
+
+
+# --------------------- Calculate metrics and save files ---------------------------------------------
 
 
 

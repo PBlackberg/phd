@@ -31,6 +31,37 @@ def mse_anomMean(mse):
 
 
 
+
+# def calc_hus_tMean(hus):
+#     hus_tMean = hus.mean(dim='time')
+
+#     hus_tMean = xr.Dataset(
+#         data_vars = {'hus_tMean': hus_tMean}
+#                 )
+
+#     return hus_tMean
+
+
+
+# def calc_hus_sMean(hus):
+#     aWeights = np.cos(np.deg2rad(hus.lat))
+#     hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
+    
+#     hus_sMean = xr.Dataset(
+#     data_vars = {'hus_sMean': hus_sMean}
+#             )
+
+#     return hus_sMean
+
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
 
     model='MPI-ESM1-2-HR'

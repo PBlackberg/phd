@@ -1,15 +1,16 @@
 import xarray as xr
 import numpy as np
 import os
-import intake
-import xesmf as xe
 import scipy
 from scipy.interpolate import griddata
 
 
 
 
-def regrid_conserv_np(M_in, M_out):
+def regrid_conserv(M_in):
+
+    # dimensions of model to regrid to
+    M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
 
     # dimensions
     dlat = M_in.lat.data[1]-M_in.lat.data[0]
@@ -45,6 +46,11 @@ def regrid_conserv_np(M_in, M_out):
         # weights from individual gridboxes contributing to the new gridbox as fraction of the total combined area contribution
         Wlat[i,:] = II/np.sum(II)
 
+    Wlat = xr.DataArray(
+        data = Wlat,
+        dims = ['lat_n', 'lat']
+        )
+
     Wlon = np.zeros([len(lon_n), len(lon)])
     for i in np.arange(0,len(lon_n)):
         lonBoxMin_n = lonBnds_n[0][i]
@@ -62,17 +68,61 @@ def regrid_conserv_np(M_in, M_out):
         # weights from individual gridboxes contributing to the new gridbox as fraction of the total combined area contribution
         Wlon[i,:] = II/np.sum(II)
 
+    Wlon = xr.DataArray(
+        data = Wlon,
+        dims = ['lon_n', 'lon']
+        )
+
     # interpolation
-    M_n = np.zeros([len(M_in.time.data), len(lat_n), len(lon_n)])
-    for day in np.arange(0,len(M_in.time.data)):
-        M_Wlat = np.zeros([len(lat_n), len(lon)])
+    if ('plev' or 'lev') in M_in.dims:
+        if 'lev' in M_in.dims:
+            M_n = M_n.rename({'lev': 'plev'})
 
-        for i in range(0, np.shape(Wlat)[0]):
-            M_Wlat[i,:] = np.nansum(M_in.isel(time=day) * np.vstack(Wlat[i,:]),axis=0)/np.sum(~np.isnan(M_in.isel(time=day))*1*np.vstack(Wlat[i,:]),axis=0)
+        M_n = xr.DataArray(
+            data = np.zeros([len(M_in.time.data), len(M_in.plev.data), len(lat_n), len(lon_n)]),
+            dims = ['time', 'plev', 'lat_n', 'lon_n'],
+            coords = {'time': M_in.time.data, 'plev': M_in.plev.data, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
+            attrs = M_in.attrs
+            )
+
+        for day in np.arange(0,len(M_in.time.data)):
             
-        for i in range(0, np.shape(Wlon)[0]):
-            M_n[day,:,i] = np.nansum(M_Wlat * Wlon[i,:],axis=1)/np.sum(~np.isnan(M_Wlat)*1*Wlon[i,:], axis=1)
+            M_Wlat = xr.DataArray(
+            data = np.zeros([len(M_in.plev), len(lat_n), len(lon)]),
+            dims = ['plev', 'lat_n', 'lon']
+            )
 
+            for i in range(0, len(Wlat.lat_n)):
+                M_Wlat[:,i,:] = (M_in.isel(time=day) * Wlat[i,:]).sum(dim='lat', skipna=True) / (M_in.isel(time=day).notnull()*1*Wlat[i,:]).sum(dim='lat')
+                
+            for i in range(0, len(Wlon.lon_n)):
+                M_n[day,:,:,i] = (M_Wlat * Wlon[i,:]).sum(dim='lon', skipna=True) / (M_Wlat.notnull()*1*Wlon[i,:]).sum(dim='lon')
+
+
+    else:
+        M_n = xr.DataArray(
+            data = np.zeros([len(M_in.time.data), len(lat_n), len(lon_n)]),
+            dims = ['time', 'lat_n', 'lon_n'],
+            coords = {'time': M_in.time.data, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
+            attrs = M_in.attrs
+            )
+
+        for day in np.arange(0,len(M_in.time.data)):
+
+            M_Wlat = xr.DataArray(
+            data = np.zeros([len(lat_n), len(lon)]),
+            dims = ['lat_n', 'lon']
+            )
+
+            for i in range(0, len(Wlat.lat_n)):
+                M_Wlat[i,:] = (M_in.isel(time=day) * Wlat[i,:]).sum(dim='lat', skipna=True) / (M_in.isel(time=day).notnull()*1*Wlat[i,:]).sum(dim='lat')
+                
+            for i in range(0, len(Wlon.lon_n)):
+                M_n[day,:,i] = (M_Wlat * Wlon[i,:]).sum(dim='lon', skipna=True) / (M_Wlat.notnull()*1*Wlon[i,:]).sum(dim='lon')
+
+
+    M_n = M_n.rename({'lat_n': 'lat', 'lon_n': 'lon'})
+    
     return M_n
 
 
@@ -111,18 +161,11 @@ def get_gpcp():
         interpolated_values = griddata(nonnan_indices, time_slice.values[~np.isnan(time_slice.values)], nan_indices, method='linear')
         time_slice.values[nan_indices[:, 0], nan_indices[:, 1]] = interpolated_values
 
-    M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
-    precip_n = regrid_conserv_np(precip, M_out)
-
-    precip_n = xr.DataArray(
-        data = precip_n,
-        dims = ['time', 'lat', 'lon'],
-        coords = {'time': precip.time.data, 'lat': M_out.lat.data, 'lon': M_out.lon.data},
-        attrs = precip.attrs
-        )
+    precip_n = regrid_conserv(precip)
 
     ds_gpcp = xr.Dataset(
-        data_vars = {'precip': precip_n}
+        data_vars = {'precip': precip_n},
+        attrs = ds.attrs
         )
 
     return ds_gpcp
@@ -137,10 +180,9 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
+
     ds_gpcp = get_gpcp()
 
-
-    
 
     folder = '/g/data/k10/cb4968/data/obs/ds'
     save_gpcp = False

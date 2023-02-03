@@ -7,9 +7,10 @@ from funcs.vars.myFuncs import *
 
 
 
-# ------------------------------- select data files to generate ---------------------------------------------
+# ------------------------------- select datasets to use and datafiles to generate ---------------------------------------------
 
-models = [
+
+models_cmip5 = [
         # 'IPSL-CM5A-MR', # 1
          'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
@@ -64,6 +65,8 @@ for model in models:
     start = timeit.default_timer()
     
     for experiment in experiments:
+
+
 
 # ------------------------------- Calculate metrics and save files ---------------------------------------------
             
@@ -212,6 +215,8 @@ for model in models:
 
     stop = timeit.default_timer()
     print('model: {} took {} minutes to finsih'.format(model, (stop-start)/60))
+
+
 
 
 
