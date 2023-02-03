@@ -15,10 +15,20 @@ module load conda/analysis3-22.10-unstable
 python /g/data/k10/cb4968/phd/clVars.py $PBS_NCPUS 
 
 
-# submitting job: qsub /g/data/k10/cb4968/phd/bash/job.sh 
-# run somewhere from cd /g/data/k10/cb4968/phd/metrics/funcs/vars
 
 
-# check status: qstat -swx jobID (or qstat -s)
-# check utilisation rate (%gpu): nqstat_anu jobID
-# remove job from queue: qdel jobID 
+# submitting job: 
+# qsub /g/data/k10/cb4968/phd/bash/interactive_job.sh 
+
+# in ipython, run scripts from: 
+# cd /g/data/k10/cb4968/phd/metrics/funcs/vars
+
+
+# check status: 
+# qstat -swx jobID (or qstat -s)
+
+# check utilisation rate (%gpu): 
+# nqstat_anu jobID
+
+# remove job from queue: 
+# qdel jobID  
