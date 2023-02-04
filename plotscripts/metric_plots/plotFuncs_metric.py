@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
-import cartopy
 import seaborn as sns
+import cartopy
 
 import warnings
 from shapely.errors import ShapelyDeprecationWarning

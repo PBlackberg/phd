@@ -338,7 +338,7 @@ def get_wap500(institute, model, experiment):
     ds = concat_files(path_folder, experiment)
     regridder = regrid_conserv_xesmf(ds)
 
-    wap500 = ds['wap'].sel(plev=500e2)    
+    wap500 = ds['wap'].sel(plev=500e2)*60*60*24    
     wap500_n = regridder(wap500)
     wap500_n.attrs['units']= 'Pa day' + chr(0x207B) + chr(0x00B9)
 
