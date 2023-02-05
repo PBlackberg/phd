@@ -1,8 +1,8 @@
 import xarray as xr
+import xesmf as xe
 import numpy as np
 import os
 import scipy
-import xesmf as xe
 
 
 
@@ -338,7 +338,7 @@ def get_wap500(institute, model, experiment):
     ds = concat_files(path_folder, experiment)
     regridder = regrid_conserv_xesmf(ds)
 
-    wap500 = ds['wap'].sel(plev=500e2)    
+    wap500 = ds['wap'].sel(plev=500e2)*60*60*24    
     wap500_n = regridder(wap500)
     wap500_n.attrs['units']= 'Pa day' + chr(0x207B) + chr(0x00B9)
 
@@ -365,7 +365,7 @@ def get_clouds(institute, model, experiment):
     pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
     pressureLevels_n = regridder(pressureLevels)
 
-    pressureLevels_low = xr.where((pressureLevels_n<=1000e2) & (pressureLevels_n>=600), 1, 0)
+    pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0)
     cloud_low = clouds_n*pressureLevels_low
     cloud_low = cloud_low.max(dim='lev')
     cloud_low.attrs['units'] = '%'
@@ -394,6 +394,35 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
+    models = [
+            # 'IPSL-CM5A-MR', # 1
+            'GFDL-CM3',     # 2
+            # 'GISS-E2-H',    # 3
+            # 'bcc-csm1-1',   # 4
+            # 'CNRM-CM5',     # 5
+            # 'CCSM4',        # 6
+            # 'HadGEM2-AO',   # 7
+            # 'BNU-ESM',      # 8
+            # 'EC-EARTH',     # 9
+            # 'FGOALS-g2',    # 10
+            # 'MPI-ESM-MR',   # 11
+            # 'CMCC-CM',      # 12
+            # 'inmcm4',       # 13
+            # 'NorESM1-M',    # 14
+            # 'CanESM2',      # 15 
+            # 'MIROC5',       # 16
+            # 'HadGEM2-CC',   # 17
+            # 'MRI-CGCM3',    # 18
+            # 'CESM1-BGC'     # 19
+            ]
+    
+
+    experiments = [
+                'historical',
+                # 'rcp85'
+                ]
+    
+    
     institutes = {
         'IPSL-CM5A-MR':'IPSL',
         'GFDL-CM3':'NOAA-GFDL',
@@ -415,56 +444,28 @@ if __name__ == '__main__':
         'MRI-CGCM3':'MRI',
         'CESM1-BGC':'NSF-DOE-NCAR'
         }
-    
-
-    models = [
-            'IPSL-CM5A-MR', # 1
-            'GFDL-CM3',     # 2
-            'GISS-E2-H',    # 3
-            'bcc-csm1-1',   # 4
-            'CNRM-CM5',     # 5
-            'CCSM4',        # 6
-            'HadGEM2-AO',   # 7
-            'BNU-ESM',      # 8
-            'EC-EARTH',     # 9
-            'FGOALS-g2',    # 10
-            'MPI-ESM-MR',   # 11
-            'CMCC-CM',      # 12
-            'inmcm4',       # 13
-            'NorESM1-M',    # 14
-            'CanESM2',      # 15 
-            'MIROC5',       # 16
-            'HadGEM2-CC',   # 17
-            'MRI-CGCM3',    # 18
-            'CESM1-BGC'     # 19
-            ]
-    
-
-    experiments = [
-                'historical',
-                'rcp85'
-                ]
 
 
     for model in models:
         for experiment in experiments:
 
-            # ds_pr = get_pr(institutes[model], model, experiment)
-            # ds_tas = get_tas(institutes[model], model, experiment)
+            ds_pr = get_pr(institutes[model], model, experiment)
+            ds_tas = get_tas(institutes[model], model, experiment)
             ds_pw = get_pw(institutes[model], model, experiment)
             ds_hur = get_hur(institutes[model], model, experiment)
             ds_wap500 = get_wap500(institutes[model], model, experiment)
             ds_clouds = get_clouds(institutes[model], model, experiment)
 
 
-            folder = '/g/data/k10/cb4968/data/cmip5/ds/'
             save_pr = False
             save_tas = False
-            save_pw = True
-            save_hur = True
-            save_wap500 = True
-            save_cl = True
-
+            save_pw = False
+            save_hur = False
+            save_wap500 = False
+            save_cl = False
+            
+            folder = '/g/data/k10/cb4968/data/cmip5/ds/'
+            
             if save_pr:
                 fileName = model + '_precip_' + experiment + '.nc'
                 dataset = ds_pr
@@ -482,17 +483,17 @@ if __name__ == '__main__':
 
             if save_hur:
                 fileName = model + '_hur_' + experiment + '.nc'
-                dataset = ds_tas
+                dataset = ds_hur
                 save_file(dataset, folder, fileName)
                 
             if save_wap500:
                 fileName = model + '_wap500_' + experiment + '.nc'
-                dataset = ds_tas
+                dataset = ds_wap500
                 save_file(dataset, folder, fileName)
 
             if save_cl:
                 fileName = model + '_cl_' + experiment + '.nc'
-                dataset = ds_tas
+                dataset = ds_clouds
                 save_file(dataset, folder, fileName)
 
 
