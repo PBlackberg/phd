@@ -1,8 +1,6 @@
 import xarray as xr
 import numpy as np
-
-from vars.myFuncs import *
-from vars.mse_vars import *
+from variables.cmip6Vars import *
 
 
 def mse_anomMean(mse):
@@ -26,36 +24,6 @@ def mse_anomMean(mse):
         )
 
     return mse_anomalyMean
-
-
-
-
-
-
-# def calc_hus_tMean(hus):
-#     hus_tMean = hus.mean(dim='time')
-
-#     hus_tMean = xr.Dataset(
-#         data_vars = {'hus_tMean': hus_tMean}
-#                 )
-
-#     return hus_tMean
-
-
-
-# def calc_hus_sMean(hus):
-#     aWeights = np.cos(np.deg2rad(hus.lat))
-#     hus_sMean= hus.weighted(aWeights).mean(dim=('lat','lon'))
-    
-#     hus_sMean = xr.Dataset(
-#     data_vars = {'hus_sMean': hus_sMean}
-#             )
-
-#     return hus_sMean
-
-
-
-
 
 
 

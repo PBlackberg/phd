@@ -39,18 +39,20 @@ def concat_files(path_folder, experiment):
 
 
 def regrid_conserv_xesmf(ds_in):
-    ds_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')
+    folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
+    fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
+    ds_out = xr.open_dataset(folder + '/' + fileName)
     regridder = xe.Regridder(ds_in.isel(time=0), ds_out, 'conservative', periodic=True)
 
-    
     return regridder
 
 
 
 def regrid_conserv(M_in):
-
     # dimensions of model to regrid to
-    M_out = xr.open_dataset('/g/data/k10/cb4968/data/cmip5/FGOALS-g2/FGOALS-g2_ds_regid_historical.nc')['pr']
+    folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
+    fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
+    M_out = xr.open_dataset(folder + '/' + fileName)['pr']
 
     # dimensions
     dlat = M_in.lat.data[1]-M_in.lat.data[0]
@@ -167,8 +169,6 @@ def regrid_conserv(M_in):
 
 
 
-
-
 def save_file(dataset, folder, fileName):
     os.makedirs(folder, exist_ok=True)
     path = folder + '/' + fileName
@@ -275,7 +275,7 @@ def get_pw(institute, model, experiment):
         data= -scipy.integrate.simpson(hus_n.data, hus_n.plev.data, axis=1, even='last')/g,
         dims=['time','lat', 'lon'],
         coords={'time': hus_n.time.data, 'lat': hus_n.lat.data, 'lon': hus_n.lon.data},
-        attrs={'units':'mm day' + chr(0x207B) + chr(0x00B9),
+        attrs={'units':'mm',
                'Description': 'precipitable water from 850-0 hpa'}
         )
 
@@ -307,7 +307,7 @@ def get_hur(institute, model, experiment):
     ds = concat_files(path_folder, experiment)
     regridder = regrid_conserv_xesmf(ds)
 
-    hur = ds['hur'].sel(plev=slice(850e2,0)) # free troposphere
+    hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
     hur_n = regridder(hur).fillna(0) 
 
     g = 9.8
@@ -359,7 +359,7 @@ def get_clouds(institute, model, experiment):
     ds = concat_files(path_folder, experiment)
     regridder = regrid_conserv_xesmf(ds)
     
-    clouds = ds['cl']
+    clouds = ds['cl']*100
     clouds_n = regridder(clouds)
 
     pressureLevels = ds.a*ds.p0 + ds.b*ds.ps

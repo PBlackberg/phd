@@ -1,8 +1,11 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
+from variables.cmip5Vars import *
 
 
+
+# -------------------------------------------- general functions --------------------------------------------
 
 
 # Connect objects across boundary (objects that touch across lon=0, lon=360 boundary are the same object) (takes array(lat, lon))
@@ -42,6 +45,15 @@ def haversine_dist(lat1, lon1, lat2, lon2):
 
 
 
+
+
+
+
+# -------------------------------------------- organisation metrics ---------------------------------------------
+
+
+
+
 def calc_rome(precip, conv_threshold):
     rome = []
 
@@ -69,7 +81,7 @@ def calc_rome(precip, conv_threshold):
         data = rome,
         dims = ['time'],
         coords = {'time': precip.time.data},
-        attrs = {'units':'km^2'}
+        attrs = {'units':'km\u00b2]'}
         )
 
     return rome
@@ -171,7 +183,7 @@ def calc_rome_n(n, precip, conv_threshold):
         dims = ['time'],
         coords = {'time': precip.time.data},
         attrs = {'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
-                 'units': 'km^2'}
+                 'units': 'km\u00b2]'}
         )
 
     return rome_n
@@ -191,8 +203,7 @@ def rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d):
 
 
 def calc_numberIndex(precip, conv_threshold):
-    o_number, areaf = [], []
-
+    
     lat = precip.lat.data
     lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
@@ -201,7 +212,7 @@ def calc_numberIndex(precip, conv_threshold):
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
-
+    o_number, areaf = [], []
     for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
@@ -226,43 +237,34 @@ def calc_numberIndex(precip, conv_threshold):
         )
 
     areaf = xr.DataArray(
-        data=areaf,
+        data=areaf*100,
         dims=['time'],
-        coords={'time': precip.time.data}
+        coords={'time': precip.time.data},
+        attrs = {'units': '%'}
         )
 
 
-    numberIndex = xr.Dataset(
+    ds_numberIndex = xr.Dataset(
         data_vars = {'o_number': o_number, 
                      'areaf': areaf}
         ) 
 
-    return numberIndex
+    return ds_numberIndex
 
 
 
-
-
-def calc_rEff(area): # input as m^2
-    return np.sqrt(area/np.pi)*1e-3
-
-def calc_pwad_bin(idx, o_area, o_pr): #, obj_area, obj_pr
-    return np.sum(idx*o_area*o_pr)/(np.sum(o_area*o_pr))
-
-
-def calc_pwad(precip, conv_threshold):
-    o_pr, o_area = [], []
+def calc_oAreaAndPr(precip, conv_threshold):
 
     lat = precip.lat.data
     lon = precip.lon.data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
-    R = 6371
+    R = 6371 # km
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
-
     aream3d = np.expand_dims(aream,axis=2) # used for broadcasting
 
+    o_pr, o_area = [], []
     for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         pr_day3d = np.expand_dims(pr_day,axis=2)
@@ -279,73 +281,29 @@ def calc_pwad(precip, conv_threshold):
         o_area = np.append(o_area, o_areaScene)
         o_pr = np.append(o_pr, o_prScene)
         
-
-    o_r = calc_rEff(o_area)
-
-    # define the bin width of the mean gridbox area (as effective radius)
-    bin_width = calc_rEff(np.mean(aream))
-    bin_end = calc_rEff(np.max(o_area))
-    bins = np.arange(0, bin_end+bin_width, bin_width)
-    bins_mid = np.append(0,bins+(0.5*bin_width)) # place the datapoints in the middle of a bin
-
-
-    # place fractional amount of precipitation fallling in respective bin
-    pwad_bins = []
-    for i in np.arange(0,len(bins)-1):
-        idx = (o_r>bins[i]) & (o_r<=bins[i+1])
-        pwad_bins = np.append(pwad_bins, calc_pwad_bin(idx, o_area, o_pr))
-
-    # close the distribution by describing zero objects in bins smaller or greater than min, max
-    pwad_bins = np.append(0, pwad_bins)
-    pwad_bins = np.append(pwad_bins,0)
-
-
-
     o_area = xr.DataArray(
         data = o_area,
-        attrs = {'units':'km^2'}
+        attrs = {'units':'km\u00b2]'}
         )
 
     o_pr = xr.DataArray(
         data = o_pr,
-        attrs = {'descrption': 'area weighted precipitation in contiguous convective region',
-                'units':'mm/day'}
+        attrs = {'descrption': 'area weighted mean precipitation in contiguous convective region',
+                'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
 
-    pwad_bins = xr.DataArray(
-        data = pwad_bins,
-        attrs = {'descrption': 'fractional distribution of precipitation into bins of area in terms of effective radius',
-                'units':''}
+    ds_oAreaAndPr = xr.Dataset(
+        data_vars = {'o_area': o_area,
+                    'o_pr': o_pr},
+        attrs = {'descrption': 'area and precipipitation rate of contiguous convective regions in scene'}
         )
 
-    bins_mid = xr.DataArray(
-        data = bins_mid,
-        attrs = {'descrption': 'datapoints for middle of effective radius bins',
-                'units':'km'}
-        )
-
-    pwad = xr.Dataset(
-        data_vars = {'pwad': pwad_bins, 
-                     'bins_mid': bins_mid}
-        )
-                    #  'o_area': o_area,
-                    #  'o_pr': o_pr}
-        
-    return pwad
-
-
-
+    return ds_oAreaAndPr
 
 
 
 
 if __name__ == '__main__':
-
-    from os.path import expanduser
-    home = expanduser("~")
-    from vars.myFuncs import *
-
-
 
     models = [
         # 'IPSL-CM5A-MR', # 1
@@ -373,74 +331,72 @@ if __name__ == '__main__':
         'historical',
         # 'rcp85'
         ]
+    
 
-
-    switch = {
-        'local_files': True, 
-        'nci_files': False, 
-    }
-
+    institutes = {
+        'IPSL-CM5A-MR':'IPSL',
+        'GFDL-CM3':'NOAA-GFDL',
+        'GISS-E2-H':'NASA-GISS',
+        'bcc-csm1-1':'BCC',
+        'CNRM-CM5':'CNRM-CERFACS',
+        'CCSM4':'NCAR',
+        'HadGEM2-AO':'NIMR-KMA',
+        'BNU-ESM':'BNU',
+        'EC-EARTH':'ICHEC',
+        'FGOALS-g2':'LASG-CESS',
+        'MPI-ESM-MR':'MPI-M',
+        'CMCC-CM':'CMCC',
+        'inmcm4':'INM',
+        'NorESM1-M':'NCC',
+        'CanESM2':'CCCma',
+        'MIROC5':'MIROC',
+        'HadGEM2-CC':'MOHC',
+        'MRI-CGCM3':'MRI',
+        'CESM1-BGC':'NSF-DOE-NCAR'
+        }
+    
 
     for model in models:
         for experiment in experiments:
 
-            if switch['local_files']:
-                folder = home + '/Documents/data/cmip5/ds'
-                fileName = model + '_precip_' + experiment + '.nc'
-                path = folder + '/' + fileName
-                ds = xr.open_dataset(path)
-                precip = ds.precip*60*60*24
-                precip.attrs['units']= 'mm/day'
-                folder = home + '/Documents/data/cmip5/' + model
-
-            if switch['nci_files']:
-                from vars.prVars import *
-                precip = get_pr(model, experiment).precip
-                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
-
-
-
+            precip = get_pr(institutes[model], model, experiment).precip
+            
             conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
 
-
-
             rome = calc_rome(precip, conv_threshold)
             rome_n = calc_rome_n(n, precip, conv_threshold)
-
-            numberIndex = calc_numberIndex(precip, conv_threshold)
-
-            pwad = calc_pwad(precip, conv_threshold)
+            ds_numberIndex = calc_numberIndex(precip, conv_threshold)
+            ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
 
 
 
-            saveit = False            
-            if saveit:  
+
+            save_rome = False
+            save_rome_n = False
+            save_numberIndex = False
+            save_oAreaAndPr = False
+
+            folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+
+            if save_rome and save_rome_n:
                 fileName = model + '_rome_' + experiment + '.nc'              
                 dataset = xr.Dataset(
                     data_vars = {'rome':rome, 
                                  'rome_n':rome_n},
-                    attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n),
-                             'units':'km^2'}                  
+                    attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
                         )
-
                 save_file(dataset, folder, fileName)
-
-
-            saveit = False
-            if saveit:
+                
+            if save_numberIndex:
                 fileName = model + '_numberIndex_' + experiment + '.nc'
-                dataset = numberIndex
-
+                dataset = ds_numberIndex
                 save_file(dataset, folder, fileName) 
 
-
-            saveit = False
-            if saveit:
-                fileName = model + '_pwad_' + experiment + '.nc'
-                dataset = pwad
-
-                save_file(dataset, folder, fileName) 
+            if save_oAreaAndPr:
+                fileName = model + '_oAreaAndPr_' + experiment + '.nc'
+                dataset = ds_oAreaAndPr
+                save_file(dataset, folder, fileName)
 
 
 

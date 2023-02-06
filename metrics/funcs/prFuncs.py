@@ -1,18 +1,21 @@
 import xarray as xr
+from variables.cmip5Vars import *
 
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
+    rx1day.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9)
 
     precip5day = precip.resample(time='5D').mean(dim='time')
     rx5day = precip5day.resample(time='Y').max(dim='time')
+    rx5day.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9)
 
-    rxday = xr.Dataset(
+    ds_rxday = xr.Dataset(
         data_vars = {'rx1day': rx1day, 
                      'rx5day': rx5day}
         )
-
-    return rxday
+    
+    return ds_rxday
 
 
 
@@ -23,7 +26,7 @@ def calc_pr_percentiles(precip):
         data = pr95.data,
         dims = ['time'],
         coords = {'time': precip.time.data}, 
-        attrs = {'units':'mm/day'}
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
 
     pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True)
@@ -31,7 +34,7 @@ def calc_pr_percentiles(precip):
         data = pr97.data,
         dims = ['time'],
         coords = {'time': precip.time.data},
-        attrs = {'units':'mm/day'}
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
 
     pr99 = precip.quantile(0.99,dim=('lat','lon'),keep_attrs=True)
@@ -39,7 +42,7 @@ def calc_pr_percentiles(precip):
         data = pr99.data,
         dims = ['time'],
         coords = {'time': precip.time.data},
-        attrs = {'units':'mm/day'}
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
 
     pr999 = precip.quantile(0.999,dim=('lat','lon'),keep_attrs=True)
@@ -47,31 +50,38 @@ def calc_pr_percentiles(precip):
         data = pr999.data,
         dims = ['time'],
         coords = {'time': precip.time.data},
-        attrs = {'units':'mm/day'}
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
         
 
-    pr_percentiles = xr.Dataset(
+    ds_prPercentiles = xr.Dataset(
         data_vars = {'pr95': pr95, 
                      'pr97': pr97, 
                      'pr99': pr99, 
                      'pr999': pr999}
         ) 
 
-    return pr_percentiles
+    return ds_prPercentiles
+
+
+
+def F_pr10(precip):
+    F_pr10 = ((precip>10)*1).sum(dim=('lat','lon'))
+    F_pr10.attrs['units'] = 'Nb'
+
+    ds_F_pr10 = xr.Dataset(
+    data_vars = {'F_pr10': F_pr10},
+    attrs = {'description': 'Number of gridboxes in daily scene exceeding 10 mm/day'}
+        )
+
+    return ds_F_pr10
+
+
 
 
 
 
 if __name__ == '__main__':
-
-    import numpy as np
-    import pandas as pd
-    
-    from os.path import expanduser
-    home = expanduser("~")
-
-    from vars.myFuncs import *
 
 
     models = [
@@ -102,52 +112,61 @@ if __name__ == '__main__':
                 ]
 
 
-    switch = {
-        'local_files': True, 
-        'nci_files': False, 
-    }
+    institutes = {
+        'IPSL-CM5A-MR':'IPSL',
+        'GFDL-CM3':'NOAA-GFDL',
+        'GISS-E2-H':'NASA-GISS',
+        'bcc-csm1-1':'BCC',
+        'CNRM-CM5':'CNRM-CERFACS',
+        'CCSM4':'NCAR',
+        'HadGEM2-AO':'NIMR-KMA',
+        'BNU-ESM':'BNU',
+        'EC-EARTH':'ICHEC',
+        'FGOALS-g2':'LASG-CESS',
+        'MPI-ESM-MR':'MPI-M',
+        'CMCC-CM':'CMCC',
+        'inmcm4':'INM',
+        'NorESM1-M':'NCC',
+        'CanESM2':'CCCma',
+        'MIROC5':'MIROC',
+        'HadGEM2-CC':'MOHC',
+        'MRI-CGCM3':'MRI',
+        'CESM1-BGC':'NSF-DOE-NCAR'
+        }
 
 
     for model in models:
         for experiment in experiments:
 
-            if switch['local_files']:
-                folder = home + '/Documents/data/cmip5/ds'
-                fileName = model + '_precip_' + experiment + '.nc'
-                path = folder + '/' + fileName
-                ds = xr.open_dataset(path)
-                precip = ds.precip*60*60*24
-                precip.attrs['units']= 'mm/day'
-                folder = home + '/Documents/data/cmip5/' + model
+            precip = get_pr(institutes[model], model, experiment).precip
+                
 
-            if switch['nci_files']:
-                from vars.prVars import *
-                precip = get_pr(model, experiment).precip
-                folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+            ds_rxday = calc_rxday(precip)
+            ds_prPercentiles = calc_pr_percentiles(precip)
+            ds_F_pr10 = F_pr10(precip)
 
 
+            save_rxday = False
+            save_prPercentiles = False
+            save_F_pr10 = False
 
+            folder = '/g/data/k10/cb4968/data/cmip5/'+ model
 
-            rxday = calc_rxday(precip)
-            pr_percentiles = calc_pr_percentiles(precip)
+            if save_rxday:
+                fileName = model + '_rxday_' + experiment + '.nc'
+                dataSet = ds_rxday
+                save_file(dataSet, folder, fileName)
 
-
-
-            saveit = False
-            if saveit:
-                fileName = model + '_pr_rxday_' + experiment + '.nc'
-                dataSet = rxday
+            if save_prPercentiles:
+                fileName = model + '_prPercentiles_' + experiment + '.nc'
+                dataSet = ds_prPercentiles
                 save_file(dataSet, folder, fileName)
 
 
-
-            saveit = False
-            if saveit:
-                fileName = model + '_pr_percentiles_' + experiment + '.nc'
-                dataSet = pr_percentiles
+            if save_F_pr10 :
+                fileName = model + '_F_pr10_' + experiment + '.nc'
+                dataSet = ds_F_pr10
                 save_file(dataSet, folder, fileName)
-
-
 
 
 
