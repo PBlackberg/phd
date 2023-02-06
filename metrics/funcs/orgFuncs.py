@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
-from variables.cmip5Vars import *
+# from variables.cmip5Vars import *
 
 
 
@@ -81,7 +81,7 @@ def calc_rome(precip, conv_threshold):
         data = rome,
         dims = ['time'],
         coords = {'time': precip.time.data},
-        attrs = {'units':'km\u00b2]'}
+        attrs = {'units':'km\u00b2'}
         )
 
     return rome
@@ -183,7 +183,7 @@ def calc_rome_n(n, precip, conv_threshold):
         dims = ['time'],
         coords = {'time': precip.time.data},
         attrs = {'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
-                 'units': 'km\u00b2]'}
+                 'units': 'km\u00b2'}
         )
 
     return rome_n
@@ -283,11 +283,13 @@ def calc_oAreaAndPr(precip, conv_threshold):
         
     o_area = xr.DataArray(
         data = o_area,
-        attrs = {'units':'km\u00b2]'}
+        dims = 'region',
+        attrs = {'units':'km\u00b2'}
         )
 
     o_pr = xr.DataArray(
         data = o_pr,
+        dims = 'region',
         attrs = {'descrption': 'area weighted mean precipitation in contiguous convective region',
                 'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )

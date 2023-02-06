@@ -11,7 +11,7 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
-def plot_scene(scene, cmap, title, vmin=None, vmax=None,fig_width=20 ,fig_height=10):
+def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=20 ,fig_height=10):
     projection = cartopy.crs.PlateCarree(central_longitude=180)
     lat = scene.lat
     lon = scene.lon
@@ -156,7 +156,7 @@ def to_monthly(da):
     return da.set_index(time=("year", "month")).unstack("time")
 
 
-def plot_timeseries(y, variable_name, series_type, title, xmin = None, ymin = None):
+def plot_timeseries(y, variable_name='', series_type='', title='', xmin = None, ymin = None):
     plt.figure(figsize=(25,5))
     plt.plot(y)
     plt.axhline(y=y.mean(dim='time'), color='k')

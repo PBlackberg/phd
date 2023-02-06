@@ -1,5 +1,5 @@
 import xarray as xr
-from variables.cmip5Vars import *
+# from variables.cmip5Vars import *
 
 
 def calc_rxday(precip):

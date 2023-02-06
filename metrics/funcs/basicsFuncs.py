@@ -13,7 +13,7 @@ def calc_tMean(var):
 
 def calc_sMean(var):
     aWeights = np.cos(np.deg2rad(var.lat))
-    return var.weighted(aWeights).mean(dim=('lat','lon'))
+    return var.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
 
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
             save_cl = False
             save_wap500 = False
             
-            folder = '/g/data/k10/cb4968/data/cmip5/ds/'
+            folder = '/g/data/k10/cb4968/data/cmip5/' + model
 
             if save_pr:
                 fileName = model + '_precip_tMean_' + experiment + '.nc'

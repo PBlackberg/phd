@@ -309,19 +309,13 @@ def get_hur(institute, model, experiment):
 
     hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
     hur_n = regridder(hur).fillna(0) 
-
-    g = 9.8
-    hur_n = xr.DataArray(
-        data= -scipy.integrate.simpson(hur_n.data, hur_n.plev.data, axis=1, even='last')/g,
-        dims=['time','lat', 'lon'],
-        coords={'time': hur_n.time.data, 'lat': hur_n.lat.data, 'lon': hur_n.lon.data},
-        attrs={'units':'%',
-               'Description': 'vertically integrated relative humidity from 850-0 hpa'}
-        )
+    hur_n = (ds.hur_n * ds.plev).sum(dim='plev') / ds.plev.sum(dim='plev')
+    hur_n.attrs['units']= '%'
+    hur_n.attrs['Description'] = 'weighted mean relative humidity from 850-0 hpa'
 
     ds_hur = xr.Dataset(
         data_vars = {'hur': hur_n},
-        attrs = {'description': 'relative humidity vertically integrated (simpson\'s method)'}
+        attrs = {'weighted mean relative humidity'}
         )
 
     return ds_hur

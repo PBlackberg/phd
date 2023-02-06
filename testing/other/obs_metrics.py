@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import timeit
 
 
-from metrics.funcs.aggFuncs import *
+from metrics.funcs.orgFuncs import *
 from metrics.funcs.prFuncs import *
 
 
