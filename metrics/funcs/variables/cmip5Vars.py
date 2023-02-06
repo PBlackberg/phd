@@ -419,7 +419,7 @@ if __name__ == '__main__':
 
     experiments = [
                 'historical',
-                # 'rcp85'
+                'rcp85'
                 ]
     
     
@@ -457,44 +457,38 @@ if __name__ == '__main__':
             ds_clouds = get_clouds(institutes[model], model, experiment)
 
 
-            save_pr = False
-            save_tas = False
-            save_pw = False
-            save_hur = False
-            save_wap500 = False
-            save_cl = False
+            save_pr = True
+            save_tas = True
+            save_pw = True
+            save_hur = True
+            save_wap500 = True
+            save_cl = True
             
             folder = '/g/data/k10/cb4968/data/cmip5/ds/'
             
             if save_pr:
                 fileName = model + '_precip_' + experiment + '.nc'
-                dataset = ds_pr
-                save_file(dataset, folder, fileName)
+                save_file(ds_pr, folder, fileName)
                 
             if save_tas:
                 fileName = model + '_tas_' + experiment + '.nc'
-                dataset = ds_tas
-                save_file(dataset, folder, fileName)
+                save_file(ds_tas, folder, fileName)
 
             if save_pw:
                 fileName = model + '_pw_' + experiment + '.nc'
-                dataset = ds_pw
-                save_file(dataset, folder, fileName)
+                save_file(ds_pw, folder, fileName)
 
             if save_hur:
                 fileName = model + '_hur_' + experiment + '.nc'
-                dataset = ds_hur
-                save_file(dataset, folder, fileName)
+                save_file(ds_hur, folder, fileName)
                 
             if save_wap500:
                 fileName = model + '_wap500_' + experiment + '.nc'
-                dataset = ds_wap500
-                save_file(dataset, folder, fileName)
+                save_file(ds_wap500, folder, fileName)
 
             if save_cl:
-                fileName = model + '_cl_' + experiment + '.nc'
-                dataset = ds_clouds
-                save_file(dataset, folder, fileName)
+                fileName = model + '_clMax_' + experiment + '.nc'
+                save_file(ds_clouds, folder, fileName)
 
 
 
