@@ -41,7 +41,7 @@ def concat_files(path_folder, experiment):
 def regrid_conserv_xesmf(ds_in):
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
     fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
-    ds_out = xr.open_dataset(folder + '/' + fileName)
+    ds_out = xr.open_dataset(folder + '/' + fileName).sel(lat=slice(-30,30))
     regridder = xe.Regridder(ds_in.isel(time=0), ds_out, 'conservative', periodic=True)
 
     return regridder
@@ -52,7 +52,7 @@ def regrid_conserv(M_in):
     # dimensions of model to regrid to
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
     fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
-    M_out = xr.open_dataset(folder + '/' + fileName)['pr']
+    M_out = xr.open_dataset(folder + '/' + fileName)['pr'].sel(lat=slice(-30,30))
 
     # dimensions
     dlat = M_in.lat.data[1]-M_in.lat.data[0]
