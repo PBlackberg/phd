@@ -194,6 +194,12 @@ def get_pr(institute, model, experiment):
 
     if experiment == 'rcp85' and model == 'GISS-E2-H':
         ensemble = 'r2i1p1'
+        
+    if model == 'EC-EARTH':
+        ensemble = 'r6i1p1'
+        
+    if model == 'CCSM4':
+        ensemble = 'r6i1p1'
 
     version = os.listdir(os.path.join(path_gen, ensemble))[-1]
     variable = 'pr'
@@ -221,11 +227,14 @@ def get_tas(institute, model, experiment):
 
     if experiment == 'historical' and model == 'GISS-E2-H':
         ensemble = 'r6i1p1'
-    
+
     if experiment == 'rcp85' and model == 'GISS-E2-H':
         ensemble = 'r2i1p1'
-
+        
     if model == 'EC-EARTH':
+        ensemble = 'r6i1p1'
+        
+    if model == 'CCSM4':
         ensemble = 'r6i1p1'
 
     version = os.listdir(os.path.join(path_gen, ensemble))[-1]
@@ -257,9 +266,12 @@ def get_pw(institute, model, experiment):
 
     if experiment == 'rcp85' and model == 'GISS-E2-H':
         ensemble = 'r2i1p1'
-
+        
+    if model == 'EC-EARTH':
+        ensemble = 'r6i1p1'
+        
     if model == 'CCSM4':
-        ensemble = 'r5i1p1'
+        ensemble = 'r6i1p1'
 
     version = os.listdir(os.path.join(path_gen, ensemble))[-1]
     variable = 'hus'
@@ -292,14 +304,17 @@ def get_hur(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     ensemble = 'r1i1p1'
 
-    # if experiment == 'historical' and model == 'GISS-E2-H':
-    #     ensemble = 'r6i1p1'
+    if experiment == 'historical' and model == 'GISS-E2-H':
+        ensemble = 'r6i1p1'
 
-    # if experiment == 'rcp85' and model == 'GISS-E2-H':
-    #     ensemble = 'r2i1p1'
-
-    # if model == 'CCSM4':
-    #     ensemble = 'r5i1p1'
+    if experiment == 'rcp85' and model == 'GISS-E2-H':
+        ensemble = 'r2i1p1'
+        
+    if model == 'EC-EARTH':
+        ensemble = 'r6i1p1'
+        
+    if model == 'CCSM4':
+        ensemble = 'r6i1p1'
 
     version = os.listdir(os.path.join(path_gen, ensemble))[-1]
     variable = 'hur'
@@ -308,20 +323,14 @@ def get_hur(institute, model, experiment):
     regridder = regrid_conserv_xesmf(ds)
 
     hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
-    hur_n = regridder(hur).fillna(0) 
-
-    g = 9.8
-    hur_n = xr.DataArray(
-        data= -scipy.integrate.simpson(hur_n.data, hur_n.plev.data, axis=1, even='last')/g,
-        dims=['time','lat', 'lon'],
-        coords={'time': hur_n.time.data, 'lat': hur_n.lat.data, 'lon': hur_n.lon.data},
-        attrs={'units':'%',
-               'Description': 'vertically integrated relative humidity from 850-0 hpa'}
-        )
+    hur_n = regridder(hur) 
+    hur_n = (hur_n * ds.plev).sum(dim='plev') / ds.plev.sum(dim='plev')
+    hur_n.attrs['units']= '%'
+    hur_n.attrs['Description'] = 'weighted mean relative humidity from 850-0 hpa'
 
     ds_hur = xr.Dataset(
         data_vars = {'hur': hur_n},
-        attrs = {'description': 'relative humidity vertically integrated (simpson\'s method)'}
+        attrs = {'Description': 'weighted mean relative humidity'}
         )
 
     return ds_hur
@@ -332,19 +341,36 @@ def get_wap500(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     ensemble = 'r1i1p1'
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
-    variable = 'wap'
-    path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
+    
+    if model == 'GISS-E2-H':
+        ds_wap500 = xr.Dataset(
+            data_vars = {'wap500': np.nan}
+            )
+    
+    else:
+        if experiment == 'rcp85' and model == 'GISS-E2-H':
+            ensemble = 'r2i1p1'
 
-    wap500 = ds['wap'].sel(plev=500e2)*60*60*24    
-    wap500_n = regridder(wap500)
-    wap500_n.attrs['units']= 'Pa day' + chr(0x207B) + chr(0x00B9)
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
 
-    ds_wap500 = xr.Dataset(
-        data_vars = {'wap500': wap500_n}
-        )
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
+
+
+        version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+        variable = 'wap'
+        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        ds = concat_files(path_folder, experiment)
+        regridder = regrid_conserv_xesmf(ds)
+
+        wap500 = ds['wap'].sel(plev=500e2)*60*60*24    
+        wap500_n = regridder(wap500)
+        wap500_n.attrs['units']= 'Pa day' + chr(0x207B) + chr(0x00B9)
+
+        ds_wap500 = xr.Dataset(
+            data_vars = {'wap500': wap500_n}
+            )
 
     return ds_wap500
 
@@ -353,36 +379,57 @@ def get_wap500(institute, model, experiment):
 def get_clouds(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     ensemble = 'r1i1p1'
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
-    variable = 'cl'
-    path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
-    
-    clouds = ds['cl']*100
-    clouds_n = regridder(clouds)
+        
+        
+    if model == 'CNRM-CM5' or model == 'CCSM4':
+        ds_clouds = xr.Dataset(
+            data_vars = {
+                'cloud_low': np.nan, 
+                'cloud_high': np.nan},
+            attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
+            )
+    else:
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
 
-    pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
-    pressureLevels_n = regridder(pressureLevels)
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
 
-    pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0)
-    cloud_low = clouds_n*pressureLevels_low
-    cloud_low = cloud_low.max(dim='lev')
-    cloud_low.attrs['units'] = '%'
-    cloud_low.attrs['description'] = 'Maximum cloud fraction (%) from plev: 1000-600 hpa'
 
-    pressureLevels_high = xr.where((pressureLevels_n<=250e2) & (pressureLevels_n>=100), 1, 0)
-    cloud_high = clouds_n*pressureLevels_high
-    cloud_high = cloud_high.max(dim='lev')
-    cloud_high.attrs['units'] = '%'
-    cloud_high.attrs['description'] = 'Maximum cloud fraction (%) from plev: 250-100 hpa'
+        version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+        variable = 'cl'
+        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        ds = concat_files(path_folder, experiment)
+        regridder = regrid_conserv_xesmf(ds)
 
-    ds_clouds = xr.Dataset(
-        data_vars = {
-            'cloud_low': cloud_low, 
-            'cloud_high': cloud_high},
-        attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
-        )
+        clouds = ds['cl']*100
+        clouds_n = regridder(clouds)
+
+        if model == 'IPSL-CM5A-MR':
+            pressureLevels = ds.ap + ds.b*ds.ps
+        else:
+            pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
+
+        pressureLevels_n = regridder(pressureLevels)
+
+        pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0)
+        cloud_low = clouds_n*pressureLevels_low
+        cloud_low = cloud_low.max(dim='lev')
+        cloud_low.attrs['units'] = '%'
+        cloud_low.attrs['description'] = 'Maximum cloud fraction (%) from plev: 1000-600 hpa'
+
+        pressureLevels_high = xr.where((pressureLevels_n<=250e2) & (pressureLevels_n>=100), 1, 0)
+        cloud_high = clouds_n*pressureLevels_high
+        cloud_high = cloud_high.max(dim='lev')
+        cloud_high.attrs['units'] = '%'
+        cloud_high.attrs['description'] = 'Maximum cloud fraction (%) from plev: 250-100 hpa'
+
+        ds_clouds = xr.Dataset(
+            data_vars = {
+                'cloud_low': cloud_low, 
+                'cloud_high': cloud_high},
+            attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
+            )
     
     return ds_clouds
 
@@ -455,14 +502,14 @@ if __name__ == '__main__':
             ds_hur = get_hur(institutes[model], model, experiment)
             ds_wap500 = get_wap500(institutes[model], model, experiment)
             ds_clouds = get_clouds(institutes[model], model, experiment)
+    
 
-
-            save_pr = True
-            save_tas = True
-            save_pw = True
-            save_hur = True
-            save_wap500 = True
-            save_cl = True
+            save_pr = False
+            save_tas = False
+            save_pw = False
+            save_hur = False
+            save_wap500 = False
+            save_cl = False
             
             folder = '/g/data/k10/cb4968/data/cmip5/ds/'
             
