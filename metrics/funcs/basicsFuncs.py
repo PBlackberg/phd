@@ -26,10 +26,10 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     models = [
-            # 'IPSL-CM5A-MR', # 1
-            # 'GFDL-CM3',     # 2
-            # 'GISS-E2-H',    # 3
-            # 'bcc-csm1-1',   # 4
+            'IPSL-CM5A-MR', # 1
+            'GFDL-CM3',     # 2
+            'GISS-E2-H',    # 3
+            'bcc-csm1-1',   # 4
             'CNRM-CM5',     # 5
             'CCSM4',        # 6
             'HadGEM2-AO',   # 7
@@ -46,12 +46,14 @@ if __name__ == '__main__':
             'MRI-CGCM3',    # 18
             'CESM1-BGC'     # 19
             ]
+    model = models[0]
     
 
     experiments = [
-                'historical',
-                # 'rcp85'
+                # 'historical',
+                'rcp85'
                 ]
+    experiment = experiments[0]
     
     
     institutes = {
@@ -75,6 +77,7 @@ if __name__ == '__main__':
         'MRI-CGCM3':'MRI',
         'CESM1-BGC':'NSF-DOE-NCAR'
         }
+    institute = institutes[model]
 
 
     for model in models:
@@ -132,38 +135,49 @@ if __name__ == '__main__':
 
 
             if save_pw:
-                fileName = model + '_pw_tMean_' + experiment + '.nc'
-                dataset = xr.Dataset(
-                    data_vars = {'pw_tMean': calc_tMean(pw),
-                                'pw_snapshot': snapshot(pw)}
-                        )
-                save_file(dataset, folder, fileName)
+                if model == 'CESM1-BGC':
+                    pass
+                elif (model == 'HadGEM2-AO' or model =='EC-EARTH') and experiment == 'rcp85':
+                    pass
+                else:
+                    fileName = model + '_pw_tMean_' + experiment + '.nc'
+                    dataset = xr.Dataset(
+                        data_vars = {'pw_tMean': calc_tMean(pw),
+                                    'pw_snapshot': snapshot(pw)}
+                            )
+                    save_file(dataset, folder, fileName)
 
-                fileName = model + '_pw_sMean_' + experiment + '.nc'
-                dataset = xr.Dataset(
-                    data_vars = {'pw_sMean': calc_sMean(pw)}
-                        )
-                save_file(dataset, folder, fileName)
+                    fileName = model + '_pw_sMean_' + experiment + '.nc'
+                    dataset = xr.Dataset(
+                        data_vars = {'pw_sMean': calc_sMean(pw)}
+                            )
+                    save_file(dataset, folder, fileName)
 
 
             if save_hur:
-                fileName = model + '_hur_tMean_' + experiment + '.nc'
-                dataset = xr.Dataset(
-                    data_vars = {'hur_tMean': calc_tMean(hur),
-                                'hur_snapshot': snapshot(hur)}
-                        )
-                save_file(dataset, folder, fileName)
+                if model == 'EC-EARTH' and experiment == 'rcp85':
+                    pass
+                else:
+                    fileName = model + '_hur_tMean_' + experiment + '.nc'
+                    dataset = xr.Dataset(
+                        data_vars = {'hur_tMean': calc_tMean(hur),
+                                    'hur_snapshot': snapshot(hur)}
+                            )
+                    save_file(dataset, folder, fileName)
 
-                fileName = model + '_hur_sMean_' + experiment + '.nc'
-                dataset = xr.Dataset(
-                    data_vars = {'hur_sMean': calc_sMean(hur)}
-                        )
-                save_file(dataset, folder, fileName)
+                    fileName = model + '_hur_sMean_' + experiment + '.nc'
+                    dataset = xr.Dataset(
+                        data_vars = {'hur_sMean': calc_sMean(hur)}
+                            )
+                    save_file(dataset, folder, fileName)
 
 
             if save_cl:
-                if model == 'CNRM-CM5' or model == 'CCSM4':
+                if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
                     pass
+                elif (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
+                    pass
+                
                 else:
                     fileName = model + '_clouds_tMean_' + experiment + '.nc'
                     dataset = xr.Dataset(
@@ -184,7 +198,9 @@ if __name__ == '__main__':
 
             if save_wap500:
                 
-                if model == 'GISS-E2-H':
+                if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model=='inmcm4' or model == 'HadGEM2-CC' or model == 'CESM1-BGC':
+                    pass
+                elif (model == 'bcc-csm1-1' or model =='EC-EARTH') and experiment=='rcp85':
                     pass
                 else:
                     fileName = model + '_wap500_tMean_' + experiment + '.nc'

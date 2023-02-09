@@ -27,12 +27,23 @@ def concat_files(path_folder, experiment):
         files = sorted(files, key=lambda x: x[x.index(".nc")-17:x.index(".nc")-13])
         files = [f for f in files if int(f[f.index(".nc")-17:f.index(".nc")-13]) <= yearStart_last and int(f[f.index(".nc")-8:f.index(".nc")-4]) >= yearEnd_first]
 
+        for f in files:
+            if int(f[f.index(".nc")-17:f.index(".nc")-9])==19790101 and int(f[f.index(".nc")-8:f.index(".nc")])==20051231:
+                files.remove(f)
 
     path_fileList = []
     for file in files:
         path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+    
 
-    ds = xr.open_mfdataset(path_fileList, combine='by_coords').sel(time=slice(str(yearEnd_first), str(yearStart_last)),lat=slice(-35,35))
+    
+    
+    # f0 = path_fileList[0]
+    # f1 = path_fileList[1]
+    # if (len(path_fileList) == 2) and (int(f0[f0.index(".nc")-8:f0.index(".nc")]) == int(f1[f1.index(".nc")-8:f1.index(".nc")])):
+    #     ds = xr.open_dataset(path_fileList[0]).sel(time=slice(str(yearEnd_first), str(yearStart_last)),lat=slice(-35,35))
+    # else:
+        ds = xr.open_mfdataset(path_fileList, combine='by_coords').sel(time=slice(str(yearEnd_first), str(yearStart_last)),lat=slice(-35,35))
 
     return ds
 
@@ -201,7 +212,12 @@ def get_pr(institute, model, experiment):
     if model == 'CCSM4':
         ensemble = 'r6i1p1'
 
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+    versions = os.listdir(os.path.join(path_gen, ensemble))
+    if len(versions)>1:
+        version = max(versions, key=lambda x: int(x[1:]))
+    else:
+        version = versions[0]
+    
     variable = 'pr'
     path_folder =  os.path.join(path_gen, ensemble, version, variable)
     
@@ -223,6 +239,11 @@ def get_pr(institute, model, experiment):
 def get_tas(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
+    
+    if model == 'FGOALS-g2':
+        path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'
+    
+    
     ensemble = 'r1i1p1'
 
     if experiment == 'historical' and model == 'GISS-E2-H':
@@ -237,7 +258,12 @@ def get_tas(institute, model, experiment):
     if model == 'CCSM4':
         ensemble = 'r6i1p1'
 
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+    versions = os.listdir(os.path.join(path_gen, ensemble))
+    if len(versions)>1:
+        version = max(versions, key=lambda x: int(x[1:]))
+    else:
+        version = versions[0]
+        
     variable = 'tas'
     path_folder =  os.path.join(path_gen, ensemble, version, variable)
     ds = concat_files(path_folder, experiment)
@@ -260,41 +286,56 @@ def get_pw(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     ensemble = 'r1i1p1'
+    
+    if model == 'CESM1-BGC':
+        ds_pw = xr.Dataset(
+            data_vars = {'pw': np.nan}
+            )
+    elif (model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85':
+        ds_pw = xr.Dataset(
+            data_vars = {'pw': np.nan}
+            )
+    
+    else:
+        if experiment == 'historical' and model == 'GISS-E2-H':
+            ensemble = 'r6i1p1'
 
-    if experiment == 'historical' and model == 'GISS-E2-H':
-        ensemble = 'r6i1p1'
+        if experiment == 'rcp85' and model == 'GISS-E2-H':
+            ensemble = 'r2i1p1'
 
-    if experiment == 'rcp85' and model == 'GISS-E2-H':
-        ensemble = 'r2i1p1'
-        
-    if model == 'EC-EARTH':
-        ensemble = 'r6i1p1'
-        
-    if model == 'CCSM4':
-        ensemble = 'r6i1p1'
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
 
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
-    variable = 'hus'
-    path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
 
-    hus = ds['hus'].sel(plev=slice(850e2,0)) # free troposphere
-    hus_n = regridder(hus).fillna(0)
+        versions = os.listdir(os.path.join(path_gen, ensemble))
+        if len(versions)>1:
+            version = max(versions, key=lambda x: int(x[1:]))
+        else:
+            version = versions[0]
 
-    g = 9.8
-    pw_n = xr.DataArray(
-        data= -scipy.integrate.simpson(hus_n.data, hus_n.plev.data, axis=1, even='last')/g,
-        dims=['time','lat', 'lon'],
-        coords={'time': hus_n.time.data, 'lat': hus_n.lat.data, 'lon': hus_n.lon.data},
-        attrs={'units':'mm',
-               'Description': 'precipitable water from 850-0 hpa'}
-        )
+        variable = 'hus'
+        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        ds = concat_files(path_folder, experiment)
+        regridder = regrid_conserv_xesmf(ds)
 
-    ds_pw = xr.Dataset(
-        data_vars = {'pw': pw_n},
-        attrs = {'description': 'Precipitable water calculated as the vertically integrated specific humidity (simpson\'s method)'}
-        )
+        hus = ds['hus'].sel(plev=slice(850e2,0)) # free troposphere
+        hus_n = regridder(hus).fillna(0)
+
+        g = 9.8
+        pw_n = xr.DataArray(
+            data= -scipy.integrate.simpson(hus_n.data, hus_n.plev.data, axis=1, even='last')/g,
+            dims=['time','lat', 'lon'],
+            coords={'time': hus_n.time.data, 'lat': hus_n.lat.data, 'lon': hus_n.lon.data},
+            attrs={'units':'mm',
+                   'Description': 'precipitable water from 850-0 hpa'}
+            )
+
+        ds_pw = xr.Dataset(
+            data_vars = {'pw': pw_n},
+            attrs = {'description': 'Precipitable water calculated as the vertically integrated specific humidity (simpson\'s method)'}
+            )
 
     return ds_pw
 
@@ -304,34 +345,45 @@ def get_hur(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     ensemble = 'r1i1p1'
 
-    if experiment == 'historical' and model == 'GISS-E2-H':
-        ensemble = 'r6i1p1'
+    if model == 'EC-EARTH' and experiment == 'rcp85':
+        ds_hur = xr.Dataset(
+            data_vars = {'hur': np.nan}
+            )
+    else:
+    
+        if experiment == 'historical' and model == 'GISS-E2-H':
+            ensemble = 'r6i1p1'
 
-    if experiment == 'rcp85' and model == 'GISS-E2-H':
-        ensemble = 'r2i1p1'
-        
-    if model == 'EC-EARTH':
-        ensemble = 'r6i1p1'
-        
-    if model == 'CCSM4':
-        ensemble = 'r6i1p1'
+        if experiment == 'rcp85' and model == 'GISS-E2-H':
+            ensemble = 'r2i1p1'
 
-    version = os.listdir(os.path.join(path_gen, ensemble))[-1]
-    variable = 'hur'
-    path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
 
-    hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
-    hur_n = regridder(hur) 
-    hur_n = (hur_n * ds.plev).sum(dim='plev') / ds.plev.sum(dim='plev')
-    hur_n.attrs['units']= '%'
-    hur_n.attrs['Description'] = 'weighted mean relative humidity from 850-0 hpa'
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
 
-    ds_hur = xr.Dataset(
-        data_vars = {'hur': hur_n},
-        attrs = {'Description': 'weighted mean relative humidity'}
-        )
+        versions = os.listdir(os.path.join(path_gen, ensemble))
+        if len(versions)>1:
+            version = max(versions, key=lambda x: int(x[1:]))
+        else:
+            version = versions[0]
+
+        variable = 'hur'
+        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        ds = concat_files(path_folder, experiment)
+        regridder = regrid_conserv_xesmf(ds)
+
+        hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
+        hur_n = regridder(hur) 
+        hur_n = (hur_n * ds.plev).sum(dim='plev') / ds.plev.sum(dim='plev')
+        hur_n.attrs['units']= '%'
+        hur_n.attrs['Description'] = 'weighted mean relative humidity from 850-0 hpa'
+
+        ds_hur = xr.Dataset(
+            data_vars = {'hur': hur_n},
+            attrs = {'Description': 'weighted mean relative humidity'}
+            )
 
     return ds_hur
 
@@ -342,7 +394,12 @@ def get_wap500(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     ensemble = 'r1i1p1'
     
-    if model == 'GISS-E2-H':
+    if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC':
+        ds_wap500 = xr.Dataset(
+            data_vars = {'wap500': np.nan}
+            )
+        
+    elif (model == 'bcc-csm1-1' or model == 'EC-EARTH') and experiment=='rcp85':
         ds_wap500 = xr.Dataset(
             data_vars = {'wap500': np.nan}
             )
@@ -358,7 +415,12 @@ def get_wap500(institute, model, experiment):
             ensemble = 'r6i1p1'
 
 
-        version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+        versions = os.listdir(os.path.join(path_gen, ensemble))
+        if len(versions)>1:
+            version = max(versions, key=lambda x: int(x[1:]))
+        else:
+            version = versions[0]
+        
         variable = 'wap'
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
         ds = concat_files(path_folder, experiment)
@@ -381,13 +443,22 @@ def get_clouds(institute, model, experiment):
     ensemble = 'r1i1p1'
         
         
-    if model == 'CNRM-CM5' or model == 'CCSM4':
+    if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
         ds_clouds = xr.Dataset(
             data_vars = {
                 'cloud_low': np.nan, 
                 'cloud_high': np.nan},
             attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
             )
+        
+    elif (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
+        ds_clouds = xr.Dataset(
+            data_vars = {
+                'cloud_low': np.nan, 
+                'cloud_high': np.nan},
+            attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
+            )
+    
     else:
         if model == 'EC-EARTH':
             ensemble = 'r6i1p1'
@@ -396,7 +467,12 @@ def get_clouds(institute, model, experiment):
             ensemble = 'r6i1p1'
 
 
-        version = os.listdir(os.path.join(path_gen, ensemble))[-1]
+        versions = os.listdir(os.path.join(path_gen, ensemble))
+        if len(versions)>1:
+            version = max(versions, key=lambda x: int(x[1:]))
+        else:
+            version = versions[0]
+        
         variable = 'cl'
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
         ds = concat_files(path_folder, experiment)
@@ -405,8 +481,15 @@ def get_clouds(institute, model, experiment):
         clouds = ds['cl']*100
         clouds_n = regridder(clouds)
 
-        if model == 'IPSL-CM5A-MR':
+        if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2':
             pressureLevels = ds.ap + ds.b*ds.ps
+            
+        elif model == 'FGOALS-g2':
+            pressureLevels = ds.ptop + ds.lev*(ds.ps-ds.ptop)
+            
+        elif model == 'HadGEM2-CC':
+            pressureLevels = ds.lev+ds.b*ds.orog
+            
         else:
             pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
 
