@@ -160,7 +160,7 @@ def plot_scenes(ds, cmap='Reds', title='', vmin = None, vmax=None):
                 plt.text(-235,-25, 'latitude', rotation=90)
 
             if (len(ds.data_vars)<=4) or (len(ds.data_vars)>4 and i>=(len(ds.data_vars)-4)) :
-                plt.colorbar(pcm, ax=ax, orientation='horizontal', pad=0.35, aspect=50, fraction=0.055,label = ds[dataset].units)
+                plt.colorbar(pcm, ax=ax, orientation='horizontal', pad=0.35, aspect=50, fraction=0.055,label = ' [' + ds[dataset].units + ']') #ds[dataset].Description 
                 plt.text(-25,-70, 'longitude',fontsize=8)
                 ax.set_xticks([-180, -90, 0, 90, 180])
                 ax.set_xticklabels([0, 90, 180, 270, 360])

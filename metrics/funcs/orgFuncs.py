@@ -1,7 +1,11 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
+import timeit
+import os
 # from variables.cmip5Vars import *
+from os.path import expanduser
+home = expanduser("~")
 
 
 
@@ -45,7 +49,14 @@ def haversine_dist(lat1, lon1, lat2, lon2):
 
 
 
+def save_file(dataset, folder, fileName):
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
 
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataset.to_netcdf(path)
 
 
 
@@ -359,9 +370,13 @@ if __name__ == '__main__':
     
 
     for model in models:
+        print(model, 'started')
+        start = timeit.default_timer()
+
         for experiment in experiments:
 
-            precip = get_pr(institutes[model], model, experiment).precip
+            # precip = get_pr(institutes[model], model, experiment).precip
+            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds' + '/' + model + '/' + model + '_precip_' + experiment + '.nc').precip
             
             conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
@@ -376,10 +391,11 @@ if __name__ == '__main__':
 
             save_rome = False
             save_rome_n = False
-            save_numberIndex = False
-            save_oAreaAndPr = False
+            save_numberIndex = True
+            save_oAreaAndPr = True
 
-            folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+            # folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+            folder = home + '/Documents/data/cmip5/' + model
 
             if save_rome and save_rome_n:
                 fileName = model + '_rome_' + experiment + '.nc'              
@@ -401,7 +417,8 @@ if __name__ == '__main__':
                 save_file(dataset, folder, fileName)
 
 
-
+        stop = timeit.default_timer()
+        print('model: {} took {} minutes to finsih'.format(model, (stop-start)/60))
 
 
 
