@@ -320,11 +320,11 @@ if __name__ == '__main__':
 
     models = [
         # 'IPSL-CM5A-MR', # 1
-        'GFDL-CM3',     # 2
+        # 'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
-        # 'CCSM4',        # 6 # cannot concatanate files for historical run
+        'CCSM4',        # 6
         # 'HadGEM2-AO',   # 7
         # 'BNU-ESM',      # 8
         # 'EC-EARTH',     # 9
@@ -333,7 +333,7 @@ if __name__ == '__main__':
         # 'CMCC-CM',      # 12
         # 'inmcm4',       # 13
         # 'NorESM1-M',    # 14
-        # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+        # 'CanESM2',      # 15
         # 'MIROC5',       # 16
         # 'HadGEM2-CC',   # 17
         # 'MRI-CGCM3',    # 18
@@ -376,8 +376,9 @@ if __name__ == '__main__':
         for experiment in experiments:
 
             # precip = get_pr(institutes[model], model, experiment).precip
-            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds' + '/' + model + '/' + model + '_precip_' + experiment + '.nc').precip
-            
+            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds2' + '/' + model + '/' + model + '_precip_' + experiment + '.nc').precip
+
+
             conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
 
@@ -389,8 +390,8 @@ if __name__ == '__main__':
 
 
 
-            save_rome = False
-            save_rome_n = False
+            save_rome = True
+            save_rome_n = True
             save_numberIndex = True
             save_oAreaAndPr = True
 
