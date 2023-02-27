@@ -394,12 +394,12 @@ def get_wap500(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     ensemble = 'r1i1p1'
     
-    if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC':
+    if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC' or model == 'EC-EARTH':
         ds_wap500 = xr.Dataset(
             data_vars = {'wap500': np.nan}
             )
         
-    elif (model == 'bcc-csm1-1' or model == 'EC-EARTH') and experiment=='rcp85':
+    elif model == 'bcc-csm1-1' and experiment=='rcp85':
         ds_wap500 = xr.Dataset(
             data_vars = {'wap500': np.nan}
             )

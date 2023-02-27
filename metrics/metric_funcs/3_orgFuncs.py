@@ -383,9 +383,13 @@ if __name__ == '__main__':
             n = 8
 
             rome = calc_rome(precip, conv_threshold)
+            print('rome finished')
             rome_n = calc_rome_n(n, precip, conv_threshold)
+            print('rome_n finished')
             ds_numberIndex = calc_numberIndex(precip, conv_threshold)
+            print('numberIndex finished')
             ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
+            print('oAreaAndPr')
 
 
 

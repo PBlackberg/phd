@@ -17,7 +17,17 @@ def calc_sMean(var):
     return var.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
 
-
+def calc_wapArea(wap500, regime):
+    if regime == 'area_ascent':
+        areaFrac = ((wap500<0)*1).sum(dim=('lat','lon'))/(wap500.shape[1]*wap500.shape[2])*100
+        
+    if regime == 'area_descent':
+        areaFrac = ((wap500>0)*1).sum(dim=('lat','lon'))/(wap500.shape[1]*wap500.shape[2])*100
+        
+    areaFrac.attrs['units'] = '%'
+    return areaFrac
+    
+    
 
 
 
@@ -50,7 +60,7 @@ if __name__ == '__main__':
     
 
     experiments = [
-                # 'historical',
+                'historical',
                 'rcp85'
                 ]
     experiment = experiments[0]
@@ -86,20 +96,20 @@ if __name__ == '__main__':
         
         for experiment in experiments:
 
-            precip = get_pr(institutes[model], model, experiment)['precip']
-            tas = get_tas(institutes[model], model, experiment)['tas']
-            pw = get_pw(institutes[model], model, experiment)['pw']
-            hur = get_hur(institutes[model], model, experiment)['hur']
-            cloud_low = get_clouds(institutes[model], model, experiment)['cloud_low']
-            cloud_high = get_clouds(institutes[model], model, experiment)['cloud_high']
+            # precip = get_pr(institutes[model], model, experiment)['precip']
+            # tas = get_tas(institutes[model], model, experiment)['tas']
+            # pw = get_pw(institutes[model], model, experiment)['pw']
+            # hur = get_hur(institutes[model], model, experiment)['hur']
+            # cloud_low = get_clouds(institutes[model], model, experiment)['cloud_low']
+            # cloud_high = get_clouds(institutes[model], model, experiment)['cloud_high']
             wap500 = get_wap500(institutes[model], model, experiment)['wap500']
             
 
-            save_pr = True
-            save_tas = True
-            save_pw = True
-            save_hur = True
-            save_cl = True
+            save_pr = False
+            save_tas = False
+            save_pw = False
+            save_hur = False
+            save_cl = False
             save_wap500 = True
             
             folder = '/g/data/k10/cb4968/data/cmip5/' + model
@@ -196,13 +206,16 @@ if __name__ == '__main__':
                     save_file(dataset, folder, fileName)
 
 
+                    
             if save_wap500:
                 
-                if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model=='inmcm4' or model == 'HadGEM2-CC' or model == 'CESM1-BGC':
+                if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model=='inmcm4' or model == 'HadGEM2-CC' or model == 'CESM1-BGC' or model =='EC-EARTH':
                     pass
-                elif (model == 'bcc-csm1-1' or model =='EC-EARTH') and experiment=='rcp85':
+                elif model == 'bcc-csm1-1' and experiment=='rcp85':
                     pass
                 else:
+                    
+                    
                     fileName = model + '_wap500_tMean_' + experiment + '.nc'
                     dataset = xr.Dataset(
                         data_vars = {'wap500_tMean': calc_tMean(wap500),
@@ -210,9 +223,17 @@ if __name__ == '__main__':
                             )
                     save_file(dataset, folder, fileName)
 
-                    fileName = model + '_wap500_sMean_' + experiment + '.nc'
+                    fileName = model + '_wap500_ascent_' + experiment + '.nc'
+                    regime = 'area_ascent'
                     dataset = xr.Dataset(
-                        data_vars = {'wap500_sMean': calc_sMean(wap500)}
+                        data_vars = {'wap500_ascent': calc_wapArea(wap500, regime)}
+                            )
+                    save_file(dataset, folder, fileName)
+                    
+                    regime = 'area_descent'
+                    fileName = model + '_wap500_descent_' + experiment + '.nc'
+                    dataset = xr.Dataset(
+                        data_vars = {'wap500_descent': calc_wapArea(wap500, regime)}
                             )
                     save_file(dataset, folder, fileName)
 
