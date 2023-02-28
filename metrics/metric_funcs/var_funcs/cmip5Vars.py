@@ -6,7 +6,7 @@ import scipy
 
 
 
-# ---------------------------- functions to process the data ---------------------------------
+# ------------------------------------ choosing and processing ------------------------------------------------
 
 
 def concat_files(path_folder, experiment):
@@ -34,10 +34,7 @@ def concat_files(path_folder, experiment):
     path_fileList = []
     for file in files:
         path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
-    
 
-    
-    
     # f0 = path_fileList[0]
     # f1 = path_fileList[1]
     # if (len(path_fileList) == 2) and (int(f0[f0.index(".nc")-8:f0.index(".nc")]) == int(f1[f1.index(".nc")-8:f1.index(".nc")])):
@@ -46,7 +43,6 @@ def concat_files(path_folder, experiment):
         ds = xr.open_mfdataset(path_fileList, combine='by_coords').sel(time=slice(str(yearEnd_first), str(yearStart_last)),lat=slice(-35,35))
 
     return ds
-
 
 
 def regrid_conserv_xesmf(ds_in):
@@ -58,126 +54,56 @@ def regrid_conserv_xesmf(ds_in):
     return regridder
 
 
+def choose_ensemble(model, variable):
+    ensemble = 'r1i1p1'
 
-def regrid_conserv(M_in):
-    # dimensions of model to regrid to
-    folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
-    fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
-    M_out = xr.open_dataset(folder + '/' + fileName)['pr'].sel(lat=slice(-30,30))
-
-    # dimensions
-    dlat = M_in.lat.data[1]-M_in.lat.data[0]
-    dlon = M_in.lon.data[1]-M_in.lon.data[0]
-    latBnds = (M_in.lat.data-(dlat/2), M_in.lat.data+(dlat/2))
-    lonBnds = (M_in.lon.data-(dlon/2), M_in.lon.data+(dlon/2))
-    lat = np.mean(latBnds, axis=0)
-    lon = np.mean(lonBnds, axis=0)
-    # area of gridboxes as fraction of earth surface area
-    area_wlat = np.cos(np.deg2rad(lat))*dlat*np.pi/(4*180^2)
-
-    dlat_n = M_out.lat.data[1]-M_out.lat.data[0]
-    dlon_n = M_out.lon.data[1]-M_out.lon.data[0]
-    latBnds_n = (M_out.lat.data-(dlat_n/2), M_out.lat.data+(dlat_n/2))
-    lonBnds_n = (M_out.lon.data-(dlon_n/2), M_out.lon.data+(dlon_n/2))
-    lat_n = np.mean(latBnds_n, axis=0)
-    lon_n = np.mean(lonBnds_n, axis=0)
-
-    # weights
-    Wlat = np.zeros([len(lat_n), len(lat)])
-    for i in np.arange(0,len(lat_n)):
-        latBoxMin_n = latBnds_n[0][i]
-        latBoxMax_n = latBnds_n[1][i]
-
-        # gridboxes that are atleast partially overlapping with iteration gridbox
-        J = (latBnds[0]<=latBoxMax_n)*(latBnds[1]>= latBoxMin_n)*area_wlat
-
-        # including fractional area component contribution
-        I = J*(latBnds[1]-latBoxMin_n)/dlat
-        K = J*(latBoxMax_n-latBnds[0])/dlat
-        II = np.min([I,J,K], axis=0)
-
-        # weights from individual gridboxes contributing to the new gridbox as fraction of the total combined area contribution
-        Wlat[i,:] = II/np.sum(II)
-
-    Wlat = xr.DataArray(
-        data = Wlat,
-        dims = ['lat_n', 'lat']
-        )
-
-    Wlon = np.zeros([len(lon_n), len(lon)])
-    for i in np.arange(0,len(lon_n)):
-        lonBoxMin_n = lonBnds_n[0][i]
-        lonBoxMax_n = lonBnds_n[1][i]
-
-        # gridboxes that are atleast partially overlapping with iteration gridbox
-        J = (lonBnds[0]<=lonBoxMax_n)*(lonBnds[1]>= lonBoxMin_n)*1
-
-        # Including fractional area component contribution
-        I = J*(lonBnds[1]-lonBoxMin_n)/dlon
-        K = J*(lonBoxMax_n-lonBnds[0])/dlon
-        L = J*(lonBoxMax_n-lonBnds[0]+360)/dlon
-        II = np.min([I,J,K,L], axis=0)
-
-        # weights from individual gridboxes contributing to the new gridbox as fraction of the total combined area contribution
-        Wlon[i,:] = II/np.sum(II)
-
-    Wlon = xr.DataArray(
-        data = Wlon,
-        dims = ['lon_n', 'lon']
-        )
-
-    # interpolation
-    if ('plev' or 'lev') in M_in.dims:
-        if 'lev' in M_in.dims:
-            M_n = M_n.rename({'lev': 'plev'})
-
-        M_n = xr.DataArray(
-            data = np.zeros([len(M_in.time.data), len(M_in.plev.data), len(lat_n), len(lon_n)]),
-            dims = ['time', 'plev', 'lat_n', 'lon_n'],
-            coords = {'time': M_in.time.data, 'plev': M_in.plev.data, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
-            attrs = M_in.attrs
-            )
-
-        for day in np.arange(0,len(M_in.time.data)):
-            
-            M_Wlat = xr.DataArray(
-            data = np.zeros([len(M_in.plev), len(lat_n), len(lon)]),
-            dims = ['plev', 'lat_n', 'lon']
-            )
-
-            for i in range(0, len(Wlat.lat_n)):
-                M_Wlat[:,i,:] = (M_in.isel(time=day) * Wlat[i,:]).sum(dim='lat', skipna=True) / (M_in.isel(time=day).notnull()*1*Wlat[i,:]).sum(dim='lat')
-                
-            for i in range(0, len(Wlon.lon_n)):
-                M_n[day,:,:,i] = (M_Wlat * Wlon[i,:]).sum(dim='lon', skipna=True) / (M_Wlat.notnull()*1*Wlon[i,:]).sum(dim='lon')
+    if variable == 'pr' or variable == 'tas':
+        if model == 'GISS-E2-H' and experiment == 'historical':
+            ensemble = 'r6i1p1'
+        if model == 'GISS-E2-H' and experiment == 'rcp85':
+            ensemble = 'r2i1p1'
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
+    return ensemble
 
 
+def pick_latestVersion(path_gen, ensemble):
+    versions = os.listdir(os.path.join(path_gen, ensemble))
+    if len(versions)>1:
+        version = max(versions, key=lambda x: int(x[1:]))
     else:
-        M_n = xr.DataArray(
-            data = np.zeros([len(M_in.time.data), len(lat_n), len(lon_n)]),
-            dims = ['time', 'lat_n', 'lon_n'],
-            coords = {'time': M_in.time.data, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
-            attrs = M_in.attrs
-            )
-
-        for day in np.arange(0,len(M_in.time.data)):
-
-            M_Wlat = xr.DataArray(
-            data = np.zeros([len(lat_n), len(lon)]),
-            dims = ['lat_n', 'lon']
-            )
-
-            for i in range(0, len(Wlat.lat_n)):
-                M_Wlat[i,:] = (M_in.isel(time=day) * Wlat[i,:]).sum(dim='lat', skipna=True) / (M_in.isel(time=day).notnull()*1*Wlat[i,:]).sum(dim='lat')
-                
-            for i in range(0, len(Wlon.lon_n)):
-                M_n[day,:,i] = (M_Wlat * Wlon[i,:]).sum(dim='lon', skipna=True) / (M_Wlat.notnull()*1*Wlon[i,:]).sum(dim='lon')
+        version = versions[0]
+    return version
 
 
-    M_n = M_n.rename({'lat_n': 'lat', 'lon_n': 'lon'})
+def data_exist(model, experiment, variable):
+    data_exist = 'yes'
+
+    if variable == 'pw':
+        if model == 'CESM1-BGC':
+            data_exist = 'no'
+        if (model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85':
+            data_exist = 'no'
     
-    return M_n
+    if variable == 'hur':
+        if model == 'EC-EARTH' and experiment == 'rcp85':
+            data_exist = 'no'
 
+    if variable == 'wap':
+        if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC' or model == 'EC-EARTH':
+            data_exist = 'no'
+        if model == 'bcc-csm1-1' and experiment=='rcp85':
+            data_exist = 'no'
+
+    if variable == 'cl':
+        if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
+            data_exist = 'no'
+        if (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
+            data_exist = 'no'
+    
+    return data_exist
 
 
 def save_file(dataset, folder, fileName):
@@ -190,138 +116,73 @@ def save_file(dataset, folder, fileName):
     dataset.to_netcdf(path)
 
 
-
-
-# --------------------------------- functions to get the data -------------------------------------------
-
+# --------------------------------------------- getting variable ----------------------------------------------------------
 
 def get_pr(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    ensemble = 'r1i1p1'
-
-    if experiment == 'historical' and model == 'GISS-E2-H':
-        ensemble = 'r6i1p1'
-
-    if experiment == 'rcp85' and model == 'GISS-E2-H':
-        ensemble = 'r2i1p1'
-        
-    if model == 'EC-EARTH':
-        ensemble = 'r6i1p1'
-        
-    if model == 'CCSM4':
-        ensemble = 'r6i1p1'
-
-    versions = os.listdir(os.path.join(path_gen, ensemble))
-    if len(versions)>1:
-        version = max(versions, key=lambda x: int(x[1:]))
-    else:
-        version = versions[0]
-    
     variable = 'pr'
+    ensemble = choose_ensemble(model, variable)
+    version = pick_latestVersion(path_gen, ensemble)
     path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
-    
-    precip = ds['pr']*60*60*24
-    precip_n = regridder(precip)
+
+    ds = concat_files(path_folder, experiment) # picks out lat: -35, 35
+
+    regridder = regrid_conserv_xesmf(ds) # define regridder based of grid from other model
+    precip = ds['pr']*60*60*24 # convert to mm/day
+    precip_n = regridder(precip) # conservatively interpolate to grid from other model, onto lat: -30, 30 (_n is new grid)
     precip_n.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9)
 
     ds_pr = xr.Dataset(
         data_vars = {'precip': precip_n},
         attrs = ds.attrs
         )
-
     return ds_pr
 
 
 def get_tas(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    
     if model == 'FGOALS-g2':
-        path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'
-    
-    
-    ensemble = 'r1i1p1'
-
-    if experiment == 'historical' and model == 'GISS-E2-H':
-        ensemble = 'r6i1p1'
-
-    if experiment == 'rcp85' and model == 'GISS-E2-H':
-        ensemble = 'r2i1p1'
-        
-    if model == 'EC-EARTH':
-        ensemble = 'r6i1p1'
-        
-    if model == 'CCSM4':
-        ensemble = 'r6i1p1'
-
-    versions = os.listdir(os.path.join(path_gen, ensemble))
-    if len(versions)>1:
-        version = max(versions, key=lambda x: int(x[1:]))
-    else:
-        version = versions[0]
-        
+        path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'   
     variable = 'tas'
+    ensemble = choose_ensemble(model, variable)
+    version = pick_latestVersion(path_gen, ensemble)
     path_folder =  os.path.join(path_gen, ensemble, version, variable)
-    ds = concat_files(path_folder, experiment)
-    regridder = regrid_conserv_xesmf(ds)
 
-    tas = ds['tas']-273.15
+    ds = concat_files(path_folder, experiment)
+    
+    regridder = regrid_conserv_xesmf(ds)
+    tas = ds['tas']-273.15 # convert to degrees Celsius
     tas_n = regridder(tas)
     tas_n.attrs['units']= '\u00B0C'
-
 
     ds_tas = xr.Dataset(
         data_vars = {'tas': tas_n},
         attrs = ds.attrs
         )
-
     return ds_tas
 
 
 def get_pw(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    ensemble = 'r1i1p1'
+    variable = 'hus'
+    ensemble = choose_ensemble(model, variable)
     
-    if model == 'CESM1-BGC':
+    if data_exist(model,variable) == 'no':
         ds_pw = xr.Dataset(
             data_vars = {'pw': np.nan}
             )
-    elif (model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85':
-        ds_pw = xr.Dataset(
-            data_vars = {'pw': np.nan}
-            )
-    
     else:
-        if experiment == 'historical' and model == 'GISS-E2-H':
-            ensemble = 'r6i1p1'
-
-        if experiment == 'rcp85' and model == 'GISS-E2-H':
-            ensemble = 'r2i1p1'
-
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
-
-        if model == 'CCSM4':
-            ensemble = 'r6i1p1'
-
-        versions = os.listdir(os.path.join(path_gen, ensemble))
-        if len(versions)>1:
-            version = max(versions, key=lambda x: int(x[1:]))
-        else:
-            version = versions[0]
-
-        variable = 'hus'
+        version = pick_latestVersion(path_gen, ensemble)
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
-        ds = concat_files(path_folder, experiment)
-        regridder = regrid_conserv_xesmf(ds)
 
-        hus = ds['hus'].sel(plev=slice(850e2,0)) # free troposphere
-        hus_n = regridder(hus).fillna(0)
+        ds = concat_files(path_folder, experiment)
+        
+        regridder = regrid_conserv_xesmf(ds)
+        hus = ds['hus'].sel(plev=slice(850e2,0)) # free troposphere (most values at 1000 hPa over land are NaN)
+        hus_n = regridder(hus).fillna(0) # mountains will be NaN for larger values as well, so setting them to zero
 
         g = 9.8
         pw_n = xr.DataArray(
@@ -336,45 +197,27 @@ def get_pw(institute, model, experiment):
             data_vars = {'pw': pw_n},
             attrs = {'description': 'Precipitable water calculated as the vertically integrated specific humidity (simpson\'s method)'}
             )
-
     return ds_pw
 
 
-
 def get_hur(institute, model, experiment):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
-    ensemble = 'r1i1p1'
 
-    if model == 'EC-EARTH' and experiment == 'rcp85':
+    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
+    variable = 'hur'
+    ensemble = choose_ensemble(model, variable)
+
+    if data_exist(model,variable) == 'no':
         ds_hur = xr.Dataset(
             data_vars = {'hur': np.nan}
             )
     else:
-    
-        if experiment == 'historical' and model == 'GISS-E2-H':
-            ensemble = 'r6i1p1'
-
-        if experiment == 'rcp85' and model == 'GISS-E2-H':
-            ensemble = 'r2i1p1'
-
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
-
-        if model == 'CCSM4':
-            ensemble = 'r6i1p1'
-
-        versions = os.listdir(os.path.join(path_gen, ensemble))
-        if len(versions)>1:
-            version = max(versions, key=lambda x: int(x[1:]))
-        else:
-            version = versions[0]
-
-        variable = 'hur'
+        version = pick_latestVersion(path_gen, ensemble)
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
-        ds = concat_files(path_folder, experiment)
-        regridder = regrid_conserv_xesmf(ds)
 
-        hur = ds['hur'].sel(plev=slice(850e2,0))*100 # free troposphere
+        ds = concat_files(path_folder, experiment)
+        
+        regridder = regrid_conserv_xesmf(ds)
+        hur = ds['hur'].sel(plev=slice(850e2,0)) # already in units of %
         hur_n = regridder(hur) 
         hur_n = (hur_n * ds.plev).sum(dim='plev') / ds.plev.sum(dim='plev')
         hur_n.attrs['units']= '%'
@@ -384,7 +227,6 @@ def get_hur(institute, model, experiment):
             data_vars = {'hur': hur_n},
             attrs = {'Description': 'weighted mean relative humidity'}
             )
-
     return ds_hur
 
 
@@ -392,109 +234,65 @@ def get_hur(institute, model, experiment):
 def get_wap500(institute, model, experiment):
 
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    ensemble = 'r1i1p1'
-    
-    if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC' or model == 'EC-EARTH':
+    variable = 'wap'
+    ensemble = choose_ensemble(model, variable)
+
+    if data_exist(model,variable) == 'no':
         ds_wap500 = xr.Dataset(
             data_vars = {'wap500': np.nan}
             )
-        
-    elif model == 'bcc-csm1-1' and experiment=='rcp85':
-        ds_wap500 = xr.Dataset(
-            data_vars = {'wap500': np.nan}
-            )
-    
     else:
-        if experiment == 'rcp85' and model == 'GISS-E2-H':
-            ensemble = 'r2i1p1'
-
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
-
-        if model == 'CCSM4':
-            ensemble = 'r6i1p1'
-
-
-        versions = os.listdir(os.path.join(path_gen, ensemble))
-        if len(versions)>1:
-            version = max(versions, key=lambda x: int(x[1:]))
-        else:
-            version = versions[0]
-        
-        variable = 'wap'
+        version = pick_latestVersion(path_gen, ensemble)
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
-        ds = concat_files(path_folder, experiment)
-        regridder = regrid_conserv_xesmf(ds)
 
-        wap500 = ds['wap'].sel(plev=500e2)*60*60*24    
+        ds = concat_files(path_folder, experiment)
+        
+        regridder = regrid_conserv_xesmf(ds)
+        wap500 = ds['wap'].sel(plev=500e2)*60*60*24/100 # convert to units of hPa/day    
         wap500_n = regridder(wap500)
-        wap500_n.attrs['units']= 'Pa day' + chr(0x207B) + chr(0x00B9)
+        wap500_n.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9)
 
         ds_wap500 = xr.Dataset(
             data_vars = {'wap500': wap500_n}
             )
-
     return ds_wap500
 
 
 
 def get_clouds(institute, model, experiment):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
-    ensemble = 'r1i1p1'
+    variable = 'cl'
+    ensemble = choose_ensemble(model, variable)
         
-        
-    if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
+    if data_exist(model,variable) == 'no':
         ds_clouds = xr.Dataset(
             data_vars = {
                 'cloud_low': np.nan, 
                 'cloud_high': np.nan},
             attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
             )
-        
-    elif (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
-        ds_clouds = xr.Dataset(
-            data_vars = {
-                'cloud_low': np.nan, 
-                'cloud_high': np.nan},
-            attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
-            )
-    
     else:
-        if model == 'EC-EARTH':
-            ensemble = 'r6i1p1'
-
-        if model == 'CCSM4':
-            ensemble = 'r6i1p1'
-
-
-        versions = os.listdir(os.path.join(path_gen, ensemble))
-        if len(versions)>1:
-            version = max(versions, key=lambda x: int(x[1:]))
-        else:
-            version = versions[0]
-        
-        variable = 'cl'
+        version = pick_latestVersion(path_gen, ensemble)
         path_folder =  os.path.join(path_gen, ensemble, version, variable)
-        ds = concat_files(path_folder, experiment)
-        regridder = regrid_conserv_xesmf(ds)
 
-        clouds = ds['cl']*100
+        ds = concat_files(path_folder, experiment)
+        
+        regridder = regrid_conserv_xesmf(ds)
+        clouds = ds['cl'] # already in units of %
         clouds_n = regridder(clouds)
 
+        # different models have different conversions from height coordinate to pressure coordinate. Need to convert from height coordinate matrix to pressure coordinate matrix
         if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2':
             pressureLevels = ds.ap + ds.b*ds.ps
-            
         elif model == 'FGOALS-g2':
             pressureLevels = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-            
         elif model == 'HadGEM2-CC':
             pressureLevels = ds.lev+ds.b*ds.orog
-            
         else:
             pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
-
         pressureLevels_n = regridder(pressureLevels)
 
+        # (further, interpolate to 19 pressure levels and ) find maximum cloud fraction for low and high cloud regimes
         pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0)
         cloud_low = clouds_n*pressureLevels_low
         cloud_low = cloud_low.max(dim='lev')
@@ -513,9 +311,12 @@ def get_clouds(institute, model, experiment):
                 'cloud_high': cloud_high},
             attrs = {'description': 'Metric defined as maximum cloud fraction (%) from specified pressure level intervals'}
             )
-    
     return ds_clouds
 
+
+
+def get_stability(institute, model, experiment):
+    print('hello')
 
 
 
@@ -546,12 +347,10 @@ if __name__ == '__main__':
             # 'CESM1-BGC'     # 19
             ]
     
-
     experiments = [
                 'historical',
-                'rcp85'
+                # 'rcp85'
                 ]
-    
     
     institutes = {
         'IPSL-CM5A-MR':'IPSL',
@@ -574,7 +373,6 @@ if __name__ == '__main__':
         'MRI-CGCM3':'MRI',
         'CESM1-BGC':'NSF-DOE-NCAR'
         }
-
 
     for model in models:
         for experiment in experiments:
@@ -619,8 +417,6 @@ if __name__ == '__main__':
             if save_cl:
                 fileName = model + '_clMax_' + experiment + '.nc'
                 save_file(ds_clouds, folder, fileName)
-
-
 
 
 

@@ -3,7 +3,7 @@ import xarray as xr
 import skimage.measure as skm
 import timeit
 import os
-# from variables.cmip5Vars import *
+# from var_funcs.cmip5Vars import *
 from os.path import expanduser
 home = expanduser("~")
 
@@ -61,9 +61,6 @@ def save_file(dataset, folder, fileName):
 
 
 # -------------------------------------------- organisation metrics ---------------------------------------------
-
-
-
 
 def calc_rome(precip, conv_threshold):
     rome = []
@@ -259,7 +256,6 @@ def calc_numberIndex(precip, conv_threshold):
         data_vars = {'o_number': o_number, 
                      'areaf': areaf}
         ) 
-
     return ds_numberIndex
 
 
@@ -310,7 +306,6 @@ def calc_oAreaAndPr(precip, conv_threshold):
                     'o_pr': o_pr},
         attrs = {'descrption': 'area and precipipitation rate of contiguous convective regions in scene'}
         )
-
     return ds_oAreaAndPr
 
 
@@ -374,12 +369,13 @@ if __name__ == '__main__':
         start = timeit.default_timer()
 
         for experiment in experiments:
+            print(experiment, 'started') 
 
             # precip = get_pr(institutes[model], model, experiment).precip
-            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds2' + '/' + model + '/' + model + '_precip_' + experiment + '.nc').precip
-
-
-            conv_threshold = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
+            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds/' + model + '/' + model + '_precip_' + experiment + '.nc')['precip']
+            
+            quantile_threshold = 0.97
+            conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
 
             rome = calc_rome(precip, conv_threshold)
@@ -389,18 +385,16 @@ if __name__ == '__main__':
             ds_numberIndex = calc_numberIndex(precip, conv_threshold)
             print('numberIndex finished')
             ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
-            print('oAreaAndPr')
+            print('oAreaAndPr finished')
 
 
-
-
-            save_rome = True
-            save_rome_n = True
-            save_numberIndex = True
-            save_oAreaAndPr = True
+            save_rome = False
+            save_rome_n = False
+            save_numberIndex = False
+            save_oAreaAndPr = False
 
             # folder = '/g/data/k10/cb4968/data/cmip5/'+ model
-            folder = home + '/Documents/data/cmip5/' + model
+            folder_save = home + '/Documents/data/cmip5/' + model
 
             if save_rome and save_rome_n:
                 fileName = model + '_rome_' + experiment + '.nc'              
@@ -409,17 +403,17 @@ if __name__ == '__main__':
                                  'rome_n':rome_n},
                     attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
                         )
-                save_file(dataset, folder, fileName)
-                
+                save_file(dataset, folder_save, fileName)
+
             if save_numberIndex:
                 fileName = model + '_numberIndex_' + experiment + '.nc'
                 dataset = ds_numberIndex
-                save_file(dataset, folder, fileName) 
+                save_file(dataset, folder_save, fileName) 
 
             if save_oAreaAndPr:
                 fileName = model + '_oAreaAndPr_' + experiment + '.nc'
                 dataset = ds_oAreaAndPr
-                save_file(dataset, folder, fileName)
+                save_file(dataset, folder_save, fileName)
 
 
         stop = timeit.default_timer()

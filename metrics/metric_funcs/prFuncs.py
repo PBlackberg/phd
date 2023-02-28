@@ -1,5 +1,8 @@
 import xarray as xr
-# from variables.cmip5Vars import *
+import os
+# from var_funcs.cmip5Vars import *
+from os.path import expanduser
+home = expanduser("~")
 
 
 def calc_rxday(precip):
@@ -77,7 +80,14 @@ def F_pr10(precip):
     return ds_F_pr10
 
 
+def save_file(dataset, folder, fileName):
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
 
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataset.to_netcdf(path)
 
 
 
@@ -138,8 +148,8 @@ if __name__ == '__main__':
     for model in models:
         for experiment in experiments:
 
-            precip = get_pr(institutes[model], model, experiment).precip
-                
+            # precip = get_pr(institutes[model], model, experiment).precip
+            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds/' + model + '/' + model + '_precip_' + experiment + '.nc')['precip']
 
             ds_rxday = calc_rxday(precip)
             ds_prPercentiles = calc_pr_percentiles(precip)
@@ -150,23 +160,23 @@ if __name__ == '__main__':
             save_prPercentiles = False
             save_F_pr10 = False
 
-            folder = '/g/data/k10/cb4968/data/cmip5/'+ model
+            folder_save = '/g/data/k10/cb4968/data/cmip5/'+ model
 
             if save_rxday:
                 fileName = model + '_rxday_' + experiment + '.nc'
                 dataSet = ds_rxday
-                save_file(dataSet, folder, fileName)
+                save_file(dataSet, folder_save, fileName)
 
             if save_prPercentiles:
                 fileName = model + '_prPercentiles_' + experiment + '.nc'
                 dataSet = ds_prPercentiles
-                save_file(dataSet, folder, fileName)
+                save_file(dataSet, folder_save, fileName)
 
 
             if save_F_pr10 :
                 fileName = model + '_F_pr10_' + experiment + '.nc'
                 dataSet = ds_F_pr10
-                save_file(dataSet, folder, fileName)
+                save_file(dataSet, folder_save, fileName)
 
 
 
