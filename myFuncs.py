@@ -3,8 +3,7 @@ import os
 import numpy as np
 
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeat
+import cartopy
 
 import warnings
 from shapely.errors import ShapelyDeprecationWarning
@@ -23,17 +22,16 @@ def save_file(dataset, folder, fileName):
     dataset.to_netcdf(path)
 
 
-def plot_snapshot(var, cmap, variable_name, model):
-    projection = ccrs.PlateCarree(central_longitude=180)
-    lat = var.lat
-    lon = var.lon
+def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=17.5 ,fig_height=8):
+    projection = cartopy.crs.PlateCarree(central_longitude=180)
+    lat = scene.lat
+    lon = scene.lon
 
-    f, ax = plt.subplots(subplot_kw=dict(projection=projection), figsize=(15, 5))
-
-    var.plot(transform=ccrs.PlateCarree(), cbar_kwargs={'orientation': 'horizontal','pad':0.125, 'aspect':50,'fraction':0.055}, cmap=cmap)
-    ax.add_feature(cfeat.COASTLINE)
-    ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
-    ax.set_title(variable_name + ' snapshot, model:' + model)
+    f, ax = plt.subplots(subplot_kw=dict(projection=projection), figsize=(fig_width, fig_height))
+    scene.plot(transform=cartopy.crs.PlateCarree(), cbar_kwargs={'orientation': 'horizontal','pad':0.125, 'aspect':50,'fraction':0.055}, cmap=cmap, vmin=vmin, vmax=vmax)
+    ax.add_feature(cartopy.feature.COASTLINE)
+    ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=cartopy.crs.PlateCarree())
+    ax.set_title(title)
     ax.set_xticks([-180, -90, 0, 90, 180])
     ax.set_xticklabels([0, 90, 180, 270, 360])
     ax.set_yticks([-20, 0, 20])

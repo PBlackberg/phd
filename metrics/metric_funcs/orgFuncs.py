@@ -312,35 +312,7 @@ def calc_oAreaAndPr(precip, conv_threshold):
 
 
 if __name__ == '__main__':
-
-    models = [
-        # 'IPSL-CM5A-MR', # 1
-        # 'GFDL-CM3',     # 2
-        # 'GISS-E2-H',    # 3
-        # 'bcc-csm1-1',   # 4
-        # 'CNRM-CM5',     # 5
-        'CCSM4',        # 6
-        # 'HadGEM2-AO',   # 7
-        # 'BNU-ESM',      # 8
-        # 'EC-EARTH',     # 9
-        # 'FGOALS-g2',    # 10
-        # 'MPI-ESM-MR',   # 11
-        # 'CMCC-CM',      # 12
-        # 'inmcm4',       # 13
-        # 'NorESM1-M',    # 14
-        # 'CanESM2',      # 15
-        # 'MIROC5',       # 16
-        # 'HadGEM2-CC',   # 17
-        # 'MRI-CGCM3',    # 18
-        # 'CESM1-BGC'     # 19
-        ]
-    
-    experiments = [
-        'historical',
-        # 'rcp85'
-        ]
-    
-
+   
     institutes = {
         'IPSL-CM5A-MR':'IPSL',
         'GFDL-CM3':'NOAA-GFDL',
@@ -363,6 +335,39 @@ if __name__ == '__main__':
         'CESM1-BGC':'NSF-DOE-NCAR'
         }
     
+    models = [
+        # 'IPSL-CM5A-MR', # 1
+        # 'GFDL-CM3',     # 2
+        # 'GISS-E2-H',    # 3
+        # 'bcc-csm1-1',   # 4
+        # 'CNRM-CM5',     # 5
+        # 'CCSM4',        # 6
+        # 'HadGEM2-AO',   # 7
+        # 'BNU-ESM',      # 8
+        # 'EC-EARTH',     # 9
+        # 'FGOALS-g2',    # 10
+        # 'MPI-ESM-MR',   # 11
+        # 'CMCC-CM',      # 12
+        # 'inmcm4',       # 13
+        # 'NorESM1-M',    # 14
+        # 'CanESM2',      # 15
+        # 'MIROC5',       # 16
+        # 'HadGEM2-CC',   # 17
+        # 'MRI-CGCM3',    # 18
+        # 'CESM1-BGC'     # 19
+        ]
+    
+    experiments = [
+        'historical',
+        # 'rcp85'
+        ]
+    
+
+    observations = [
+        'GPCP',
+        # 'IMERG'
+        ]
+
 
     for model in models:
         print(model, 'started')
@@ -398,26 +403,86 @@ if __name__ == '__main__':
 
             if save_rome and save_rome_n:
                 fileName = model + '_rome_' + experiment + '.nc'              
-                dataset = xr.Dataset(
+                ds_rome = xr.Dataset(
                     data_vars = {'rome':rome, 
                                  'rome_n':rome_n},
                     attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
                         )
-                save_file(dataset, folder_save, fileName)
+                save_file(ds_rome, folder_save, fileName)
 
             if save_numberIndex:
                 fileName = model + '_numberIndex_' + experiment + '.nc'
-                dataset = ds_numberIndex
-                save_file(dataset, folder_save, fileName) 
+                save_file(ds_numberIndex, folder_save, fileName) 
 
             if save_oAreaAndPr:
                 fileName = model + '_oAreaAndPr_' + experiment + '.nc'
-                dataset = ds_oAreaAndPr
-                save_file(dataset, folder_save, fileName)
+                save_file(ds_oAreaAndPr, folder_save, fileName)
 
 
         stop = timeit.default_timer()
         print('model: {} took {} minutes to finsih'.format(model, (stop-start)/60))
+
+
+
+
+    for obs in observations:
+        print(obs, 'started')
+        start = timeit.default_timer()
+
+        # precip = get_gpcp(institutes[model], model, experiment).precip
+        folder = home + '/Documents/data/obs/ds'
+        fileName = obs + '_precip_orig.nc'
+        path = folder + '/' + fileName
+        precip = xr.open_dataset(path)['precip']
+        
+        quantile_threshold = 0.97
+        conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
+        n = 8
+
+        rome = calc_rome(precip, conv_threshold)
+        print('rome finished')
+        rome_n = calc_rome_n(n, precip, conv_threshold)
+        print('rome_n finished')
+        ds_numberIndex = calc_numberIndex(precip, conv_threshold)
+        print('numberIndex finished')
+        ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
+        print('oAreaAndPr finished')
+
+
+        save_rome = True
+        save_rome_n = True
+        save_numberIndex = True
+        save_oAreaAndPr = True
+
+        # folder_save = '/g/data/k10/cb4968/data/obs/'+ obs
+        folder_save = home + '/Documents/data/obs/' + obs +'_orig'
+
+        if save_rome and save_rome_n:
+            fileName = obs + '_rome_orig.nc'              
+            ds_rome = xr.Dataset(
+                data_vars = {'rome':rome, 
+                                'rome_n':rome_n},
+                attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
+                    )
+            save_file(ds_rome, folder_save, fileName)
+
+        if save_numberIndex:
+            fileName = obs + '_numberIndex_orig.nc'
+            save_file(ds_numberIndex, folder_save, fileName) 
+
+        if save_oAreaAndPr:
+            fileName = obs + '_oAreaAndPr_orig.nc'
+            save_file(ds_oAreaAndPr, folder_save, fileName)
+
+
+        stop = timeit.default_timer()
+        print('obs: {} took {} minutes to finsih'.format(obs, (stop-start)/60))  
+
+
+
+
+
+
 
 
 
