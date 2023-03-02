@@ -100,7 +100,7 @@ if __name__ == '__main__':
             # 'GISS-E2-H',    # 3
             # 'bcc-csm1-1',   # 4
             # 'CNRM-CM5',     # 5
-            # 'CCSM4',        # 6 # cannot concatanate files for rcp85 run
+            # 'CCSM4',        # 6
             # 'HadGEM2-AO',   # 7
             # 'BNU-ESM',      # 8
             # 'EC-EARTH',     # 9
@@ -109,7 +109,7 @@ if __name__ == '__main__':
             # 'CMCC-CM',      # 12
             # 'inmcm4',       # 13
             # 'NorESM1-M',    # 14
-            # 'CanESM2',      # 15 # slicing with .sel does not work, 'contains no datetime objects'
+            # 'CanESM2',      # 15
             # 'MIROC5',       # 16
             # 'HadGEM2-CC',   # 17
             # 'MRI-CGCM3',    # 18
@@ -120,7 +120,11 @@ if __name__ == '__main__':
                 'historical',
                 # 'rcp85'
                 ]
-
+    
+    observations = [
+        'GPCP'
+        ]
+    original_resolution = True
 
     institutes = {
         'IPSL-CM5A-MR':'IPSL',
@@ -177,6 +181,55 @@ if __name__ == '__main__':
                 fileName = model + '_F_pr10_' + experiment + '.nc'
                 dataSet = ds_F_pr10
                 save_file(dataSet, folder_save, fileName)
+
+
+
+
+    for obs in observations:
+        
+        # precip = get_gpcp()['precip']
+        folder = home + '/Documents/data/obs/ds/'
+        fileName = obs + '_precip_.nc'
+        if original_resolution:
+            fileName = obs + '_precip_orig.nc'
+        path = folder + '/' + fileName
+        precip = xr.open_dataset(path)['precip']
+
+        ds_rxday = calc_rxday(precip)
+        ds_prPercentiles = calc_pr_percentiles(precip)
+        ds_F_pr10 = F_pr10(precip)
+
+
+        save_rxday = False
+        save_prPercentiles = False
+        save_F_pr10 = False
+
+        # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ model
+        folder_save = home + '/Documents/data/obs/' + obs
+        if original_resolution:
+            folder_save = home + '/Documents/data/obs/' + obs + '_orig'
+
+
+        if save_rxday:
+            fileName = obs + '_rxday.nc'
+            if original_resolution:
+                fileName = obs + '_rxday_orig.nc'
+            save_file(ds_rxday, folder_save, fileName)
+
+        if save_prPercentiles:
+            fileName = obs + '_prPercentiles.nc'
+            if original_resolution:
+                fileName = obs + '_prPercentiles_orig.nc'
+            save_file(ds_prPercentiles, folder_save, fileName)
+
+        if save_F_pr10 :
+            fileName = obs + '_F_pr10.nc'
+            if original_resolution:
+                fileName = obs + '_F_pr10_orig.nc'
+            save_file(ds_F_pr10, folder_save, fileName)
+
+
+
 
 
 

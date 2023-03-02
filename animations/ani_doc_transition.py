@@ -1,15 +1,12 @@
 import xarray as xr
 import numpy as np
 
-from matplotlib import pyplot as plt, animation
-from IPython.display import HTML, display
-
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeat
+from matplotlib import animation
+import cartopy
 
-from os.path import expanduser
-home = expanduser("~")
+import os
+home = os.path.expanduser("~")
 
 import timeit
 
@@ -53,6 +50,7 @@ observations = [
     'GPCP',
     # 'IMERG'
     ]
+original_resolution = True
 
 rome_options = [
     'rome',
@@ -63,16 +61,14 @@ rome_option = rome_options[0]
 
 
 
-
 for model in models:
     print(model, 'started')
     start = timeit.default_timer()
 
-    folder = home + '/Documents/data/cmip5/ds'
+    folder = home + '/Documents/data/cmip5/ds/' + model
     fileName = model + '_precip_' + experiment + '.nc'
     path = folder + '/' + fileName
-    ds = xr.open_dataset(path)
-    precip = ds.precip*60*60*24
+    precip = xr.open_dataset(path)['precip']
     precip.attrs['units']= 'mm/day'
 
 
@@ -80,9 +76,6 @@ for model in models:
     fileName = model + '_pr_percentiles_' + experiment + '.nc'
     path = folder + '/' + fileName
     pr_percentiles = xr.open_dataset(path)
-
-
-    conv_threshold = pr_percentiles.pr97.mean(dim=('time'))
 
 
     folder = home + '/Documents/data/cmip5/' + model
@@ -96,23 +89,35 @@ for model in models:
     lat = precip.lat
     lon = precip.lon
     lonm,latm = np.meshgrid(lon,lat)
+    conv_threshold = pr_percentiles['pr97'].mean(dim=('time'))
 
-    rome_prctile = np.percentile(rome[rome_option],99.5)
-    x2= np.argwhere(rome[rome_option].data>=rome_prctile)
+    rome_threshold = 0.5
+    rome_prctile = np.percentile(rome[rome_option],rome_threshold)
+    x_rome_low= np.squeeze(np.argwhere(rome[rome_option].data<=rome_prctile))
+
+    lower_threshold = 49.75
+    upper_threshold = 50.25
+    rome_prctile_lower = np.percentile(rome[rome_option], lower_threshold)
+    rome_prctile_upper = np.percentile(rome[rome_option], upper_threshold)
+    x_rome_med = np.squeeze(np.argwhere((rome[rome_option].data >= rome_prctile_lower) & (rome[rome_option].data <= rome_prctile_upper)))
+
+    rome_threshold = 99.5
+    rome_prctile = np.percentile(rome[rome_option],rome_threshold)
+    x_rome_high= np.squeeze(np.argwhere(rome[rome_option].data>=rome_prctile))
+
+    x_rome = np.concatenate((x_rome_low, x_rome_med, x_rome_high))
 
     def animate(frame):    
-        ax = fig.add_subplot(projection=ccrs.PlateCarree(central_longitude=180))
+        ax = fig.add_subplot(projection=cartopy.crs.PlateCarree(central_longitude=180))
 
-        ax.add_feature(cfeat.COASTLINE)
-        ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
+        ax.add_feature(cartopy.feature.COASTLINE)
+        ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=cartopy.crs.PlateCarree())
 
-        pr_day = precip.isel(time=x2[frame][0])
-        extreme_percentileDay = pr_percentiles[percentile_option].isel(time=x2[frame][0]).data
+        pr_day = precip.isel(time=x_rome[frame])
 
-        pcm= ax.pcolormesh(lonm,latm, pr_day.where(pr_day>conv_threshold),transform=ccrs.PlateCarree(),zorder=0, cmap='Blues', vmin=15, vmax=80)
-        ax.pcolormesh(lonm,latm, pr_day.where(pr_day>extreme_percentileDay),transform=ccrs.PlateCarree(), cmap='Reds')
+        pcm= ax.pcolormesh(lonm,latm, pr_day.where(pr_day>conv_threshold),transform=cartopy.crs.PlateCarree(),zorder=0, cmap='Blues', vmin=0, vmax=80)
 
-        ax.set_title(model + ': location of precipitation extremes')
+        ax.set_title(model + ': gradually increasing DOC')
         ax.set_xlabel('longitude')
         ax.set_ylabel('latitude')
 
@@ -120,27 +125,25 @@ for model in models:
         ax.set_xticks([-180, -90, 0, 90, 180])
         ax.set_xticklabels([0, 90, 180, 270, 360])
 
-        plt.colorbar(pcm, ax=ax, orientation='horizontal',pad=0.10, aspect=50, fraction=0.055, label = ' pr97 [mm/day]')
+        plt.colorbar(pcm, ax=ax, orientation='horizontal',pad=0.10, aspect=50, fraction=0.055, label = '[mm/day]')
         plt.close()
     
 
     ani = animation.FuncAnimation(
-        fig,             # figure
-        animate,         # name of the function above
-        frames=len(x2),  # Could also be iterable or list
-        interval=500     # ms between frames
+        fig,                    # figure
+        animate,                # name of the function above
+        frames=len(x_rome),     # Could also be iterable or list
+        interval=500            # ms between frames
         )
 
 
-    folder = home + '/Documents/log/analysis/animations'
-    fileName = model + '_location_high_pr_percentile_' + experiment + '.mp4'
+    folder = home + '/Documents/log/analysis/animations/conv_doc_transition'
+    fileName = model + '_doc_transition' + experiment + '.mp4'
     path = folder + '/' + fileName
     ani.save(path)
 
     stop = timeit.default_timer()
     print('it takes {} minutes to crete annimation for model: {}'.format((stop-start)/60, model))
-
-
 
 
 
@@ -152,6 +155,8 @@ for obs in observations:
 
     folder = home + '/Documents/data/obs/ds'
     fileName = obs + '_precip.nc'
+    if original_resolution:
+        fileName = obs + '_precip_orig.nc'
     path = folder + '/' + fileName
     precip = xr.open_dataset(path)['precip']
     precip.attrs['units']= 'mm/day'
@@ -159,13 +164,18 @@ for obs in observations:
 
     folder = home + '/Documents/data/obs/' + obs
     fileName = obs + '_prPercentiles.nc'
+    if original_resolution:
+        folder = home + '/Documents/data/obs/GPCP_orig'
+        fileName = obs + '_prPercentiles_orig.nc'
     path = folder + '/' + fileName
     pr_percentiles = xr.open_dataset(path)
-    conv_threshold = pr_percentiles.pr97.mean(dim=('time'))
 
 
     folder = home + '/Documents/data/obs/' + obs
     fileName = obs + '_rome.nc'
+    if original_resolution:
+        folder = home + '/Documents/data/obs/GPCP_orig'
+        fileName = obs + '_rome_orig.nc'
     path = folder + '/' + fileName
     rome = xr.open_dataset(path)
 
@@ -175,36 +185,35 @@ for obs in observations:
     lat = precip.lat
     lon = precip.lon
     lonm,latm = np.meshgrid(lon,lat)
+    conv_threshold = pr_percentiles['pr97'].mean(dim=('time'))
 
 
-    rome = rome['rome'].sel(time=slice('1998-01', '2021-12'))
-    percentile_threshold = 0.5
-    rome_prctile = np.percentile(rome,percentile_threshold)
-    x1= np.squeeze(np.argwhere(rome.data<=rome_prctile))
+    rome_threshold = 0.5
+    rome_prctile = np.percentile(rome[rome_option],rome_threshold)
+    x_rome_low= np.squeeze(np.argwhere(rome[rome_option].data<=rome_prctile))
 
-    lower_percentile = 49.75
-    upper_percentile = 50.25
-    lower_val = np.percentile(rome, lower_percentile)
-    upper_val = np.percentile(rome, upper_percentile)
-    x2 = np.squeeze(np.argwhere((rome.data >= lower_val) & (rome.data <= upper_val)))
+    lower_threshold = 49.75
+    upper_threshold = 50.25
+    rome_prctile_lower = np.percentile(rome[rome_option], lower_threshold)
+    rome_prctile_upper = np.percentile(rome[rome_option], upper_threshold)
+    x_rome_med = np.squeeze(np.argwhere((rome[rome_option].data >= rome_prctile_lower) & (rome[rome_option].data <= rome_prctile_upper)))
 
+    rome_threshold = 99.5
+    rome_prctile = np.percentile(rome[rome_option],rome_threshold)
+    x_rome_high= np.squeeze(np.argwhere(rome[rome_option].data>=rome_prctile))
 
-    percentile_threshold = 99.5
-    rome_prctile = np.percentile(rome,percentile_threshold)
-    x3= np.squeeze(np.argwhere(rome.data>=rome_prctile))
-
-    x4 = np.concatenate((x1, x2, x3))
+    x_rome = np.concatenate((x_rome_low, x_rome_med, x_rome_high))
 
 
     def animate(frame):    
-        ax = fig.add_subplot(projection=ccrs.PlateCarree(central_longitude=180))
+        ax = fig.add_subplot(projection=cartopy.crs.PlateCarree(central_longitude=180))
 
-        ax.add_feature(cfeat.COASTLINE)
-        ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
+        ax.add_feature(cartopy.feature.COASTLINE)
+        ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=cartopy.crs.PlateCarree())
 
-        pr_day = precip.isel(time=x4[frame])
+        pr_day = precip.isel(time=x_rome[frame])
 
-        pcm= ax.pcolormesh(lonm,latm, pr_day.where(pr_day>conv_threshold),transform=ccrs.PlateCarree(),zorder=0, cmap='Blues',vmin=0, vmax=80)
+        pcm= ax.pcolormesh(lonm,latm, pr_day.where(pr_day>conv_threshold),transform=cartopy.crs.PlateCarree(),zorder=0, cmap='Blues',vmin=0, vmax=80)
 
         ax.set_title(obs + ': gradually increasing DOC')
         ax.set_xlabel('longitude')
@@ -219,20 +228,22 @@ for obs in observations:
     
 
     ani = animation.FuncAnimation(
-        fig,             # figure
-        animate,         # name of the function above
-        frames=len(x4),  # Could also be iterable or list
-        interval=500     # ms between frames
+        fig,                    # figure
+        animate,                # name of the function above
+        frames=len(x_rome),     # Could also be iterable or list
+        interval=500            # ms between frames
         )
 
 
-    folder = home + '/Documents/log/analysis/animations'
-    fileName = obs + '_gradually_increasing_doc.mp4'
+    folder = home + '/Documents/log/analysis/animations/conv_doc_transition'
+    fileName = obs + '_doc_transition.mp4'
+    if original_resolution:
+        fileName = obs + '_orig_location_high_pr_percentile.mp4'
     path = folder + '/' + fileName
     ani.save(path)
 
     stop = timeit.default_timer()
-    print('it takes {} minutes to crete annimation for model: {}'.format((stop-start)/60, obs))
+    print('it takes {} minutes to crete annimation for obs: {}'.format((stop-start)/60, obs))
 
 
 
