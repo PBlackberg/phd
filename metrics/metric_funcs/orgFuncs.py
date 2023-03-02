@@ -367,6 +367,7 @@ if __name__ == '__main__':
         'GPCP',
         # 'IMERG'
         ]
+    original_resolution = False
 
 
     for model in models:
@@ -431,7 +432,9 @@ if __name__ == '__main__':
 
         # precip = get_gpcp(institutes[model], model, experiment).precip
         folder = home + '/Documents/data/obs/ds'
-        fileName = obs + '_precip_orig.nc'
+        fileName = obs + '_precip.nc'
+        if original_resolution:
+            fileName = obs + '_precip_orig.nc'
         path = folder + '/' + fileName
         precip = xr.open_dataset(path)['precip']
         
@@ -455,23 +458,35 @@ if __name__ == '__main__':
         save_oAreaAndPr = True
 
         # folder_save = '/g/data/k10/cb4968/data/obs/'+ obs
-        folder_save = home + '/Documents/data/obs/' + obs +'_orig'
+        folder_save = home + '/Documents/data/obs/' + obs
+        if original_resolution:    
+            folder_save = home + '/Documents/data/obs/' + obs +'_orig'
 
         if save_rome and save_rome_n:
-            fileName = obs + '_rome_orig.nc'              
+            fileName = obs + '_rome.nc'   
+            if original_resolution:           
+                fileName = obs + '_rome_orig.nc'  
+
             ds_rome = xr.Dataset(
                 data_vars = {'rome':rome, 
                                 'rome_n':rome_n},
                 attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
                     )
+            
             save_file(ds_rome, folder_save, fileName)
 
         if save_numberIndex:
-            fileName = obs + '_numberIndex_orig.nc'
+            fileName = obs + '_numberIndex.nc'
+            if original_resolution:        
+                fileName = obs + '_numberIndex_orig.nc'
+
             save_file(ds_numberIndex, folder_save, fileName) 
 
         if save_oAreaAndPr:
-            fileName = obs + '_oAreaAndPr_orig.nc'
+            fileName = obs + '_oAreaAndPr.nc'
+            if original_resolution:    
+                fileName = obs + '_oAreaAndPr_orig.nc'    
+
             save_file(ds_oAreaAndPr, folder_save, fileName)
 
 
