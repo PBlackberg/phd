@@ -50,7 +50,7 @@ observations = [
     'GPCP',
     # 'IMERG'
     ]
-original_resolution = True
+original_resolution = False
 
 rome_options = [
     'rome',
@@ -73,9 +73,9 @@ for model in models:
 
 
     folder = home + '/Documents/data/cmip5/' + model
-    fileName = model + '_pr_percentiles_' + experiment + '.nc'
+    fileName = model + '_prPercentiles_' + experiment + '.nc'
     path = folder + '/' + fileName
-    pr_percentiles = xr.open_dataset(path)
+    prPercentiles = xr.open_dataset(path)
 
 
     folder = home + '/Documents/data/cmip5/' + model
@@ -89,19 +89,19 @@ for model in models:
     lat = precip.lat
     lon = precip.lon
     lonm,latm = np.meshgrid(lon,lat)
-    conv_threshold = pr_percentiles['pr97'].mean(dim=('time'))
+    conv_threshold = prPercentiles['pr97'].mean(dim=('time'))
 
-    rome_threshold = 0.5
+    rome_threshold = 0.25
     rome_prctile = np.percentile(rome[rome_option],rome_threshold)
     x_rome_low= np.squeeze(np.argwhere(rome[rome_option].data<=rome_prctile))
 
-    lower_threshold = 49.75
-    upper_threshold = 50.25
+    lower_threshold = 49.875
+    upper_threshold = 50.125
     rome_prctile_lower = np.percentile(rome[rome_option], lower_threshold)
     rome_prctile_upper = np.percentile(rome[rome_option], upper_threshold)
     x_rome_med = np.squeeze(np.argwhere((rome[rome_option].data >= rome_prctile_lower) & (rome[rome_option].data <= rome_prctile_upper)))
 
-    rome_threshold = 99.5
+    rome_threshold = 99.75
     rome_prctile = np.percentile(rome[rome_option],rome_threshold)
     x_rome_high= np.squeeze(np.argwhere(rome[rome_option].data>=rome_prctile))
 
@@ -138,7 +138,7 @@ for model in models:
 
 
     folder = home + '/Documents/log/analysis/animations/conv_doc_transition'
-    fileName = model + '_doc_transition' + experiment + '.mp4'
+    fileName = model + '_doc_transition' + '_'+ experiment + '.mp4'
     path = folder + '/' + fileName
     ani.save(path)
 
@@ -168,7 +168,7 @@ for obs in observations:
         folder = home + '/Documents/data/obs/GPCP_orig'
         fileName = obs + '_prPercentiles_orig.nc'
     path = folder + '/' + fileName
-    pr_percentiles = xr.open_dataset(path)
+    prPercentiles = xr.open_dataset(path)
 
 
     folder = home + '/Documents/data/obs/' + obs
@@ -185,20 +185,20 @@ for obs in observations:
     lat = precip.lat
     lon = precip.lon
     lonm,latm = np.meshgrid(lon,lat)
-    conv_threshold = pr_percentiles['pr97'].mean(dim=('time'))
+    conv_threshold = prPercentiles['pr97'].mean(dim=('time'))
 
 
-    rome_threshold = 0.5
+    rome_threshold = 0.25
     rome_prctile = np.percentile(rome[rome_option],rome_threshold)
     x_rome_low= np.squeeze(np.argwhere(rome[rome_option].data<=rome_prctile))
 
-    lower_threshold = 49.75
-    upper_threshold = 50.25
+    lower_threshold = 49.875
+    upper_threshold = 50.125
     rome_prctile_lower = np.percentile(rome[rome_option], lower_threshold)
     rome_prctile_upper = np.percentile(rome[rome_option], upper_threshold)
     x_rome_med = np.squeeze(np.argwhere((rome[rome_option].data >= rome_prctile_lower) & (rome[rome_option].data <= rome_prctile_upper)))
 
-    rome_threshold = 99.5
+    rome_threshold = 99.75
     rome_prctile = np.percentile(rome[rome_option],rome_threshold)
     x_rome_high= np.squeeze(np.argwhere(rome[rome_option].data>=rome_prctile))
 
@@ -238,7 +238,7 @@ for obs in observations:
     folder = home + '/Documents/log/analysis/animations/conv_doc_transition'
     fileName = obs + '_doc_transition.mp4'
     if original_resolution:
-        fileName = obs + '_orig_location_high_pr_percentile.mp4'
+        fileName = obs + '_doc_transition_orig.mp4'
     path = folder + '/' + fileName
     ani.save(path)
 
