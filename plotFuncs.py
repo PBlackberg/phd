@@ -14,6 +14,8 @@ home = os.path.expanduser("~")
 
 
 
+# --------------------------------------------------------------------------------- basic plot functions ----------------------------------------------------------------------------------------- #
+
 def plot_scene(scene, cmap='Reds', zorder= 0, title='', ax='', vmin=None, vmax=None, fig_width=17.5, fig_height=8):
     projection = cartopy.crs.PlateCarree(central_longitude=180)
     lat = scene.lat
@@ -141,7 +143,9 @@ def plot_boxplot(y, title='', ylabel='', ax=''):
 
 
 
-# ------------------------------------------------------------------------------------- other functions -------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------- common operations functions ------------------------------------------------------------------------------------- #
 
 
 def to_monthly(da):
@@ -156,7 +160,24 @@ def to_monthly(da):
 
 
 
-def get_dsvariable(variable, dataset, resolution, experiment, home=home):
+def get_dsvariable(variable, dataset, experiment, home=home, resolution = 'regridded'): # can add in another try when using cmip6
+
+    if resolution == 'regridded':
+        folder_model = '{}/Documents/data/CMIP5/ds_cmip5/{}'.format(home,dataset)
+        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
+        path1 = os.path.join(folder_model, fileName_model)
+
+        folder_obs = home + '/Documents/data/obs/ds_obs/' + dataset
+        fileName_obs = dataset + '_' + variable + '.nc'
+        path2 = os.path.join(folder_obs, fileName_obs)
+
+        try:
+            ds = xr.open_dataset(path1)
+        except FileNotFoundError:
+            try:
+                ds = xr.open_dataset(path2)
+            except FileNotFoundError:
+                print(f"Error: no file at {path1} or {path2}")
 
     if resolution == 'original':
         folder_model = '{}/Documents/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
@@ -175,6 +196,13 @@ def get_dsvariable(variable, dataset, resolution, experiment, home=home):
             except FileNotFoundError:
                 print(f"Error: no file at {path1} or {path2}")
 
+    return ds
+
+                        
+
+
+def get_dsvariable(variable, dataset, experiment, home=home, resolution = 'regridded'): # can add in another try when using cmip6
+
     if resolution == 'regridded':
         folder_model = '{}/Documents/data/CMIP5/ds_cmip5/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
@@ -191,78 +219,105 @@ def get_dsvariable(variable, dataset, resolution, experiment, home=home):
                 ds = xr.open_dataset(path2)
             except FileNotFoundError:
                 print(f"Error: no file at {path1} or {path2}")
+
+    if resolution == 'original':
+        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
+        fileName_model = dataset + '_' + variable + '_'+ experiment+ '_orig.nc'
+        path1 = os.path.join(folder_model, fileName_model)
+
+        folder_obs = '{}/Documents/data/obs/ds_obs_orig/{}'.format(home,dataset)
+        fileName_obs = dataset + '_' + variable + '_orig.nc'
+        path2 = os.path.join(folder_obs, fileName_obs)
+
+        try:
+            ds = xr.open_dataset(path1)
+        except FileNotFoundError:
+            try:
+                ds = xr.open_dataset(path2)
+            except FileNotFoundError:
+                print(f"Error: no file at {path1} or {path2}")
+
     return ds
 
-                        
 
-def find_limits(variable, datasets, resolutions, experiments, home=home, timeMean_option=[''], quantile_low=0, quantile_high=1, scene_type=''):
 
-    vmin, vmax = [], []
-    for dataset in datasets:
-        for resolution in resolutions:
-            for experiment in experiments:
+
+
+
+
+
+
+
+
+
+# def find_limits(variable, datasets, resolutions, experiments, home=home, timeMean_option=[''], quantile_low=0, quantile_high=1, scene_type=''):
+
+#     vmin, vmax = [], []
+#     for dataset in datasets:
+#         for resolution in resolutions:
+#             for experiment in experiments:
                 
-                data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable]
+#                 data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable]
 
-                if scene_type == 'example':
-                    data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].isel(time=0)
+#                 if scene_type == 'example':
+#                     data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].isel(time=0)
                 
-                elif scene_type == 'experiment':
-                    data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].mean(dim=('time'),keep_attrs=True)
+#                 elif scene_type == 'experiment':
+#                     data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].mean(dim=('time'),keep_attrs=True)
 
-                elif scene_type == 'difference':
-                    data_historical = get_dsvariable(variable, dataset, resolution, experiment='historical')[variable].mean(dim=('time'))
-                    data_rcp85 = get_dsvariable(variable, dataset, resolution, experiment='rcp85')[variable].mean(dim=('time'))
+#                 elif scene_type == 'difference':
+#                     data_historical = get_dsvariable(variable, dataset, resolution, experiment='historical')[variable].mean(dim=('time'))
+#                     data_rcp85 = get_dsvariable(variable, dataset, resolution, experiment='rcp85')[variable].mean(dim=('time'))
 
-                    if variable != 'tas':
-                        tas_historical = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='historical')[variable].mean(dim=('time'))
-                        tas_rcp85 = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='rcp85')[variable].mean(dim=('time'))
-                        tas_difference = tas_rcp85 - tas_historical
-                        data = (data_rcp85 - data_historical)/(data_historical*tas_difference)
-                    else:
-                        data = (data_rcp85 - data_historical)/data_historical
-
-
-                    if timeMean_option[0] == 'difference':
-                        aWeights = np.cos(np.deg2rad(data_historical.lat))
-                        data = (data_rcp85.weighted(aWeights).mean(dim=('lat','lon')) - data_historical.weighted(aWeights).mean(dim=('lat','lon')))/data_historical.weighted(aWeights).mean(dim=('lat','lon'))
+#                     if variable != 'tas':
+#                         tas_historical = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='historical')[variable].mean(dim=('time'))
+#                         tas_rcp85 = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='rcp85')[variable].mean(dim=('time'))
+#                         tas_difference = tas_rcp85 - tas_historical
+#                         data = (data_rcp85 - data_historical)/(data_historical*tas_difference)
+#                     else:
+#                         data = (data_rcp85 - data_historical)/data_historical
 
 
-                if variable != 'tas' and len(np.shape(data))>2:
-                    aWeights = np.cos(np.deg2rad(data.lat))
-                    y= data.weighted(aWeights).mean(dim=('lat','lon'))
-                else:
-                    y= data
+#                     if timeMean_option[0] == 'difference':
+#                         aWeights = np.cos(np.deg2rad(data_historical.lat))
+#                         data = (data_rcp85.weighted(aWeights).mean(dim=('lat','lon')) - data_historical.weighted(aWeights).mean(dim=('lat','lon')))/data_historical.weighted(aWeights).mean(dim=('lat','lon'))
 
-                if timeMean_option[0] == 'experiment':
-                    y = y.mean(dim='time', keep_attrs=True)
 
-                if timeMean_option[0] == 'annual':
-                    y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
+#                 if variable != 'tas' and len(np.shape(data))>2:
+#                     aWeights = np.cos(np.deg2rad(data.lat))
+#                     y= data.weighted(aWeights).mean(dim=('lat','lon'))
+#                 else:
+#                     y= data
 
-                if timeMean_option[0] == 'seasonal':
-                    y = y.resample(time='QS-DEC').mean(dim="time")
-                    y = to_monthly(y)
-                    y = y.rename({'month':'season'})
-                    y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
-                    y = y.isel(year=slice(1, None))
+#                 if timeMean_option[0] == 'experiment':
+#                     y = y.mean(dim='time', keep_attrs=True)
 
-                if timeMean_option[0] == 'monthly':
-                    if variable == 'tas' and datasets[0] == 'FGOALS-g2':
-                        pass
-                    else:
-                        y = y.resample(time='M').mean(dim='time', keep_attrs=True)
+#                 if timeMean_option[0] == 'annual':
+#                     y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
 
-                if timeMean_option[0] == 'daily':
-                    y = y
+#                 if timeMean_option[0] == 'seasonal':
+#                     y = y.resample(time='QS-DEC').mean(dim="time")
+#                     y = to_monthly(y)
+#                     y = y.rename({'month':'season'})
+#                     y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
+#                     y = y.isel(year=slice(1, None))
+
+#                 if timeMean_option[0] == 'monthly':
+#                     if variable == 'tas' and datasets[0] == 'FGOALS-g2':
+#                         pass
+#                     else:
+#                         y = y.resample(time='M').mean(dim='time', keep_attrs=True)
+
+#                 if timeMean_option[0] == 'daily':
+#                     y = y
                 
-                vmin = np.append(vmin, np.quantile(y, quantile_low))
-                vmax = np.append(vmax, np.quantile(y, quantile_high))
+#                 vmin = np.append(vmin, np.quantile(y, quantile_low))
+#                 vmax = np.append(vmax, np.quantile(y, quantile_high))
 
-    vmin = np.min(vmin)
-    vmax = np.max(vmax)
+#     vmin = np.min(vmin)
+#     vmax = np.max(vmax)
 
-    return vmin, vmax
+#     return vmin, vmax
 
 
 

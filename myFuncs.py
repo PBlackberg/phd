@@ -11,16 +11,9 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
 
-def save_file(dataset, folder, fileName):
-    
-    os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + fileName
 
-    if os.path.exists(path):
-        os.remove(path)    
-    
-    dataset.to_netcdf(path)
 
+# -------------------------------------------------------------------------------------- plotfuncs -----------------------------------------------------------------------------------------
 
 def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=17.5 ,fig_height=8):
     projection = cartopy.crs.PlateCarree(central_longitude=180)
@@ -36,6 +29,27 @@ def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=17.5
     ax.set_xticklabels([0, 90, 180, 270, 360])
     ax.set_yticks([-20, 0, 20])
     plt.tight_layout()
+
+
+
+
+
+
+
+
+
+# ----------------------------------------------------------------------------------- common operations -----------------------------------------------------------------------------------
+
+
+def save_file(dataset, folder, fileName):
+    
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
+
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataset.to_netcdf(path)
 
 
 
@@ -55,10 +69,7 @@ def to_monthly(da):
 
 
 
-
-
-
-
+# ------------------------------------------------------------------------------------- bigger functions -------------------------------------------------------------------------------------
 
 def regrid_conserv(M_in):
     # dimensions of model to regrid to
