@@ -71,6 +71,7 @@ def to_monthly(da):
 
 # ------------------------------------------------------------------------------------- bigger functions -------------------------------------------------------------------------------------
 
+
 def regrid_conserv(M_in):
     # dimensions of model to regrid to
     folder1 = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
@@ -203,7 +204,6 @@ def regrid_conserv(M_in):
     M_n = M_n.rename({'lat_n': 'lat', 'lon_n': 'lon'})
     
     return M_n
-
 
 
 

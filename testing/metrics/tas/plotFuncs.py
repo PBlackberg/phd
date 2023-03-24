@@ -140,24 +140,8 @@ def plot_boxplot(y, title='', ylabel='', ax=''):
 
 
 
-def plot_bins(x,y, ax):    
-    bin_width = (x.max() - x.min())/100
-    bin_end = x.max()
-    bins = np.arange(0, bin_end+bin_width, bin_width)
-
-    y_bins = []
-    for i in np.arange(0,len(bins)-1):
-        y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
-    ax.plot(bins[:-1], y_bins, 'k')
 
 
-
-
-def plot_scatter(ax, x,y):
-    plt.scatter(x,y,facecolors='none', edgecolor='k')
-    res= stats.pearsonr(x,y)
-    if res[1]<=0.05:
-        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction') # xy=(0.2, 0.1), xytext=(0.05, 0.875)
 
 
 
@@ -234,11 +218,11 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
 def get_metric(metric, dataset, experiment='historical', home=home, resolution='regridded'):
 
     if resolution == 'regridded':
-        folder_model = '{}/Documents/data/CMIP5/metrics_cmip5/{}'.format(home,dataset)
+        folder_model = '{}/Documents/data/CMIP5/metric_cmip5/{}'.format(home,dataset)
         fileName_model = dataset + '_' + metric + '_' + experiment + '.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = home + '/Documents/data/obs/metrics_obs/' + dataset
+        folder_obs = home + '/Documents/data/obs/metric_obs/' + dataset
         fileName_obs = dataset + '_' + metric + '.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
@@ -251,11 +235,11 @@ def get_metric(metric, dataset, experiment='historical', home=home, resolution='
                 print(f"Error: no file at {path1} or {path2}")
 
     if resolution == 'original':
-        folder_model = '{}/Documents/data/CMIP5/metrics_cmip5_orig/{}'.format(home,dataset)
+        folder_model = '{}/Documents/data/CMIP5/metric_cmip5_orig/{}'.format(home,dataset)
         fileName_model = dataset + '_' + metric + '_'+ experiment+ '_orig.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = '{}/Documents/data/obs/metrics_obs_orig/{}'.format(home,dataset)
+        folder_obs = '{}/Documents/data/obs/metric_obs_orig/{}'.format(home,dataset)
         fileName_obs = dataset + '_' + metric + '_orig.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 

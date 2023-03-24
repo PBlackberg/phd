@@ -341,7 +341,7 @@ if __name__ == '__main__':
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
-        # 'CCSM4',        # 6
+        'CCSM4',        # 6
         # 'HadGEM2-AO',   # 7
         # 'BNU-ESM',      # 8
         # 'EC-EARTH',     # 9
@@ -358,13 +358,13 @@ if __name__ == '__main__':
         ]
     
     experiments = [
-        'historical',
-        # 'rcp85'
+        # 'historical',
+        'rcp85'
         ]
     
 
     observations = [
-        'GPCP',
+        # 'GPCP',
         # 'IMERG'
         ]
     original_resolution = False
@@ -378,7 +378,11 @@ if __name__ == '__main__':
             print(experiment, 'started') 
 
             # precip = get_pr(institutes[model], model, experiment).precip
-            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds/' + model + '/' + model + '_precip_' + experiment + '.nc')['precip']
+
+            folder_model = '{}/Documents/data/CMIP5/ds_cmip5/{}'.format(home, model)
+            fileName_model = model + '_precip_' + experiment + '.nc'
+            path = os.path.join(folder_model, fileName_model)
+            precip = xr.open_dataset(path)['precip']
             
             quantile_threshold = 0.97
             conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
@@ -388,19 +392,19 @@ if __name__ == '__main__':
             print('rome finished')
             rome_n = calc_rome_n(n, precip, conv_threshold)
             print('rome_n finished')
-            ds_numberIndex = calc_numberIndex(precip, conv_threshold)
-            print('numberIndex finished')
-            ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
-            print('oAreaAndPr finished')
+            # ds_numberIndex = calc_numberIndex(precip, conv_threshold)
+            # print('numberIndex finished')
+            # ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
+            # print('oAreaAndPr finished')
 
 
-            save_rome = False
-            save_rome_n = False
+            save_rome = True
+            save_rome_n = True
             save_numberIndex = False
             save_oAreaAndPr = False
 
-            # folder = '/g/data/k10/cb4968/data/cmip5/'+ model
-            folder_save = home + '/Documents/data/cmip5/' + model
+            # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ model
+            folder_save = home + '/Documents/data/cmip5/metrics_cmip5/' + model
 
             if save_rome and save_rome_n:
                 fileName = model + '_rome_' + experiment + '.nc'              
@@ -452,10 +456,10 @@ if __name__ == '__main__':
         print('oAreaAndPr finished')
 
 
-        save_rome = True
-        save_rome_n = True
-        save_numberIndex = True
-        save_oAreaAndPr = True
+        save_rome = False
+        save_rome_n = False
+        save_numberIndex = False
+        save_oAreaAndPr = False
 
         # folder_save = '/g/data/k10/cb4968/data/obs/'+ obs
         folder_save = home + '/Documents/data/obs/' + obs

@@ -68,7 +68,10 @@ def plot_timeseries(y, timeMean_option=[''], title='', ax='', ymin=None, ymax=No
         ax.plot(y, label = y.season.values)
 
     if timeMean_option[0] == 'monthly':
-        y = y.resample(time='M').mean(dim='time', keep_attrs=True)
+        if len(y)<1000:
+            pass
+        else:
+            y = y.resample(time='M').mean(dim='time', keep_attrs=True)
 
         ax.plot(y)
         ax.axhline(y=y.mean(dim='time'), color='k')
@@ -140,24 +143,8 @@ def plot_boxplot(y, title='', ylabel='', ax=''):
 
 
 
-def plot_bins(x,y, ax):    
-    bin_width = (x.max() - x.min())/100
-    bin_end = x.max()
-    bins = np.arange(0, bin_end+bin_width, bin_width)
-
-    y_bins = []
-    for i in np.arange(0,len(bins)-1):
-        y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
-    ax.plot(bins[:-1], y_bins, 'k')
 
 
-
-
-def plot_scatter(ax, x,y):
-    plt.scatter(x,y,facecolors='none', edgecolor='k')
-    res= stats.pearsonr(x,y)
-    if res[1]<=0.05:
-        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction') # xy=(0.2, 0.1), xytext=(0.05, 0.875)
 
 
 
