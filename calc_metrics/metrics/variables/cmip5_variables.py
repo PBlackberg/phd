@@ -292,8 +292,7 @@ def get_clouds(institute, model, experiment):
             pressureLevels = ds.a*ds.p0 + ds.b*ds.ps
         pressureLevels_n = regridder(pressureLevels)
 
-        # (further, interpolate to 19 pressure levels and ) find maximum cloud fraction for low and high cloud regimes
-        pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0)
+        pressureLevels_low = xr.where((pressureLevels_n<=10000e2) & (pressureLevels_n>=600), 1, 0) # needs to be hPa
         cloud_low = clouds_n*pressureLevels_low
         cloud_low = cloud_low.max(dim='lev')
         cloud_low.attrs['units'] = '%'

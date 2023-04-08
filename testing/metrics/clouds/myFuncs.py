@@ -15,20 +15,20 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 # -------------------------------------------------------------------------------------- plotfuncs -----------------------------------------------------------------------------------------
 
-def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=17.5 ,fig_height=8):
-    projection = cartopy.crs.PlateCarree(central_longitude=180)
-    lat = scene.lat
-    lon = scene.lon
+# def plot_scene(scene, cmap='Reds', title='', vmin=None, vmax=None,fig_width=17.5 ,fig_height=8):
+#     projection = cartopy.crs.PlateCarree(central_longitude=180)
+#     lat = scene.lat
+#     lon = scene.lon
 
-    f, ax = plt.subplots(subplot_kw=dict(projection=projection), figsize=(fig_width, fig_height))
-    scene.plot(transform=cartopy.crs.PlateCarree(), cbar_kwargs={'orientation': 'horizontal','pad':0.125, 'aspect':50,'fraction':0.055}, cmap=cmap, vmin=vmin, vmax=vmax)
-    ax.add_feature(cartopy.feature.COASTLINE)
-    ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=cartopy.crs.PlateCarree())
-    ax.set_title(title)
-    ax.set_xticks([-180, -90, 0, 90, 180])
-    ax.set_xticklabels([0, 90, 180, 270, 360])
-    ax.set_yticks([-20, 0, 20])
-    plt.tight_layout()
+#     f, ax = plt.subplots(subplot_kw=dict(projection=projection), figsize=(fig_width, fig_height))
+#     scene.plot(transform=cartopy.crs.PlateCarree(), cbar_kwargs={'orientation': 'horizontal','pad':0.125, 'aspect':50,'fraction':0.055}, cmap=cmap, vmin=vmin, vmax=vmax)
+#     ax.add_feature(cartopy.feature.COASTLINE)
+#     ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=cartopy.crs.PlateCarree())
+#     ax.set_title(title)
+#     ax.set_xticks([-180, -90, 0, 90, 180])
+#     ax.set_xticklabels([0, 90, 180, 270, 360])
+#     ax.set_yticks([-20, 0, 20])
+#     plt.tight_layout()
 
 
 
@@ -154,9 +154,9 @@ def regrid_conserv(M_in):
         )
 
     # interpolation
-    if ('plev' or 'lev') in M_in.dims:
-        if 'lev' in M_in.dims:
-            M_n = M_n.rename({'lev': 'plev'})
+    if 'lev' in M_in.dims:
+        # if 'lev' in M_in.dims:
+        M_in = M_in.rename({'lev': 'plev'})
 
         M_n = xr.DataArray(
             data = np.zeros([len(M_in.time.data), len(M_in.plev.data), len(lat_n), len(lon_n)]),
