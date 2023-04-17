@@ -3,7 +3,7 @@ import xarray as xr
 import skimage.measure as skm
 import timeit
 import os
-# from var_funcs.cmip5Vars import *
+# from get_varuables.cmip5Vars import *
 from os.path import expanduser
 home = expanduser("~")
 
@@ -337,11 +337,11 @@ if __name__ == '__main__':
     
     models = [
         # 'IPSL-CM5A-MR', # 1
-        # 'GFDL-CM3',     # 2
+        'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
-        'CCSM4',        # 6
+        # 'CCSM4',        # 6
         # 'HadGEM2-AO',   # 7
         # 'BNU-ESM',      # 8
         # 'EC-EARTH',     # 9
@@ -358,8 +358,8 @@ if __name__ == '__main__':
         ]
     
     experiments = [
-        # 'historical',
-        'rcp85'
+        'historical',
+        # 'rcp85'
         ]
     
 
@@ -388,7 +388,7 @@ if __name__ == '__main__':
             conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
 
-            rome = calc_rome(precip, conv_threshold)
+            rome = calc_rome(precip.isel(time=slice(0,20)), conv_threshold)
             print('rome finished')
             rome_n = calc_rome_n(n, precip, conv_threshold)
             print('rome_n finished')
