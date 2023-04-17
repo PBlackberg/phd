@@ -15,7 +15,7 @@ home = os.path.expanduser("~")
 
 
 
-# --------------------------------------------------------------------------------- basic plot functions ----------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------- basic plot functions --------------------------------------------------------------------------------------------------------------- #
 
 def plot_scene(scene, cmap='Reds', zorder= 0, title='', ax='', vmin=None, vmax=None, fig_width=17.5, fig_height=8):
     projection = cartopy.crs.PlateCarree(central_longitude=180)
@@ -153,7 +153,16 @@ def plot_scatter(x,y,ax):
 
 
 
-# ------------------------------------------------------------------------------------- common operations functions ------------------------------------------------------------------------------------- #
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------------- common operations functions --------------------------------------------------------------------------------------------------- #
 
 
 def to_monthly(da):
@@ -398,7 +407,14 @@ def regrid_conserv(M_in):
 
 
 
+def save_file(dataset, folder, fileName):
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + fileName
 
+    if os.path.exists(path):
+        os.remove(path)    
+    
+    dataset.to_netcdf(path)
 
 
 

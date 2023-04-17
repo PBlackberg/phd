@@ -48,38 +48,16 @@ def plot_scene(scene, cmap='Reds', zorder= 0, title='', ax='', vmin=None, vmax=N
 
 
 
-def plot_timeseries(y, timeMean_option=[''], title='', ax='', ymin=None, ymax=None, fig_width=20, fig_height=5):
+def plot_timeseries(y, timeMean_option='', title='', ax='', ymin=None, ymax=None, fig_width=20, fig_height=5):
 
     if not ax:
         f, ax = plt.subplots(figsize=(fig_width, fig_height))
 
-    if timeMean_option[0] == 'annual':
-        y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
-
-        ax.plot(y)
-        ax.axhline(y=y.mean(dim='time'), color='k')
-
-    if timeMean_option[0] == 'seasonal':
-        y = y.resample(time='QS-DEC').mean(dim="time")
-        y = to_monthly(y)
-        y = y.rename({'month':'season'})
-        y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
-        y = y.isel(year=slice(1, None))
-
+    if timeMean_option == 'seasonal':
         ax.plot(y, label = y.season.values)
-
-    if timeMean_option[0] == 'monthly':
-        if len(y)<1000:
-            pass
-        else:
-            y = y.resample(time='M').mean(dim='time', keep_attrs=True)
-
+    else:
         ax.plot(y)
-        ax.axhline(y=y.mean(dim='time'), color='k')
-
-    if timeMean_option[0] == 'daily' or not timeMean_option[0]:
-        ax.plot(y)
-        ax.axhline(y=y.mean(dim='time'), color='k')
+        ax.axhline(y=y.mean(dim='time'), color= 'k',  linestyle="--")
     
     ax.set_title(title)
     ax.set_ylim([ymin, ymax])
@@ -122,7 +100,6 @@ def plot_bar(y, timeMean_option=[''], title='', ax='', ymin=None, ymax=None, fig
 
 
 
-
 def plot_boxplot(y, title='', ylabel='', ax=''):
 
     if not ax:
@@ -142,7 +119,6 @@ def plot_boxplot(y, title='', ylabel='', ax=''):
     sns.despine(top=True, right=True, left=False, bottom=True)
 
 
-
 def plot_scatter(x,y,ax):
     ax.scatter(x,y,facecolors='none', edgecolor='k')
     res= stats.pearsonr(x,y)
@@ -150,10 +126,15 @@ def plot_scatter(x,y,ax):
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction') # xy=(0.2, 0.1), xytext=(0.05, 0.875)
 
 
+def plot_bins(x,y, ax):    
+    bin_width = (x.max() - x.min())/100
+    bin_end = x.max()
+    bins = np.arange(0, bin_end+bin_width, bin_width)
 
-
-
-
+    y_bins = []
+    for i in np.arange(0,len(bins)-1):
+        y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
+    ax.plot(bins[:-1], y_bins, 'k')
 
 
 
@@ -419,9 +400,31 @@ def save_file(dataset, folder, fileName):
 
 
 
+def resample_timeMean(y, timeMean_option=''):
 
+    if timeMean_option == 'annual':
+        if len(y)<100:
+            pass
+        else:
+            y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
 
+    if timeMean_option == 'seasonal':
+        y = y.resample(time='QS-DEC').mean(dim="time")
+        y = to_monthly(y)
+        y = y.rename({'month':'season'})
+        y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
+        y = y.isel(year=slice(1, None))
 
+    if timeMean_option == 'monthly':
+        if len(y)<1000:
+            pass
+        else:
+            y = y.resample(time='M').mean(dim='time', keep_attrs=True)
+
+    if timeMean_option == 'daily' or not timeMean_option:
+        pass
+
+    return y
 
 
 
