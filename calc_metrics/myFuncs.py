@@ -119,14 +119,14 @@ def plot_boxplot(y, title='', ylabel='', ax=''):
     sns.despine(top=True, right=True, left=False, bottom=True)
 
 
-def plot_scatter(x,y,ax):
-    ax.scatter(x,y,facecolors='none', edgecolor='k')
+def plot_scatter(x,y,ax, color='k'):
+    ax.scatter(x,y,facecolors='none', edgecolor=color)
     res= stats.pearsonr(x,y)
     if res[1]<=0.05:
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction') # xy=(0.2, 0.1), xytext=(0.05, 0.875)
 
 
-def plot_bins(x,y, ax):    
+def plot_bins(x,y, ax, color='k'):    
     bin_width = (x.max() - x.min())/100
     bin_end = x.max()
     bins = np.arange(0, bin_end+bin_width, bin_width)
@@ -134,8 +134,11 @@ def plot_bins(x,y, ax):
     y_bins = []
     for i in np.arange(0,len(bins)-1):
         y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
-    ax.plot(bins[:-1], y_bins, 'k')
+    ax.plot(bins[:-1], y_bins, color)
 
+    res= stats.pearsonr(x,y)
+    if res[1]<=0.05:
+        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction')
 
 
 

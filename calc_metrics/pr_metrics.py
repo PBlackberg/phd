@@ -1,9 +1,7 @@
 import xarray as xr
 import os
-# from var_funcs.cmip5Vars import *
-from os.path import expanduser
-home = expanduser("~")
-
+# from get_variables.cmip5_variables import *
+home = os.path .expanduser("~")
 
 def calc_rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
@@ -19,8 +17,6 @@ def calc_rxday(precip):
         )
     
     return ds_rxday
-
-
 
 def calc_pr_percentiles(precip):
 
@@ -67,9 +63,51 @@ def calc_pr_percentiles(precip):
     return ds_prPercentiles
 
 
+def calc_prMean_percentiles(precip):
+
+    pr95 = precip.quantile(0.95,dim=('lat','lon'),keep_attrs=True)
+    mask = xr.where(precip>= pr95, 1, 0)
+    prMean95 = (precip*mask).mean(dim=('lat', 'lon'))
+    prMean95 = xr.DataArray(
+        data = prMean95.data,
+        dims = ['time'],
+        coords = {'time': precip.time.data}, 
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
+        )
+
+    pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True)
+    mask = xr.where(precip>= pr97, 1, 0)
+    prMean97 = (precip*mask).mean(dim=('lat', 'lon'))
+    prMean97 = xr.DataArray(
+        data = prMean97.data,
+        dims = ['time'],
+        coords = {'time': precip.time.data}, 
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
+        )
+
+    pr99 = precip.quantile(0.99,dim=('lat','lon'),keep_attrs=True)
+    mask = xr.where(precip>= pr99, 1, 0)
+    prMean99 = (precip*mask).mean(dim=('lat', 'lon'))
+    prMean99 = xr.DataArray(
+        data = prMean99.data,
+        dims = ['time'],
+        coords = {'time': precip.time.data}, 
+        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
+        )
+
+    ds_prPercentiles = xr.Dataset(
+        data_vars = {'prMean95': prMean95, 
+                     'prMean97': prMean97, 
+                     'prMean99': prMean99}
+        ) 
+
+    return ds_prPercentiles
+
+
 
 def F_pr10(precip):
-    F_pr10 = ((precip>10)*1).sum(dim=('lat','lon'))
+    mask = xr.where(precip>10,1,0)
+    F_pr10 = (mask).sum(dim=('lat','lon'))
     F_pr10.attrs['units'] = 'Nb'
 
     ds_F_pr10 = xr.Dataset(
@@ -116,16 +154,23 @@ if __name__ == '__main__':
             # 'CESM1-BGC'     # 19
             ]
     
-    experiments = [
-                'historical',
-                # 'rcp85'
-                ]
-    
     observations = [
         'GPCP'
         ]
-    original_resolution = True
+    
+    datasets = models + observations
 
+
+    resolutions = [
+        # 'original',
+        'regridded'
+        ]
+    
+    experiments = [
+        'historical',
+        # 'rcp85'
+        ]
+    
     institutes = {
         'IPSL-CM5A-MR':'IPSL',
         'GFDL-CM3':'NOAA-GFDL',
@@ -149,84 +194,64 @@ if __name__ == '__main__':
         }
 
 
-    for model in models:
+    for dataset in datasets:
         for experiment in experiments:
 
-            # precip = get_pr(institutes[model], model, experiment).precip
-            precip = xr.open_dataset(home + '/Documents/data/cmip5/ds/' + model + '/' + model + '_precip_' + experiment + '.nc')['precip']
+            if dataset == 'GPCP':
+                # precip = get_GPCP(institutes[model], model, experiment).precip
+                precip = get_dsvariable('precip', dataset, experiment)
+            else:
+                # precip = get_pr(institutes[model], model, experiment).precip
+                precip = get_dsvariable('precip', dataset, experiment)
+
 
             ds_rxday = calc_rxday(precip)
             ds_prPercentiles = calc_pr_percentiles(precip)
+            ds_prMeanPercentiles = calc_prMean_percentiles(precip)
             ds_F_pr10 = F_pr10(precip)
+
 
 
             save_rxday = False
             save_prPercentiles = False
+            save_prMeanPercentiles = False
             save_F_pr10 = False
 
-            folder_save = '/g/data/k10/cb4968/data/cmip5/'+ model
+
+            if dataset == 'GPCP':
+                # folder_save = '/g/data/k10/cb4968/data/obs/'+ dataset
+                folder_save = home + '/Documents/data/obs/' + dataset
+
+            else:
+                # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ dataset
+                folder_save = home + '/Documents/data/cmip5/' + dataset
+
 
             if save_rxday:
-                fileName = model + '_rxday_' + experiment + '.nc'
+                fileName = dataset + '_rxday_' + experiment + '.nc'
                 dataSet = ds_rxday
                 save_file(dataSet, folder_save, fileName)
 
             if save_prPercentiles:
-                fileName = model + '_prPercentiles_' + experiment + '.nc'
+                fileName = dataset + '_prPercentiles_' + experiment + '.nc'
                 dataSet = ds_prPercentiles
                 save_file(dataSet, folder_save, fileName)
 
+            if save_prMeanPercentiles:
+                fileName = dataset + '_prMeanPercentiles_' + experiment + '.nc'
+                dataSet = ds_prMeanPercentiles
+                save_file(dataSet, folder_save, fileName)
 
             if save_F_pr10 :
-                fileName = model + '_F_pr10_' + experiment + '.nc'
+                fileName = dataset + '_F_pr10_' + experiment + '.nc'
                 dataSet = ds_F_pr10
                 save_file(dataSet, folder_save, fileName)
 
 
 
 
-    for obs in observations:
-        
-        # precip = get_gpcp()['precip']
-        folder = home + '/Documents/data/obs/ds/'
-        fileName = obs + '_precip_.nc'
-        if original_resolution:
-            fileName = obs + '_precip_orig.nc'
-        path = folder + '/' + fileName
-        precip = xr.open_dataset(path)['precip']
-
-        ds_rxday = calc_rxday(precip)
-        ds_prPercentiles = calc_pr_percentiles(precip)
-        ds_F_pr10 = F_pr10(precip)
 
 
-        save_rxday = False
-        save_prPercentiles = False
-        save_F_pr10 = False
-
-        # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ model
-        folder_save = home + '/Documents/data/obs/' + obs
-        if original_resolution:
-            folder_save = home + '/Documents/data/obs/' + obs + '_orig'
-
-
-        if save_rxday:
-            fileName = obs + '_rxday.nc'
-            if original_resolution:
-                fileName = obs + '_rxday_orig.nc'
-            save_file(ds_rxday, folder_save, fileName)
-
-        if save_prPercentiles:
-            fileName = obs + '_prPercentiles.nc'
-            if original_resolution:
-                fileName = obs + '_prPercentiles_orig.nc'
-            save_file(ds_prPercentiles, folder_save, fileName)
-
-        if save_F_pr10 :
-            fileName = obs + '_F_pr10.nc'
-            if original_resolution:
-                fileName = obs + '_F_pr10_orig.nc'
-            save_file(ds_F_pr10, folder_save, fileName)
 
 
 

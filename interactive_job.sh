@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l ncpus=1
-#PBS -l mem=25GB 
+#PBS -l mem=10GB 
 #PBS -q normal         
 #PBS -P k10
 #PBS -l walltime=01:00:00
@@ -10,15 +10,15 @@
 #PBS -I
 
 module use /g/data/hh5/public/modules
-module load conda/analysis3-22.10
-python /g/data/k10/cb4968/phd/metrics/funcs/vars/cmip5Vars.py $PBS_NCPUS 
+module load conda/analysis3-unstable
+python /g/data/k10/cb4968/phd/test.py $PBS_NCPUS 
 
 
 # submitting job: 
-# qsub /g/data/k10/cb4968/phd/bash/interactive_job.sh 
+# qsub /g/data/k10/cb4968/phd/interactive_job.sh 
 
 # in ipython, run scripts from: 
-# cd /g/data/k10/cb4968/phd/metrics/funcs/vars
+# cd /g/data/k10/cb4968/phd/
 
 
 # check status: 
