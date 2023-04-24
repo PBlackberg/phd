@@ -11,32 +11,50 @@ import scipy
 def data_exist(dataset, experiment, variable):
     data_exist = 'yes'
 
+    if dataset == 'GPCP' and not variable == 'pr':
+        data_exist = 'no'
+
+    if variable == 'hus':
+        if model == 'CESM1-BGC':
+            data_exist = 'no'
+        if (model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85':
+            data_exist = 'no'
+    
+    if variable == 'hur':
+        if model == 'EC-EARTH' and experiment == 'rcp85':
+            data_exist = 'no'
+
+    if variable == 'wap':
+        if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC' or model == 'EC-EARTH':
+            data_exist = 'no'
+        if model == 'bcc-csm1-1' and experiment=='rcp85':
+            data_exist = 'no'
+
+    if variable == 'cl':
+        if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
+            data_exist = 'no'
+        if (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
+            data_exist = 'no'
     return data_exist
 
 
 def choose_ensemble(model, experiment, variable):
-    ensemble = 'r1i1p1f1'
-    
-    if model == 'CNRM-CM6-1' or model =='UKESM1-0-LL':
-        ensemble = 'r1i1p1f2'
+    ensemble = 'r1i1p1'
 
+    if variable == 'pr' or variable == 'tas':
+        if model == 'GISS-E2-H' and experiment == 'historical':
+            ensemble = 'r6i1p1'
+        if model == 'GISS-E2-H' and experiment == 'rcp85':
+            ensemble = 'r2i1p1'
+        if model == 'EC-EARTH':
+            ensemble = 'r6i1p1'
+        if model == 'CCSM4':
+            ensemble = 'r6i1p1'
     return ensemble
 
 
-def last_letters(model, experiment, variable):
-    folder = 'gn'
-
-    if model == 'CNRM-CM6-1':
-        folder = 'gr'
-
-    if model == 'GFDL-CM4':
-        folder = 'gr2'
-        
-    return folder
-
-
-def pick_latestVersion(path_gen):
-    versions = os.listdir(path_gen)
+def pick_latestVersion(path_gen, ensemble):
+    versions = os.listdir(os.path.join(path_gen, ensemble))
     if len(versions)>1:
         version = max(versions, key=lambda x: int(x[1:]))
     else:
@@ -44,40 +62,22 @@ def pick_latestVersion(path_gen):
     return version
 
 
-def rcp_years(model):
-    yearEnd_first = 1970
-    yearStart_last = 1999
-    
-    if model == 'FGOALS-g3':
-        yearEnd_first = 470
-        yearStart_last = 499
-    
-    if model == 'NorESM2-MM' or model == 'GFDL-CM4' or  model =='CESM2':
-        yearEnd_first = 470
-        yearStart_last = 499
-        
-    if model == 'MIROC6':
-        yearEnd_first = 3270
-        yearStart_last = 3399
-        
-    return str(yearEnd_first), str(yearStart_last)
-    
-    
 def concat_files(path_folder, experiment):
     if experiment == 'historical':
         yearEnd_first = 1970
         yearStart_last = 1999
 
-    if experiment == 'abrupt-4xCO2':
-        yearEnd_first, yearStart_last = rcp_years(model)
+    if experiment == 'rcp85':
+        yearEnd_first = 2070
+        yearStart_last = 2099
 
     files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
     if 'Amon' in path_folder:
         files = sorted(files, key=lambda x: x[x.index(".nc")-13:x.index(".nc")-9])
-        files = [f for f in files if int(f[f.index(".nc")-13:f.index(".nc")-9]) <= int(yearStart_last) and int(f[f.index(".nc")-6:f.index(".nc")-2]) >= int(yearEnd_first)]
+        files = [f for f in files if int(f[f.index(".nc")-13:f.index(".nc")-9]) <= yearStart_last and int(f[f.index(".nc")-6:f.index(".nc")-2]) >= yearEnd_first]
     else:
         files = sorted(files, key=lambda x: x[x.index(".nc")-17:x.index(".nc")-13])
-        files = [f for f in files if int(f[f.index(".nc")-17:f.index(".nc")-13]) <= int(yearStart_last) and int(f[f.index(".nc")-8:f.index(".nc")-4]) >= int(yearEnd_first)]
+        files = [f for f in files if int(f[f.index(".nc")-17:f.index(".nc")-13]) <= yearStart_last and int(f[f.index(".nc")-8:f.index(".nc")-4]) >= yearEnd_first]
 
         for f in files:
             if int(f[f.index(".nc")-17:f.index(".nc")-9])==19790101 and int(f[f.index(".nc")-8:f.index(".nc")])==20051231:
@@ -112,18 +112,17 @@ def save_file(dataset, folder, fileName):
 # -------------------------------------------------------------------------------- get variable -------------------------------------------------------------------------------
 
 def get_pr(institute, model, experiment, resolution):
+    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     variable = 'pr'
+
     if data_exist(model, experiment, variable) == 'no':
         ds_pr = xr.Dataset(
             data_vars = {'precip': np.nan}
             )
     else:
         ensemble = choose_ensemble(model, experiment, variable)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/pr'.format(institute, model, experiment, ensemble)
-        
-        cmip6_feature = last_letters(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
-        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+        version = pick_latestVersion(path_gen, ensemble)
+        path_folder =  os.path.join(path_gen, ensemble, version, variable)
 
         ds = concat_files(path_folder, experiment) # picks out lat: -35, 35
 
@@ -343,93 +342,80 @@ def get_cl(institute, model, experiment, resolution):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    
     models = [
-        # 'TaiESM1',        # 1 # rcp monthly
-        # 'BCC-CSM2-MR',    # 2 # rcp monthly   
-        'FGOALS-g3',        # 3 # rcp 0463 - 0614
-        'CNRM-CM6-1',     # 4 # rcp 1850-1999
-        'MIROC6',         # 5 # rcp 3200 - 3340
-        'MPI-ESM1-2-HR',  # 6 # rcp 1850 - 2014
-        'NorESM2-MM',     # 7 # rcp 0001 - 0141
-        'GFDL-CM4',       # 8 # rcp 0001 - 0141 (gr2)
-        'CanESM5',        # 9 # rcp 1850 - 2000
-        # 'CMCC-ESM2',      # 10 # rcp monthly
-        'UKESM1-0-LL',    # 11 # rcp 1850 - 1999
-        'MRI-ESM2-0',     # 12 # rcp 1850 - 2000
-        'CESM2',          # 13 # rcp 0001 - 0990  (multiple fill values (check if all get converted to NaN), for historical)
-        'NESM3',          # 12 # rcp 1850-2014
+            # 'IPSL-CM5A-MR', # 1
+            'GFDL-CM3',     # 2
+            # 'GISS-E2-H',    # 3
+            # 'bcc-csm1-1',   # 4
+            # 'CNRM-CM5',     # 5
+            # 'CCSM4',        # 6
+            # 'HadGEM2-AO',   # 7
+            # 'BNU-ESM',      # 8
+            # 'EC-EARTH',     # 9
+            # 'FGOALS-g2',    # 10
+            # 'MPI-ESM-MR',   # 11
+            # 'CMCC-CM',      # 12
+            # 'inmcm4',       # 13
+            # 'NorESM1-M',    # 14
+            # 'CanESM2',      # 15 
+            # 'MIROC5',       # 16
+            # 'HadGEM2-CC',   # 17
+            # 'MRI-CGCM3',    # 18
+            # 'CESM1-BGC'     # 19
             ]
 
 
     resolutions = [
-        'original',
-        # 'regridded'
+        # 'original',
+        'regridded'
         ]
-
+    
     experiments = [
-                # 'historical',
-                'abrupt-4xCO2'
+                'historical',
+                # 'rcp85'
                 ]
-
+    
     institutes = {
-        'TaiESM1':'AS-RCEC',
-        'BCC-CSM2-MR':'BCC',
-        'FGOALS-g3':'CAS',
-        'CNRM-CM6-1':'CNRM-CERFACS',
-        'MIROC6':'MIROC',
-        'MPI-ESM1-2-HR':'MPI-M',
-        'GISS-E2-1-H':'NASA-GISS',
-        'NorESM2-MM':'NCC',
-        'GFDL-CM4':'NOAA-GFDL',
-        'CanESM5':'CCCma',
-        'CMCC-ESM2':'CMCC',
-        'UKESM1-0-LL':'MOHC',
-        'MRI-ESM2-0':'MRI',
-        'CESM2':'NCAR',
-        'NESM3':'NUIST'
+        'IPSL-CM5A-MR':'IPSL',
+        'GFDL-CM3':'NOAA-GFDL',
+        'GISS-E2-H':'NASA-GISS',
+        'bcc-csm1-1':'BCC',
+        'CNRM-CM5':'CNRM-CERFACS',
+        'CCSM4':'NCAR',
+        'HadGEM2-AO':'NIMR-KMA',
+        'BNU-ESM':'BNU',
+        'EC-EARTH':'ICHEC',
+        'FGOALS-g2':'LASG-CESS',
+        'MPI-ESM-MR':'MPI-M',
+        'CMCC-CM':'CMCC',
+        'inmcm4':'INM',
+        'NorESM1-M':'NCC',
+        'CanESM2':'CCCma',
+        'MIROC5':'MIROC',
+        'HadGEM2-CC':'MOHC',
+        'MRI-CGCM3':'MRI',
+        'CESM1-BGC':'NSF-DOE-NCAR'
         }
 
-
-    # not included:
-    # 'IITM-ESM':'CCCR-IITM'
-    # 'EC-Earth3':'EC-Earth-Consortium'
-    # 'HAMMOZ-Consortium':'MPI-ESM-1-2-HAM'
-    # 'IPSL-CM6A-LR':'IPSL'
-    # 'GISS-E2-1-H':'NASA-GISS' (only monthly for all variables)
-    # 'SNU':'SAM0-UNICON'
-    # 'MCM-UA-1-0':UA
-    # 'AWI-CM-1-1-MR':AWI
-    # 'CAMS-CSM1-0':'CAMS'
-    # 'E3SM-1-0':'E3SM-Project'
-    # 'FIO-ESM-2-0':'FIO-QLNM'
-    # 'INM-CM5-0':'INM'
-    # 'KIOST-ESM':'KIOST'
-    # 'KACE-1-0-G':'NIMS-KMA' (this institute has data for UKESM1-0-LL which is already included from a different institute)
-    # 'CIESM':'THU'
-    
-
-
     for model in models:
-        print(model)
         for experiment in experiments:
 
             ds_pr = get_pr(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
     
 
-            save_pr = True
+            save_pr = False
             save_tas = False
             save_hus = False
             save_hur = False
             save_wap = False
             save_cl = False
             
-            folder = '/g/data/k10/cb4968/data/cmip6/ds/precip'
+            folder = '/g/data/k10/cb4968/data/cmip5/ds/'
             
             if save_pr:
                 fileName = model + '_precip_' + experiment + '.nc'
@@ -457,64 +443,6 @@ if __name__ == '__main__':
                 
                 fileName = model + '_p_hybridsigma_' + experiment + '.nc'
                 save_file(ds_p_hybridsigma, folder, fileName)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
