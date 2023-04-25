@@ -188,7 +188,7 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
         fileName_obs = dataset + '_' + variable + '.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_raw/{}'.format(home,dataset)
+        folder_model = '{}/Documents/data/CMIP6/ds_cmip6/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
@@ -198,11 +198,10 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
             try:
                 ds = xr.open_dataset(path2)
             except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
                 try:
                     ds = xr.open_dataset(path3)
                 except FileNotFoundError:
-                    print(f"Error: no file at {path1} or {path2} or {path3}")
+                    print(f"Error: no file at {path1}, {path2}, or {path3}")
 
     if resolution == 'original':
         folder_model = '{}/Documents/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
@@ -213,8 +212,8 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
         fileName_obs = dataset + '_' + variable + '_orig.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_raw/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_' + experiment + '_orig.nc'
+        folder_model = '{}/Documents/data/CMIP6/ds_cmip6_orig/{}'.format(home,dataset)
+        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
         try:
@@ -223,11 +222,10 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
             try:
                 ds = xr.open_dataset(path2)
             except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
                 try:
                     ds = xr.open_dataset(path3)
                 except FileNotFoundError:
-                    print(f"Error: no file at {path1} or {path2} or {path3}")
+                    print(f"Error: no file at {path1}, {path2} or {path3}")
     return ds
 
                         
