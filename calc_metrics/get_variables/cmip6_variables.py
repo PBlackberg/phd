@@ -49,12 +49,12 @@ def rcp_years(model):
     yearStart_last = 1999
     
     if model == 'FGOALS-g3':
-        yearEnd_first = 470
-        yearStart_last = 499
+        yearEnd_first = '0470'
+        yearStart_last = '0499'
     
     if model == 'NorESM2-MM' or model == 'GFDL-CM4' or  model =='CESM2':
-        yearEnd_first = 470
-        yearStart_last = 499
+        yearEnd_first = '0001'
+        yearStart_last = '0070'
         
     if model == 'MIROC6':
         yearEnd_first = 3270
@@ -86,7 +86,7 @@ def concat_files(path_folder, experiment):
     path_fileList = []
     for file in files:
         path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
-
+    
     ds = xr.open_mfdataset(path_fileList, combine='by_coords').sel(time=slice(str(yearEnd_first), str(yearStart_last)),lat=slice(-35,35))
     return ds
 
@@ -347,10 +347,10 @@ if __name__ == '__main__':
     models = [
         # 'TaiESM1',        # 1 # rcp monthly
         # 'BCC-CSM2-MR',    # 2 # rcp monthly   
-        'FGOALS-g3',        # 3 # rcp 0463 - 0614
-        'CNRM-CM6-1',     # 4 # rcp 1850-1999
+        # 'FGOALS-g3',        # 3 # rcp 0463 - 0614
+        # 'CNRM-CM6-1',     # 4 # rcp 1850-1999
         'MIROC6',         # 5 # rcp 3200 - 3340
-        'MPI-ESM1-2-HR',  # 6 # rcp 1850 - 2014
+        # 'MPI-ESM1-2-HR',  # 6 # rcp 1850 - 2014
         'NorESM2-MM',     # 7 # rcp 0001 - 0141
         'GFDL-CM4',       # 8 # rcp 0001 - 0141 (gr2)
         'CanESM5',        # 9 # rcp 1850 - 2000
@@ -358,7 +358,7 @@ if __name__ == '__main__':
         'UKESM1-0-LL',    # 11 # rcp 1850 - 1999
         'MRI-ESM2-0',     # 12 # rcp 1850 - 2000
         'CESM2',          # 13 # rcp 0001 - 0990  (multiple fill values (check if all get converted to NaN), for historical)
-        'NESM3',          # 12 # rcp 1850-2014
+        # 'NESM3'           # 12 # rcp monthly
             ]
 
 
