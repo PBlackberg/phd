@@ -347,10 +347,10 @@ if __name__ == '__main__':
     models = [
         # 'TaiESM1',        # 1 # rcp monthly
         # 'BCC-CSM2-MR',    # 2 # rcp monthly   
-        # 'FGOALS-g3',        # 3 # rcp 0463 - 0614
-        # 'CNRM-CM6-1',     # 4 # rcp 1850-1999
+        'FGOALS-g3',      # 3 # rcp 0463 - 0614
+        'CNRM-CM6-1',     # 4 # rcp 1850-1999
         'MIROC6',         # 5 # rcp 3200 - 3340
-        # 'MPI-ESM1-2-HR',  # 6 # rcp 1850 - 2014
+        'MPI-ESM1-2-HR',  # 6 # rcp 1850 - 2014
         'NorESM2-MM',     # 7 # rcp 0001 - 0141
         'GFDL-CM4',       # 8 # rcp 0001 - 0141 (gr2)
         'CanESM5',        # 9 # rcp 1850 - 2000
@@ -422,7 +422,7 @@ if __name__ == '__main__':
             # ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
     
 
-            save_pr = True
+            save_pr = False
             save_tas = False
             save_hus = False
             save_hur = False
