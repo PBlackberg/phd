@@ -15,7 +15,7 @@ home = os.path.expanduser("~")
 
 
 
-# --------------------------------------------------------------------------------- basic plot functions ----------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------- basic plot functions --------------------------------------------------------------------------------------------------------------- #
 
 def plot_scene(scene, cmap='Reds', zorder= 0, title='', ax='', vmin=None, vmax=None, fig_width=17.5, fig_height=8):
     projection = cartopy.crs.PlateCarree(central_longitude=180)
@@ -153,7 +153,16 @@ def plot_scatter(x,y,ax):
 
 
 
-# ------------------------------------------------------------------------------------- common operations functions ------------------------------------------------------------------------------------- #
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------------- common operations functions --------------------------------------------------------------------------------------------------- #
 
 
 def to_monthly(da):
@@ -179,7 +188,7 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
         fileName_obs = dataset + '_' + variable + '.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_raw/{}'.format(home,dataset)
+        folder_model = '{}/Documents/data/CMIP6/ds_cmip6/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
@@ -189,11 +198,10 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
             try:
                 ds = xr.open_dataset(path2)
             except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
                 try:
                     ds = xr.open_dataset(path3)
                 except FileNotFoundError:
-                    print(f"Error: no file at {path1} or {path2} or {path3}")
+                    print(f"Error: no file at {path1}, {path2}, or {path3}")
 
     if resolution == 'original':
         folder_model = '{}/Documents/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
@@ -204,8 +212,8 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
         fileName_obs = dataset + '_' + variable + '_orig.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_raw/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_' + experiment + '_orig.nc'
+        folder_model = '{}/Documents/data/CMIP6/ds_cmip6_orig/{}'.format(home,dataset)
+        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
         try:
@@ -214,11 +222,10 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
             try:
                 ds = xr.open_dataset(path2)
             except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
                 try:
                     ds = xr.open_dataset(path3)
                 except FileNotFoundError:
-                    print(f"Error: no file at {path1} or {path2} or {path3}")
+                    print(f"Error: no file at {path1}, {path2} or {path3}")
     return ds
 
                         
@@ -280,47 +287,6 @@ def get_metric(metric, dataset, experiment='historical', home=home, resolution='
 
 
 
-def plot_format_multiple(datasets, variable, timeMean_options, experiments, data):
-    absolute_limits = True
-    quantile_low = 0
-    quantile_high = 1
-    if absolute_limits:
-        vmin, vmax = [], []
-        for dataset in datasets:
-
-
-
-            vmin = np.append(vmin, np.quantile(y, quantile_low))
-            vmax = np.append(vmax, np.quantile(y, quantile_high))
-
-        vmin = np.min(vmin)
-        vmax = np.max(vmax)
-
-    else:
-        vmin, vmax = None, None 
-
-
-    fig= plt.figure(figsize=(22.5,17.5))
-    title = '{} spatial mean of {} field from model:{}, experiment:{}'.format(timeMean_options[0], variable, dataset, experiments[0])
-
-    fig.suptitle(title, fontsize=18, y=0.95)
-
-    for i, dataset in enumerate(datasets):
-        ax= fig.add_subplot(5,4,i+1)
-        title = dataset
-
-
-        plot_timeseries(y, title=title, timeMean_option=timeMean_options, ax=ax, ymin=vmin, ymax=vmax)
-
-        if (len(datasets)-i)<=4:
-            xlabel = '{} [{} - {}]'.format(timeMean_options[0], str(data.isel(time=0).coords['time'].values)[:10], str(data.isel(time=-1).coords['time'].values)[:10])
-            plt.xlabel(xlabel)
-
-        if i== 0 or i==4 or i==8 or i==12 or i==16:
-            ylabel = 'Relative humidity [{}]'.format('%')
-            plt.ylabel(ylabel)
-
-    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.15, hspace=0.3)
 
 
 
@@ -336,74 +302,61 @@ def plot_format_multiple(datasets, variable, timeMean_options, experiments, data
 
 
 
-# def find_limits(variable, datasets, resolutions, experiments, home=home, timeMean_option=[''], quantile_low=0, quantile_high=1, scene_type=''):
-
-#     vmin, vmax = [], []
-#     for dataset in datasets:
-#         for resolution in resolutions:
-#             for experiment in experiments:
-                
-#                 data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable]
-
-#                 if scene_type == 'example':
-#                     data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].isel(time=0)
-                
-#                 elif scene_type == 'experiment':
-#                     data = get_dsvariable(variable, dataset, resolution, experiment, home)[variable].mean(dim=('time'),keep_attrs=True)
-
-#                 elif scene_type == 'difference':
-#                     data_historical = get_dsvariable(variable, dataset, resolution, experiment='historical')[variable].mean(dim=('time'))
-#                     data_rcp85 = get_dsvariable(variable, dataset, resolution, experiment='rcp85')[variable].mean(dim=('time'))
-
-#                     if variable != 'tas':
-#                         tas_historical = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='historical')[variable].mean(dim=('time'))
-#                         tas_rcp85 = get_dsvariable(variable='tas', dataset=dataset, resolution=resolution, experiment='rcp85')[variable].mean(dim=('time'))
-#                         tas_difference = tas_rcp85 - tas_historical
-#                         data = (data_rcp85 - data_historical)/(data_historical*tas_difference)
-#                     else:
-#                         data = (data_rcp85 - data_historical)/data_historical
 
 
-#                     if timeMean_option[0] == 'difference':
-#                         aWeights = np.cos(np.deg2rad(data_historical.lat))
-#                         data = (data_rcp85.weighted(aWeights).mean(dim=('lat','lon')) - data_historical.weighted(aWeights).mean(dim=('lat','lon')))/data_historical.weighted(aWeights).mean(dim=('lat','lon'))
+
+# -----------------------------------------------------------------------   Format for multiple plots   ----------------------------------------------------------------------------------- #
+
+# foramt for multiple plots
+# def plot_format_multiple(datasets, variable, timeMean_options, experiments, data):
+#     absolute_limits = True
+#     quantile_low = 0
+#     quantile_high = 1
+#     if absolute_limits:
+#         vmin, vmax = [], []
+#         for dataset in datasets:
 
 
-#                 if variable != 'tas' and len(np.shape(data))>2:
-#                     aWeights = np.cos(np.deg2rad(data.lat))
-#                     y= data.weighted(aWeights).mean(dim=('lat','lon'))
-#                 else:
-#                     y= data
 
-#                 if timeMean_option[0] == 'experiment':
-#                     y = y.mean(dim='time', keep_attrs=True)
+#             vmin = np.append(vmin, np.quantile(y, quantile_low))
+#             vmax = np.append(vmax, np.quantile(y, quantile_high))
 
-#                 if timeMean_option[0] == 'annual':
-#                     y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
+#         vmin = np.min(vmin)
+#         vmax = np.max(vmax)
 
-#                 if timeMean_option[0] == 'seasonal':
-#                     y = y.resample(time='QS-DEC').mean(dim="time")
-#                     y = to_monthly(y)
-#                     y = y.rename({'month':'season'})
-#                     y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
-#                     y = y.isel(year=slice(1, None))
+#     else:
+#         vmin, vmax = None, None 
 
-#                 if timeMean_option[0] == 'monthly':
-#                     if variable == 'tas' and datasets[0] == 'FGOALS-g2':
-#                         pass
-#                     else:
-#                         y = y.resample(time='M').mean(dim='time', keep_attrs=True)
 
-#                 if timeMean_option[0] == 'daily':
-#                     y = y
-                
-#                 vmin = np.append(vmin, np.quantile(y, quantile_low))
-#                 vmax = np.append(vmax, np.quantile(y, quantile_high))
+#     fig= plt.figure(figsize=(22.5,17.5))
+#     title = '{} spatial mean of {} field from model:{}, experiment:{}'.format(timeMean_options[0], variable, dataset, experiments[0])
 
-#     vmin = np.min(vmin)
-#     vmax = np.max(vmax)
+#     fig.suptitle(title, fontsize=18, y=0.95)
 
-#     return vmin, vmax
+#     for i, dataset in enumerate(datasets):
+#         ax= fig.add_subplot(5,4,i+1)
+#         title = dataset
+
+
+#         plot_timeseries(y, title=title, timeMean_option=timeMean_options, ax=ax, ymin=vmin, ymax=vmax)
+
+#         if (len(datasets)-i)<=4:
+#             xlabel = '{} [{} - {}]'.format(timeMean_options[0], str(data.isel(time=0).coords['time'].values)[:10], str(data.isel(time=-1).coords['time'].values)[:10])
+#             plt.xlabel(xlabel)
+
+#         if i== 0 or i==4 or i==8 or i==12 or i==16:
+#             ylabel = 'Relative humidity [{}]'.format('%')
+#             plt.ylabel(ylabel)
+
+#     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.15, hspace=0.3)
+
+
+
+
+
+
+
+
 
 
 

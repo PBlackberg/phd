@@ -1,6 +1,6 @@
 import intake
 import xarray as xr
-import myFuncs
+import functions.myFuncs as myFuncs
 import myPlots
 
 

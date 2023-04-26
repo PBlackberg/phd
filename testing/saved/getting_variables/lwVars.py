@@ -5,7 +5,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-import myFuncs
+import functions.myFuncs as myFuncs
 import myPlots
 
 

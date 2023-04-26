@@ -5,7 +5,7 @@ import timeit
 import os
 home = os.path.expanduser("~")
 
-import myFuncs
+import functions.myFuncs as myFuncs
 from get_variables.cmip5_variables import *
 import constructed_fields as cf
 

@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
 from plotFuncs import *
-from myFuncs import *
+from functions.myFuncs import *
 
 
 

@@ -97,7 +97,7 @@ def get_hus(model, experiment):
 if __name__ == '__main__':
 
 
-    from myFuncs import *
+    from functions.myFuncs import *
     from myPlots import *
 
     import numpy as np
