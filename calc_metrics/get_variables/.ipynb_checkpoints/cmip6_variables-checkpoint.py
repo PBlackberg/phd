@@ -9,7 +9,7 @@ import scipy
 # --------------------------------------------------------- finding ensemble/version and concatenating files --------------------------------------------------------
 
 def data_exist(dataset, experiment, variable):
-    data_exist = 'yes'
+    data_exist = 'True'
 
     return data_exist
 
@@ -113,13 +113,13 @@ def save_file(dataset, folder, fileName):
 
 def get_pr(institute, model, experiment, resolution):
     variable = 'pr'
-    if data_exist(model, experiment, variable) == 'no':
+    if not data_exist(model, experiment, variable):
         ds_pr = xr.Dataset(
             data_vars = {'precip': np.nan}
             )
     else:
         ensemble = choose_ensemble(model, experiment, variable)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/pr'.format(institute, model, experiment, ensemble)
+        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
         
         cmip6_feature = last_letters(model, experiment, variable)
         version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
@@ -143,6 +143,43 @@ def get_pr(institute, model, experiment, resolution):
                 attrs = ds.attrs
                 )
     return ds_pr
+
+
+
+def get_wap(institute, model, experiment, resolution):
+    variable = 'wap'
+    if not data_exist(model, experiment, variable):
+        ds_wap = xr.Dataset(
+            data_vars = {'wap': np.nan}
+            )
+    else:
+        ensemble = choose_ensemble(model, experiment, variable)
+        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+        
+        cmip6_feature = last_letters(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
+        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+
+        ds = concat_files(path_folder, experiment)
+        
+        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
+        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
+
+        if resolution == 'original':
+            ds_wap = xr.Dataset(
+                data_vars = {'wap': wap},
+                attrs = ds.attrs
+                )
+        elif resolution == 'regridded':
+            regridder = regrid_conserv_xesmf(ds)
+            wap_n = regridder(wap)
+            ds_wap = xr.Dataset(
+                data_vars = {'wap': wap_n},
+                attrs = ds.attrs
+                )
+    return ds_wap
+
+
 
 
 def get_tas(institute, model, experiment, resolution):
@@ -246,40 +283,6 @@ def get_hur(institute, model, experiment, resolution):
 
 
 
-def get_wap(institute, model, experiment, resolution):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-
-    variable = 'wap'
-    if data_exist(model,variable) == 'no':
-        ds_wap = xr.Dataset(
-            data_vars = {'wap': np.nan}
-            )
-    else:
-        ensemble = choose_ensemble(model, variable)
-        version = pick_latestVersion(path_gen, ensemble)
-        path_folder =  os.path.join(path_gen, ensemble, version, variable)
-
-        ds = concat_files(path_folder, experiment)
-        
-        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
-        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
-
-        if resolution == 'original':
-            ds_wap = xr.Dataset(
-                data_vars = {'wap': wap},
-                attrs = ds.attrs
-                )
-        elif resolution == 'regridded':
-            regridder = regrid_conserv_xesmf(ds)
-            wap_n = regridder(wap)
-            ds_wap = xr.Dataset(
-                data_vars = {'wap': wap_n},
-                attrs = ds.attrs
-                )
-    return ds_wap
-
-
-
 def get_cl(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
 
@@ -345,8 +348,8 @@ if __name__ == '__main__':
 
     
     models = [
-        # 'TaiESM1',        # 1 # rcp monthly
-        # 'BCC-CSM2-MR',    # 2 # rcp monthly   
+        'TaiESM1',        # 1 # rcp monthly (pr)
+        'BCC-CSM2-MR',    # 2 # rcp monthly   
         'FGOALS-g3',      # 3 # rcp 0463 - 0614
         'CNRM-CM6-1',     # 4 # rcp 1850-1999
         'MIROC6',         # 5 # rcp 3200 - 3340
@@ -354,11 +357,11 @@ if __name__ == '__main__':
         'NorESM2-MM',     # 7 # rcp 0001 - 0141
         'GFDL-CM4',       # 8 # rcp 0001 - 0141 (gr2)
         'CanESM5',        # 9 # rcp 1850 - 2000
-        # 'CMCC-ESM2',      # 10 # rcp monthly
+        'CMCC-ESM2',      # 10 # rcp monthly
         'UKESM1-0-LL',    # 11 # rcp 1850 - 1999
         'MRI-ESM2-0',     # 12 # rcp 1850 - 2000
         'CESM2',          # 13 # rcp 0001 - 0990  (multiple fill values (check if all get converted to NaN), for historical)
-        # 'NESM3'           # 12 # rcp monthly
+        'NESM3'           # 12 # rcp monthly
             ]
 
 
@@ -430,6 +433,7 @@ if __name__ == '__main__':
             save_cl = False
             
             folder = '/g/data/k10/cb4968/data/cmip6/ds/precip'
+            
             
             if save_pr:
                 fileName = model + '_precip_' + experiment + '.nc'
