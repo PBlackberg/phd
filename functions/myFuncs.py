@@ -162,93 +162,56 @@ def to_monthly(da):
 
 def get_dsvariable(variable, dataset, experiment, home = os.path.expanduser("~") + '/Documents', resolution='regridded'):
 
-    if resolution == 'regridded':
-        folder_model = '{}/data/CMIP5/ds_cmip5/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
-        path1 = os.path.join(folder_model, fileName_model)
+    folder = '{}/data/CMIP5/ds_cmip5_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
+    path_cmip5 = os.path.join(folder, filename)
 
-        folder_obs = home + '/data/obs/ds_obs/' + dataset
-        fileName_obs = dataset + '_' + variable + '.nc'
-        path2 = os.path.join(folder_obs, fileName_obs)
+    folder = '{}/data/CMIP6/ds_cmip6_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
+    path_cmip6 = os.path.join(folder, filename)
 
-        folder_model = '{}/data/CMIP6/ds_cmip6/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
-        path3 = os.path.join(folder_model, fileName_model)
+    folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + variable + '_' + resolution + '.nc'
+    path_obs = os.path.join(folder, filename)
 
+    try:
+        ds = xr.open_dataset(path_cmip5)
+    except FileNotFoundError:
         try:
-            ds = xr.open_dataset(path1)
+            ds = xr.open_dataset(path_cmip6)
         except FileNotFoundError:
             try:
-                ds = xr.open_dataset(path2)
+                ds = xr.open_dataset(path_obs)
             except FileNotFoundError:
-                try:
-                    ds = xr.open_dataset(path3)
-                except FileNotFoundError:
-                    print(f"Error: no file at {path1}, {path2}, or {path3}")
-
-    if resolution == 'original':
-        folder_model = '{}/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_'+ experiment+ '_orig.nc'
-        path1 = os.path.join(folder_model, fileName_model)
-
-        folder_obs = '{}/data/obs/ds_obs_orig/{}'.format(home,dataset)
-        fileName_obs = dataset + '_' + variable + '_orig.nc'
-        path2 = os.path.join(folder_obs, fileName_obs)
-
-        folder_model = '{}/data/CMIP6/ds_cmip6_orig/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
-        path3 = os.path.join(folder_model, fileName_model)
-
-        try:
-            ds = xr.open_dataset(path1)
-        except FileNotFoundError:
-            try:
-                ds = xr.open_dataset(path2)
-            except FileNotFoundError:
-                try:
-                    ds = xr.open_dataset(path3)
-                except FileNotFoundError:
-                    print(f"Error: no file at {path1}, {path2} or {path3}")
+                print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
     return ds
 
                         
 
 def get_metric(metric, dataset, experiment='historical', home=os.path.expanduser("~") + '/Documents', resolution='regridded'):
 
-    if resolution == 'regridded':
-        folder_model = '{}/data/CMIP5/metrics_cmip5/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + metric + '_' + experiment + '.nc'
-        path1 = os.path.join(folder_model, fileName_model)
+    folder = '{}/data/CMIP5/metrics_cmip5_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + metric + '_' + experiment + '_' + resolution + '.nc'
+    path_cmip5 = os.path.join(folder, filename)
 
-        folder_obs = home + '/data/obs/metrics_obs/' + dataset
-        fileName_obs = dataset + '_' + metric + '.nc'
-        path2 = os.path.join(folder_obs, fileName_obs)
+    folder = '{}/data/CMIP6/metrics_cmip6_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + metric + '_' + experiment + '_' + resolution + '.nc'
+    path_cmip6 = os.path.join(folder, filename)
 
+    folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
+    filename = dataset + '_' + metric + '_' + resolution + '.nc'
+    path_obs = os.path.join(folder, filename)
+
+    try:
+        ds = xr.open_dataset(path_cmip5)
+    except FileNotFoundError:
         try:
-            ds = xr.open_dataset(path1)
+            ds = xr.open_dataset(path_cmip6)
         except FileNotFoundError:
             try:
-                ds = xr.open_dataset(path2)
+                ds = xr.open_dataset(path_obs)
             except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
-
-    if resolution == 'original':
-        folder_model = '{}/data/CMIP5/metrics_cmip5_orig/{}'.format(home,dataset)
-        fileName_model = dataset + '_' + metric + '_'+ experiment+ '_orig.nc'
-        path1 = os.path.join(folder_model, fileName_model)
-
-        folder_obs = '{}/data/obs/metrics_obs_orig/{}'.format(home,dataset)
-        fileName_obs = dataset + '_' + metric + '_orig.nc'
-        path2 = os.path.join(folder_obs, fileName_obs)
-
-        try:
-            ds = xr.open_dataset(path1)
-        except FileNotFoundError:
-            try:
-                ds = xr.open_dataset(path2)
-            except FileNotFoundError:
-                print(f"Error: no file at {path1} or {path2}")
-
+                print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
     return ds
 
 

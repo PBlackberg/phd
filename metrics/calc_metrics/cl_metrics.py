@@ -153,8 +153,6 @@ if __name__ == '__main__':
                 )
 
 
-
-
             # save
             if np.isin(models_cmip5, dataset).any():
                 folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
