@@ -362,7 +362,7 @@ if __name__ == '__main__':
         'MRI-ESM2-0',     # 12 # rcp 1850 - 2000
         'CESM2',          # 13 # rcp 0001 - 0990  (multiple fill values (check if all get converted to NaN), for historical)
         'NESM3'           # 12 # rcp monthly
-            ]
+        ]
 
 
     resolutions = [
@@ -371,9 +371,10 @@ if __name__ == '__main__':
         ]
 
     experiments = [
-                # 'historical',
-                'abrupt-4xCO2'
-                ]
+        'historical',
+        # 'abrupt-4xCO2'
+        ]
+
 
     institutes = {
         'TaiESM1':'AS-RCEC',
@@ -392,7 +393,6 @@ if __name__ == '__main__':
         'CESM2':'NCAR',
         'NESM3':'NUIST'
         }
-
 
     # not included:
     # 'IITM-ESM':'CCCR-IITM'

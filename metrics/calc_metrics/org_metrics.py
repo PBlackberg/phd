@@ -1,19 +1,27 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
+
+
 import timeit
 import os
-# from get_variables.cmip5_variables import *
-from os.path import expanduser
-home = expanduser("~")
+import sys
+run_on_gadi = False
+if run_on_gadi:
+    home = '/g/data/k10/cb4968'
+    sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
+else:
+    home = os.path.expanduser("~") + '/Documents'
+sys.path.insert(0, '{}/phd/functions'.format(home))
+from myFuncs import *
+# import constructed_fields as cf
 
 
-
-# -------------------------------------------- general functions --------------------------------------------
-
-
-# Connect objects across boundary (objects that touch across lon=0, lon=360 boundary are the same object) (takes array(lat, lon))
 def connect_boundary(array):
+    ''' Connect objects across boundary 
+    Objects that touch across lon=0, lon=360 boundary are the same object.
+    Takes array(lat, lon)) 
+    '''
     s = np.shape(array)
     for row in np.arange(0,s[0]):
         if array[row,0]>0 and array[row,-1]>0:
@@ -21,68 +29,50 @@ def connect_boundary(array):
             array[array==array[row,-1]] = min(array[row,0],array[row,-1])
 
 
-
-# Haversine formula (Great circle distance) (takes vectorized input)
 def haversine_dist(lat1, lon1, lat2, lon2):
+    '''Great circle distance (from Haversine formula) 
+    h = sin^2(phi_1 - phi_2) + (cos(phi_1)cos(phi_2))sin^2(lambda_1 - lambda_2)
+    (1) h = sin(theta/2)^2
+    (2) theta = d_{great circle} / R    (central angle, theta)
+    (1) in (2) and rearrange for d gives
+    d = R * sin^-1(sqrt(h))*2 
 
-   # radius of earth in km
-    R = 6371
-
+    where 
+    phi -latitutde
+    lambda - longitude
+    (Takes vectorized input)
+    '''
+    R = 6371 # radius of earth in km
     lat1 = np.deg2rad(lat1)                       
-    lon1 = np.deg2rad(lon1-180)     
+    lon1 = np.deg2rad(lon1-180) # function requires lon [-180 to 180]
     lat2 = np.deg2rad(lat2)                       
     lon2 = np.deg2rad(lon2-180)
-
-    # Haversine formula
-    h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2
-
-    # distance from Haversine function:
-    # (1) h = sin(theta/2)^2
-
-    # central angle, theta:
-    # (2) theta = d_{great circle} / R
     
-    # (1) in (2) and rearrange for d gives
-    # d = R * sin^-1(sqrt(h))*2 
-
+    h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
     return 2 * R * np.arcsin(np.sqrt(h))
 
 
-
-def save_file(dataset, folder, fileName):
-    os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + fileName
-
-    if os.path.exists(path):
-        os.remove(path)    
-    
-    dataset.to_netcdf(path)
-
-
-
-# -------------------------------------------- organisation metrics ---------------------------------------------
-
 def calc_rome(precip, conv_threshold):
+    ''' Define scenes of contihuous convective regions
+    and puts the calculated daily values of rome in a list
+    '''
     rome = []
-
-    lat = precip.lat.data
-    lon = precip.lon.data
+    lat = precip['lat'].data
+    lon = precip['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
     R = 6371
-    aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
+    aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2) # used for area of object
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
-
 
     for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         
         connect_boundary(L)
-        labels = np.unique(L)[1:]
-
+        labels = np.unique(L)[1:] # first unique value is background
         rome = np.append(rome, rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d))
     
     rome = xr.DataArray(
@@ -91,90 +81,71 @@ def calc_rome(precip, conv_threshold):
         coords = {'time': precip.time.data},
         attrs = {'units':'km\u00b2'}
         )
-
     return rome
 
 
 def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
-    rome_allPairs = []
+    ''' Calculate rome for a scene: 
+    Average of unique pair weight: A_a + min(1, A_b / A_d) * A_b
 
+    where
+    A_a - larger area of pair
+    A_b - smaller area of pair
+    A_d - shortest distance between pair boundaries (km)
+    '''
+    rome_allPairs = []
     shape_L = np.shape(L)
-    
     if len(labels) ==1:
-        rome_allPairs = np.sum((L==labels)*1 * aream)
+        rome_allPairs = np.sum((L==labels)*1 * aream) # ROME = area of object if singular object
 
     else:
-        for idx, labeli in enumerate(labels[0:-1]):
-            
-            # find coordinates of object i
-            I, J = zip(*np.argwhere(L==labeli))
+        for idx, labeli in enumerate(labels[0:-1]): # compare object i and object j
+            I, J = zip(*np.argwhere(L==labeli)) # find coordinates of object i
             I = list(I)
             J = list(J)
-
-            # area of object i
-            oi_area = np.sum(np.squeeze(aream)[I,J])
-
-            # shortest distance from object i, start by counting the number of gridboxes
-            Ni = len(I)
-
-            # replicate each gridbox lon and lat into Ni 2D slices with the shape of L
-            lati3d = np.tile(lat[I],reps =[shape_L[0], shape_L[1], 1])
+            oi_area = np.sum(np.squeeze(aream)[I,J]) # find area of object i
+            Ni = len(I) # find number of gridboxes in object i
+            lati3d = np.tile(lat[I],reps =[shape_L[0], shape_L[1], 1]) # replicate each gridbox lon and lat into Ni 2D slices in the shape of L
             loni3d = np.tile(lon[J],reps =[shape_L[0], shape_L[1], 1])
 
-
-            # create corresponding 3D matrix from Ni copies of latm, lonm (this metrix only needs to be recreated when Ni increases from previous loop)
-            if Ni > np.shape(lonm3d)[2]:
+            if Ni > np.shape(lonm3d)[2]: # create corresponding 3D matrix from Ni copies of latm, lonm (this metrix only needs to be recreated when Ni increases from previous loop)
                 lonm3d = np.tile(lonm3d[:,:,0:1],reps =[1, 1, Ni])
                 latm3d = np.tile(latm3d[:,:,0:1],reps =[1, 1, Ni])
 
-
-            # distance from gridboxes of object i to every other point in the domain
-            distancei3d = haversine_dist(lati3d,loni3d,latm3d[:,:,0:Ni],lonm3d[:,:,0:Ni])
-
-            # minimum in the third dimension gives shortest distance from object i to every other point in the domain
-            distancem = np.amin(distancei3d, axis=2)
+            distancei3d = haversine_dist(lati3d, loni3d, latm3d[:,:,0:Ni], lonm3d[:,:,0:Ni]) # distance from gridbox in object i to every other point in the domain
+            distancem = np.amin(distancei3d, axis=2) # minimum in the third dimension gives shortest distance from object i to every other point in the domain
     
-    
-            # the shortest distance from object i to object j will be the minimum of the coordinates of object j in distancem
-            for labelj in labels[idx+1:]:
+            for labelj in labels[idx+1:]: # the shortest distance from object i to object j will be the minimum of the coordinates of object j in distancem
 
-                # coordinates of object j
-                I, J = zip(*np.argwhere(L==labelj))
+                I, J = zip(*np.argwhere(L==labelj)) # find coordinates of object j
+                oj_area = np.sum(aream[I,J]) # find area of object j
 
-                # area of object j
-                oj_area = np.sum(aream[I,J])
-
-                # ROME of unique pair
-                large_area = np.maximum(oi_area, oj_area)
+                large_area = np.maximum(oi_area, oj_area) 
                 small_area = np.minimum(oi_area, oj_area)
-                rome_pair = large_area + np.minimum(small_area, (small_area/np.amin(distancem[I,J]))**2)
+                rome_pair = large_area + np.minimum(small_area, (small_area/np.amin(distancem[I,J]))**2) # ROME of unique pair
                 rome_allPairs = np.append(rome_allPairs, rome_pair)
-                
     return np.mean(rome_allPairs)
 
 
-
-
-
-
 def calc_rome_n(n, precip, conv_threshold): 
+    ''' Define scenes of contihuous convective regions
+    and find the area of objects. 
+    Then puts the calculated daily values of rome_n in a list
+    '''
     rome_n = []
-
-    lat = precip.lat.data
-    lon = precip.lon.data
+    lat = precip['lat'].data
+    lon = precip['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
-
     latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
     lonm3d = np.expand_dims(lonm,axis=2)
     aream3d = np.expand_dims(aream,axis=2)
 
     for day in np.arange(0,len(precip.time.data)):
         pr_day = precip.isel(time=day)
-        
         L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
         
         connect_boundary(L)
@@ -182,10 +153,8 @@ def calc_rome_n(n, precip, conv_threshold):
 
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1
         o_areaScene = np.sum(obj3d * aream3d, axis=(0,1))
-
         rome_n = np.append(rome_n, rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d))
     
-
     rome_n = xr.DataArray(
         data = rome_n,
         dims = ['time'],
@@ -193,27 +162,22 @@ def calc_rome_n(n, precip, conv_threshold):
         attrs = {'description':'rome calculated from {} largest contigiuos convetive areas'.format(n),
                  'units': 'km\u00b2'}
         )
-
     return rome_n
 
-
 def rome_nScene(n, o_areaScene, L, labels, lat, lon, aream, latm3d, lonm3d):
-
+    ''' Finds n largest objects and calls rome_scene'''
     if len(o_areaScene) <= n:
         labels_n = labels
     else:
         labels_n = labels[o_areaScene.argsort()[-n:]]
-
     return rome_scene(L, labels_n, lat, lon, aream, latm3d, lonm3d)
 
 
-
-
-
 def calc_numberIndex(precip, conv_threshold):
-    
-    lat = precip.lat.data
-    lon = precip.lon.data
+    ''' Counts the number of object in each scene and records the area fraction convered
+    by convection'''
+    lat = precip['lat'].data
+    lon = precip['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
@@ -227,15 +191,13 @@ def calc_numberIndex(precip, conv_threshold):
         
         connect_boundary(L)
         labels = np.unique(L)[1:]
-
         o_numberScene = len(labels)
-        
+
         conv_day = (pr_day.where(pr_day>=conv_threshold,0)>0)*1
         areaf_scene = np.sum(conv_day * aream)/np.sum(aream)
         
         o_number = np.append(o_number, o_numberScene)
         areaf = np.append(areaf, areaf_scene)
-
 
     o_number = xr.DataArray(
         data=o_number,
@@ -251,7 +213,6 @@ def calc_numberIndex(precip, conv_threshold):
         attrs = {'units': '%'}
         )
 
-
     ds_numberIndex = xr.Dataset(
         data_vars = {'o_number': o_number, 
                      'areaf': areaf}
@@ -259,11 +220,11 @@ def calc_numberIndex(precip, conv_threshold):
     return ds_numberIndex
 
 
-
 def calc_oAreaAndPr(precip, conv_threshold):
-
-    lat = precip.lat.data
-    lon = precip.lon.data
+    '''Area and precipitation rate of each object 
+    '''
+    lat = precip['lat'].data
+    lon = precip['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
     dlat = (lat[1]-lat[0])
     dlon = (lon[1]-lon[0])
@@ -300,7 +261,7 @@ def calc_oAreaAndPr(precip, conv_threshold):
         attrs = {'descrption': 'area weighted mean precipitation in contiguous convective region',
                 'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
-
+    
     ds_oAreaAndPr = xr.Dataset(
         data_vars = {'o_area': o_area,
                     'o_pr': o_pr},
@@ -309,35 +270,11 @@ def calc_oAreaAndPr(precip, conv_threshold):
     return ds_oAreaAndPr
 
 
-
-
 if __name__ == '__main__':
    
-    institutes = {
-        'IPSL-CM5A-MR':'IPSL',
-        'GFDL-CM3':'NOAA-GFDL',
-        'GISS-E2-H':'NASA-GISS',
-        'bcc-csm1-1':'BCC',
-        'CNRM-CM5':'CNRM-CERFACS',
-        'CCSM4':'NCAR',
-        'HadGEM2-AO':'NIMR-KMA',
-        'BNU-ESM':'BNU',
-        'EC-EARTH':'ICHEC',
-        'FGOALS-g2':'LASG-CESS',
-        'MPI-ESM-MR':'MPI-M',
-        'CMCC-CM':'CMCC',
-        'inmcm4':'INM',
-        'NorESM1-M':'NCC',
-        'CanESM2':'CCCma',
-        'MIROC5':'MIROC',
-        'HadGEM2-CC':'MOHC',
-        'MRI-CGCM3':'MRI',
-        'CESM1-BGC':'NSF-DOE-NCAR'
-        }
-    
-    datasets = [
+    models_cmip5 = [
         # 'IPSL-CM5A-MR', # 1
-        'GFDL-CM3',     # 2
+        # 'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
@@ -357,11 +294,28 @@ if __name__ == '__main__':
         # 'CESM1-BGC'     # 19
         ]
     
-    observations = [
-        'GPCP'
+    models_cmip6 = [
+        # 'TaiESM1',        # 1
+        # 'BCC-CSM2-MR',    # 2
+        # 'FGOALS-g3',      # 3
+        # 'CNRM-CM6-1',     # 4
+        # 'MIROC6',         # 5
+        # 'MPI-ESM1-2-HR',  # 6
+        # 'NorESM2-MM',     # 7
+        # 'GFDL-CM4',       # 8
+        # 'CanESM5',        # 9
+        # 'CMCC-ESM2',      # 10
+        # 'UKESM1-0-LL',    # 11
+        # 'MRI-ESM2-0',     # 12
+        # 'CESM2',          # 13
+        # 'NESM3'           # 14
         ]
     
-    datasets = datasets + observations
+    observations = [
+        # 'GPCP'
+        ]
+    
+    datasets = models_cmip5 + models_cmip6 + observations
 
     resolutions = [
         # 'original',
@@ -370,9 +324,10 @@ if __name__ == '__main__':
 
     experiments = [
         'historical',
-        # 'rcp85'
+        # 'rcp85',
+        # 'abrupt-4xCO2'
+        # ''
         ]
-
 
     for dataset in datasets:
         print(dataset, 'started')
@@ -381,44 +336,52 @@ if __name__ == '__main__':
         for experiment in experiments:
             print(experiment, 'started') 
 
-            if dataset == 'GPCP':
-                # precip = get_GPCP(institutes[model], model, experiment).precip
-                precip = get_dsvariable('precip', dataset, experiment)
+            # load data
+            if run_on_gadi:
+                if dataset == 'GPCP':
+                    from obs_variables import *
+                    precip = get_GPCP(institutes[model], model, experiment)['precip']
+                
+                if np.isin(models_cmip5, dataset).any():
+                    from cmip5_variables import *
+                    precip = get_pr(institutes[model], model, experiment)['precip']
+                
+                if run_on_gadi and np.isin(models_cmip6, dataset).any():
+                    from cmip6_variables import *
+                    precip = get_pr(institutes[model], model, experiment)['precip']
             else:
-                # precip = get_pr(institutes[model], model, experiment).precip
                 precip = get_dsvariable('precip', dataset, experiment)
             
 
+            # Calculate diagnostics and put into dataset
             quantile_threshold = 0.97
             conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
             n = 8
-
             rome = calc_rome(precip, conv_threshold)
             rome_n = calc_rome_n(n, precip, conv_threshold)
+            ds_rome = xr.Dataset(
+                data_vars = {'rome':rome, 
+                             'rome_n':rome_n},
+                attrs = {'description': 'ROME based on all and the {} largest objects in the scene for each day'.format(n)}                  
+                )
             ds_numberIndex = calc_numberIndex(precip, conv_threshold)
             ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
 
 
 
-
-            save_rome = True
+            # save
+            save_rome = False
             save_numberIndex = False
             save_oAreaAndPr = False
             
-            if dataset == 'GPCP':
-                # folder_save = '/g/data/k10/cb4968/data/obs/'+ dataset
-                folder_save = home + '/Documents/data/obs/' + dataset
-
-            else:
-                # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ dataset
-                folder_save = home + '/Documents/data/cmip5/' + dataset
+            if np.isin(models_cmip5, dataset).any():
+                folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
+            if np.isin(models_cmip6, dataset).any():
+                folder_save = '{}/data/cmip6/metrics_cmip6_{}'.format(resolutions[0])
+            if np.isin(observations, dataset).any():
+                folder_save = '{}/data/obs/metrics_obs_{}'.format(resolutions[0])
 
             if save_rome:
-                ds_rome = xr.Dataset(
-                    data_vars = {'rome':rome, 
-                                 'rome_n':rome_n},
-                    attrs = {'description': 'ROME based on all and the {} largest contiguous convective regions in the scene for each day'.format(n)}                  
-                    )
                 fileName = dataset + '_rome_' + experiment + '.nc'              
                 save_file(ds_rome, folder_save, fileName)
 

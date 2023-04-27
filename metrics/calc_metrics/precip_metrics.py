@@ -1,9 +1,40 @@
+import numpy as np
 import xarray as xr
-import os
-# from get_variables.cmip5_variables import *
-home = os.path .expanduser("~")
+import scipy
 
-def calc_rxday(precip):
+import timeit
+import os
+import sys
+run_on_gadi = False
+if run_on_gadi:
+    home = '/g/data/k10/cb4968'
+    sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
+else:
+    home = os.path.expanduser("~") + '/Documents'
+sys.path.insert(0, '{}/phd/functions'.format(home))
+from myFuncs import *
+# import constructed_fields as cf
+
+
+def snapshot(var):
+    return var.isel(time=0)
+
+def tMean(var):
+    return var.mean(dim='time', keep_attrs=True)
+
+def sMean(var):
+    aWeights = np.cos(np.deg2rad(var.lat))
+    return var.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
+
+def in_descent(var, dataset, experiment):
+    wap500 = get_dsvariable('wap', dataset, experiment, resolution=resolutions[0])['wap'].sel(plev = 5e4)
+
+    if len(var)<1000:
+        wap500 = resample_timeMean(wap500, 'monthly')
+        wap500 = wap500.assign_coords(time=data.time)
+    return var.where(wap500>0, np.nan)
+
+def rxday(precip):
     rx1day = precip.resample(time='Y').max(dim='time')
     rx1day.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9)
 
@@ -15,10 +46,9 @@ def calc_rxday(precip):
         data_vars = {'rx1day': rx1day, 
                      'rx5day': rx5day}
         )
-    
     return ds_rxday
 
-def calc_pr_percentiles(precip):
+def pr_percentiles(precip):
 
     pr95 = precip.quantile(0.95,dim=('lat','lon'),keep_attrs=True)
     pr95 = xr.DataArray(
@@ -43,67 +73,52 @@ def calc_pr_percentiles(precip):
         coords = {'time': precip.time.data},
         attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
-
-    pr999 = precip.quantile(0.999,dim=('lat','lon'),keep_attrs=True)
-    pr999 = xr.DataArray(
-        data = pr999.data,
-        dims = ['time'],
-        coords = {'time': precip.time.data},
-        attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
-        )
         
-
     ds_prPercentiles = xr.Dataset(
         data_vars = {'pr95': pr95, 
                      'pr97': pr97, 
-                     'pr99': pr99, 
-                     'pr999': pr999}
+                     'pr99': pr99}
         ) 
-
     return ds_prPercentiles
 
-
-def calc_prMean_percentiles(precip):
+def pr_MeanPercentiles(precip):
 
     pr95 = precip.quantile(0.95,dim=('lat','lon'),keep_attrs=True)
-    mask = xr.where(precip>= pr95, 1, 0)
-    prMean95 = (precip*mask).mean(dim=('lat', 'lon'))
-    prMean95 = xr.DataArray(
-        data = prMean95.data,
+    aWeights = np.cos(np.deg2rad(precip.lat))
+    pr95Mean = precip.where(precip>= pr95).weighted(aWeights).mean(dim=('lat', 'lon'))
+    pr95Mean = xr.DataArray(
+        data = pr95Mean.data,
         dims = ['time'],
         coords = {'time': precip.time.data}, 
         attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
 
     pr97 = precip.quantile(0.97,dim=('lat','lon'),keep_attrs=True)
-    mask = xr.where(precip>= pr97, 1, 0)
-    prMean97 = (precip*mask).mean(dim=('lat', 'lon'))
-    prMean97 = xr.DataArray(
-        data = prMean97.data,
+    aWeights = np.cos(np.deg2rad(precip.lat))
+    pr97Mean = precip.where(precip>= pr97).weighted(aWeights).mean(dim=('lat', 'lon'))
+    pr97Mean = xr.DataArray(
+        data = pr97Mean.data,
         dims = ['time'],
         coords = {'time': precip.time.data}, 
         attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
-
+    
     pr99 = precip.quantile(0.99,dim=('lat','lon'),keep_attrs=True)
-    mask = xr.where(precip>= pr99, 1, 0)
-    prMean99 = (precip*mask).mean(dim=('lat', 'lon'))
-    prMean99 = xr.DataArray(
-        data = prMean99.data,
+    aWeights = np.cos(np.deg2rad(precip.lat))
+    pr99Mean = precip.where(precip>= pr99).weighted(aWeights).mean(dim=('lat', 'lon'))
+    pr99Mean = xr.DataArray(
+        data = pr99Mean.data,
         dims = ['time'],
         coords = {'time': precip.time.data}, 
         attrs = {'units':'mm day' + chr(0x207B) + chr(0x00B9)}
         )
-
+    
     ds_prPercentiles = xr.Dataset(
-        data_vars = {'prMean95': prMean95, 
-                     'prMean97': prMean97, 
-                     'prMean99': prMean99}
+        data_vars = {'pr95Mean': pr95Mean, 
+                     'prMean97': pr97Mean, 
+                     'prMean99': pr99Mean}
         ) 
-
     return ds_prPercentiles
-
-
 
 def F_pr10(precip):
     mask = xr.where(precip>10,1,0)
@@ -114,52 +129,56 @@ def F_pr10(precip):
     data_vars = {'F_pr10': F_pr10},
     attrs = {'description': 'Number of gridboxes in daily scene exceeding 10 mm/day'}
         )
-
     return ds_F_pr10
-
-
-def save_file(dataset, folder, fileName):
-    os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + fileName
-
-    if os.path.exists(path):
-        os.remove(path)    
-    
-    dataset.to_netcdf(path)
 
 
 
 if __name__ == '__main__':
 
-
-    models = [
-            # 'IPSL-CM5A-MR', # 1
-            'GFDL-CM3',     # 2
-            # 'GISS-E2-H',    # 3
-            # 'bcc-csm1-1',   # 4
-            # 'CNRM-CM5',     # 5
-            # 'CCSM4',        # 6
-            # 'HadGEM2-AO',   # 7
-            # 'BNU-ESM',      # 8
-            # 'EC-EARTH',     # 9
-            # 'FGOALS-g2',    # 10
-            # 'MPI-ESM-MR',   # 11
-            # 'CMCC-CM',      # 12
-            # 'inmcm4',       # 13
-            # 'NorESM1-M',    # 14
-            # 'CanESM2',      # 15
-            # 'MIROC5',       # 16
-            # 'HadGEM2-CC',   # 17
-            # 'MRI-CGCM3',    # 18
-            # 'CESM1-BGC'     # 19
-            ]
-    
-    observations = [
-        'GPCP'
+    models_cmip5 = [
+        # 'IPSL-CM5A-MR', # 1
+        'GFDL-CM3',     # 2
+        # 'GISS-E2-H',    # 3
+        # 'bcc-csm1-1',   # 4
+        # 'CNRM-CM5',     # 5
+        # 'CCSM4',        # 6
+        # 'HadGEM2-AO',   # 7
+        # 'BNU-ESM',      # 8
+        # 'EC-EARTH',     # 9
+        # 'FGOALS-g2',    # 10
+        # 'MPI-ESM-MR',   # 11
+        # 'CMCC-CM',      # 12
+        # 'inmcm4',       # 13
+        # 'NorESM1-M',    # 14
+        # 'CanESM2',      # 15
+        # 'MIROC5',       # 16
+        # 'HadGEM2-CC',   # 17
+        # 'MRI-CGCM3',    # 18
+        # 'CESM1-BGC'     # 19
         ]
     
-    datasets = models + observations
-
+    models_cmip6 = [
+        # 'TaiESM1',        # 1
+        # 'BCC-CSM2-MR',    # 2
+        # 'FGOALS-g3',      # 3
+        # 'CNRM-CM6-1',     # 4
+        # 'MIROC6',         # 5
+        # 'MPI-ESM1-2-HR',  # 6
+        # 'NorESM2-MM',     # 7
+        # 'GFDL-CM4',       # 8
+        # 'CanESM5',        # 9
+        # 'CMCC-ESM2',      # 10
+        # 'UKESM1-0-LL',    # 11
+        # 'MRI-ESM2-0',     # 12
+        # 'CESM2',          # 13
+        # 'NESM3'           # 14
+        ]
+    
+    observations = [
+        # 'GPCP'
+        ]
+    
+    datasets = models_cmip5 + models_cmip6 + observations
 
     resolutions = [
         # 'original',
@@ -168,84 +187,68 @@ if __name__ == '__main__':
     
     experiments = [
         'historical',
-        # 'rcp85'
+        # 'rcp85',
+        # 'abrupt-4xCO2',
+        # ''
         ]
-    
-    institutes = {
-        'IPSL-CM5A-MR':'IPSL',
-        'GFDL-CM3':'NOAA-GFDL',
-        'GISS-E2-H':'NASA-GISS',
-        'bcc-csm1-1':'BCC',
-        'CNRM-CM5':'CNRM-CERFACS',
-        'CCSM4':'NCAR',
-        'HadGEM2-AO':'NIMR-KMA',
-        'BNU-ESM':'BNU',
-        'EC-EARTH':'ICHEC',
-        'FGOALS-g2':'LASG-CESS',
-        'MPI-ESM-MR':'MPI-M',
-        'CMCC-CM':'CMCC',
-        'inmcm4':'INM',
-        'NorESM1-M':'NCC',
-        'CanESM2':'CCCma',
-        'MIROC5':'MIROC',
-        'HadGEM2-CC':'MOHC',
-        'MRI-CGCM3':'MRI',
-        'CESM1-BGC':'NSF-DOE-NCAR'
-        }
-
 
     for dataset in datasets:
         for experiment in experiments:
 
-            if dataset == 'GPCP':
-                # precip = get_GPCP(institutes[model], model, experiment).precip
-                precip = get_dsvariable('precip', dataset, experiment)
+            # load data
+            if run_on_gadi:
+                if dataset == 'GPCP':
+                    from obs_variables import *
+                    precip = get_GPCP(institutes[model], model, experiment)['precip']
+                
+                if np.isin(models_cmip5, dataset).any():
+                    from cmip5_variables import *
+                    precip = get_pr(institutes[model], model, experiment)['precip']
+                
+                if run_on_gadi and np.isin(models_cmip6, dataset).any():
+                    from cmip6_variables import *
+                    precip = get_pr(institutes[model], model, experiment)['precip']
             else:
-                # precip = get_pr(institutes[model], model, experiment).precip
                 precip = get_dsvariable('precip', dataset, experiment)
 
 
-            ds_rxday = calc_rxday(precip)
-            ds_prPercentiles = calc_pr_percentiles(precip)
-            ds_prMeanPercentiles = calc_prMean_percentiles(precip)
+            # Calculate diagnostics and put into dataset
+            ds_rxday = rxday(precip)
+            ds_prPercentiles = pr_percentiles(precip)
+            ds_prMeanPercentiles = pr_MeanPercentiles(precip)
             ds_F_pr10 = F_pr10(precip)
 
 
-
+            # save
             save_rxday = False
             save_prPercentiles = False
             save_prMeanPercentiles = False
             save_F_pr10 = False
 
 
-            if dataset == 'GPCP':
-                # folder_save = '/g/data/k10/cb4968/data/obs/'+ dataset
-                folder_save = home + '/Documents/data/obs/' + dataset
-
-            else:
-                # folder_save = '/g/data/k10/cb4968/data/cmip5/'+ dataset
-                folder_save = home + '/Documents/data/cmip5/' + dataset
+            if np.isin(models_cmip5, dataset).any():
+                folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
+            if np.isin(models_cmip6, dataset).any():
+                folder_save = '{}/data/cmip6/metrics_cmip6_{}'.format(resolutions[0])
+            if np.isin(observations, dataset).any():
+                folder_save = '{}/data/obs/metrics_obs_{}'.format(resolutions[0])
 
 
             if save_rxday:
                 fileName = dataset + '_rxday_' + experiment + '.nc'
-                dataSet = ds_rxday
-                save_file(dataSet, folder_save, fileName)
+                save_file(ds_rxday, folder_save, fileName)
 
             if save_prPercentiles:
                 fileName = dataset + '_prPercentiles_' + experiment + '.nc'
-                dataSet = ds_prPercentiles
-                save_file(dataSet, folder_save, fileName)
+                save_file(ds_prPercentiles, folder_save, fileName)
 
             if save_prMeanPercentiles:
                 fileName = dataset + '_prMeanPercentiles_' + experiment + '.nc'
-                dataSet = ds_prMeanPercentiles
-                save_file(dataSet, folder_save, fileName)
+                save_file(ds_prMeanPercentiles, folder_save, fileName)
 
             if save_F_pr10 :
                 fileName = dataset + '_F_pr10_' + experiment + '.nc'
-                dataSet = ds_F_pr10
-                save_file(dataSet, folder_save, fileName)
+                save_file(ds_F_pr10, folder_save, fileName)
 
 
 

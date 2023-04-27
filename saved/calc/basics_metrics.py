@@ -1,13 +1,24 @@
 import numpy as np
 import xarray as xr
 import scipy
+
 import timeit
 import os
-home = os.path.expanduser("~")
+run_on_gadi = False
+if run_on_gadi:
+    home = '/g/data/k10/cb4968'
+else:
+    home = os.path.expanduser("~") + '/Documents'
 
-import metrics.get_variables.myFuncs as myFuncs
-from get_variables.cmip5_variables import *
+import sys
+sys.path.insert(0, '{}phd/functions'.format(home))
+sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
+
+from myFuncs import *
+from cmip6_variables import *
 import constructed_fields as cf
+
+
 
 def snapshot(var):
     return var.isel(time=0)

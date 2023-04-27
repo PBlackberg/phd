@@ -11,7 +11,6 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 import os
-home = os.path.expanduser("~")
 
 
 
@@ -161,18 +160,18 @@ def to_monthly(da):
 
 
 
-def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridded'):
+def get_dsvariable(variable, dataset, experiment, home = os.path.expanduser("~") + '/Documents', resolution='regridded'):
 
     if resolution == 'regridded':
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP5/ds_cmip5/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = home + '/Documents/data/obs/ds_obs/' + dataset
+        folder_obs = home + '/data/obs/ds_obs/' + dataset
         fileName_obs = dataset + '_' + variable + '.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP6/ds_cmip6/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP6/ds_cmip6/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
@@ -188,15 +187,15 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
                     print(f"Error: no file at {path1}, {path2}, or {path3}")
 
     if resolution == 'original':
-        folder_model = '{}/Documents/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP5/ds_cmip5_orig/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_'+ experiment+ '_orig.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = '{}/Documents/data/obs/ds_obs_orig/{}'.format(home,dataset)
+        folder_obs = '{}/data/obs/ds_obs_orig/{}'.format(home,dataset)
         fileName_obs = dataset + '_' + variable + '_orig.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
-        folder_model = '{}/Documents/data/CMIP6/ds_cmip6_orig/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP6/ds_cmip6_orig/{}'.format(home,dataset)
         fileName_model = dataset + '_' + variable + '_' + experiment + '.nc'
         path3 = os.path.join(folder_model, fileName_model)
 
@@ -214,14 +213,14 @@ def get_dsvariable(variable, dataset, experiment, home=home, resolution='regridd
 
                         
 
-def get_metric(metric, dataset, experiment='historical', home=home, resolution='regridded'):
+def get_metric(metric, dataset, experiment='historical', home=os.path.expanduser("~") + '/Documents', resolution='regridded'):
 
     if resolution == 'regridded':
-        folder_model = '{}/Documents/data/CMIP5/metrics_cmip5/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP5/metrics_cmip5/{}'.format(home,dataset)
         fileName_model = dataset + '_' + metric + '_' + experiment + '.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = home + '/Documents/data/obs/metrics_obs/' + dataset
+        folder_obs = home + '/data/obs/metrics_obs/' + dataset
         fileName_obs = dataset + '_' + metric + '.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
@@ -234,11 +233,11 @@ def get_metric(metric, dataset, experiment='historical', home=home, resolution='
                 print(f"Error: no file at {path1} or {path2}")
 
     if resolution == 'original':
-        folder_model = '{}/Documents/data/CMIP5/metrics_cmip5_orig/{}'.format(home,dataset)
+        folder_model = '{}/data/CMIP5/metrics_cmip5_orig/{}'.format(home,dataset)
         fileName_model = dataset + '_' + metric + '_'+ experiment+ '_orig.nc'
         path1 = os.path.join(folder_model, fileName_model)
 
-        folder_obs = '{}/Documents/data/obs/metrics_obs_orig/{}'.format(home,dataset)
+        folder_obs = '{}/data/obs/metrics_obs_orig/{}'.format(home,dataset)
         fileName_obs = dataset + '_' + metric + '_orig.nc'
         path2 = os.path.join(folder_obs, fileName_obs)
 
@@ -442,6 +441,50 @@ def onePlus(a):
 
 
 
+# --------------------------------------------------------------------------   commonly used variables   ---------------------------------------------------------------------------------- #
+
+institutes_cmip5 = {
+    'IPSL-CM5A-MR':'IPSL',
+    'GFDL-CM3':'NOAA-GFDL',
+    'GISS-E2-H':'NASA-GISS',
+    'bcc-csm1-1':'BCC',
+    'CNRM-CM5':'CNRM-CERFACS',
+    'CCSM4':'NCAR',
+    'HadGEM2-AO':'NIMR-KMA',
+    'BNU-ESM':'BNU',
+    'EC-EARTH':'ICHEC',
+    'FGOALS-g2':'LASG-CESS',
+    'MPI-ESM-MR':'MPI-M',
+    'CMCC-CM':'CMCC',
+    'inmcm4':'INM',
+    'NorESM1-M':'NCC',
+    'CanESM2':'CCCma',
+    'MIROC5':'MIROC',
+    'HadGEM2-CC':'MOHC',
+    'MRI-CGCM3':'MRI',
+    'CESM1-BGC':'NSF-DOE-NCAR'
+    }
+
+institutes_cmip6 = {
+    'TaiESM1':'AS-RCEC',
+    'BCC-CSM2-MR':'BCC',
+    'FGOALS-g3':'CAS',
+    'CNRM-CM6-1':'CNRM-CERFACS',
+    'MIROC6':'MIROC',
+    'MPI-ESM1-2-HR':'MPI-M',
+    'GISS-E2-1-H':'NASA-GISS',
+    'NorESM2-MM':'NCC',
+    'GFDL-CM4':'NOAA-GFDL',
+    'CanESM5':'CCCma',
+    'CMCC-ESM2':'CMCC',
+    'UKESM1-0-LL':'MOHC',
+    'MRI-ESM2-0':'MRI',
+    'CESM2':'NCAR',
+    'NESM3':'NUIST'
+    }
+
+
+institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
 
@@ -450,68 +493,6 @@ def onePlus(a):
 
 
 
-
-
-
-
-
-# -----------------------------------------------------------------------   Format for multiple plots   ----------------------------------------------------------------------------------- #
-
-# foramt for multiple plots
-# def plot_format_multiple(datasets, variable, timeMean_options, experiments, data):
-#     absolute_limits = True
-#     quantile_low = 0
-#     quantile_high = 1
-#     if absolute_limits:
-#         vmin, vmax = [], []
-#         for dataset in datasets:
-
-
-
-#             vmin = np.append(vmin, np.quantile(y, quantile_low))
-#             vmax = np.append(vmax, np.quantile(y, quantile_high))
-
-#         vmin = np.min(vmin)
-#         vmax = np.max(vmax)
-
-#     else:
-#         vmin, vmax = None, None 
-
-
-#     fig= plt.figure(figsize=(22.5,17.5))
-#     title = '{} spatial mean of {} field from model:{}, experiment:{}'.format(timeMean_options[0], variable, dataset, experiments[0])
-
-#     fig.suptitle(title, fontsize=18, y=0.95)
-
-#     for i, dataset in enumerate(datasets):
-#         ax= fig.add_subplot(5,4,i+1)
-#         title = dataset
-
-
-#         plot_timeseries(y, title=title, timeMean_option=timeMean_options, ax=ax, ymin=vmin, ymax=vmax)
-
-#         if (len(datasets)-i)<=4:
-#             xlabel = '{} [{} - {}]'.format(timeMean_options[0], str(data.isel(time=0).coords['time'].values)[:10], str(data.isel(time=-1).coords['time'].values)[:10])
-#             plt.xlabel(xlabel)
-
-#         if i== 0 or i==4 or i==8 or i==12 or i==16:
-#             ylabel = 'Relative humidity [{}]'.format('%')
-#             plt.ylabel(ylabel)
-
-#     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.15, hspace=0.3)
-
-
-
-
-
-
-# saving and loading data
-
-
-# folder_model = '{}/Documents/data/CMIP5/metrics_cmip5/{}'.format(home,dataset)
-# filename = dataset + '_tas_tMean_rcp85.nc'
-# a = xr.open_dataset(folder_model + '/' + filename)
-# a.tas_tMean
 
 
 

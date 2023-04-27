@@ -5,7 +5,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-
 artScenes_4days = np.zeros(shape = (4, 22, 128))
 time_range = pd.date_range("1970/01/01","1970/01/05",freq='D',inclusive='left')
 lat = np.linspace(-30, 30, 22)
