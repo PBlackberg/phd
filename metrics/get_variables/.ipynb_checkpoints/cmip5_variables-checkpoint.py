@@ -3,38 +3,38 @@ import xesmf as xe
 import numpy as np
 import os
 import scipy
-
+home = '/g/data/k10/cb4968'
 
 
 # --------------------------------------------------------- finding ensemble/version and concatenating files --------------------------------------------------------
 
 def data_exist(dataset, experiment, variable):
-    data_exist = 'yes'
+    data_exist = True
 
     if dataset == 'GPCP' and not variable == 'pr':
-        data_exist = 'no'
+        data_exist = False
 
     if variable == 'hus':
         if model == 'CESM1-BGC':
-            data_exist = 'no'
+            data_exist = False
         if (model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85':
-            data_exist = 'no'
+            data_exist = False
     
     if variable == 'hur':
         if model == 'EC-EARTH' and experiment == 'rcp85':
-            data_exist = 'no'
+            data_exist = False
 
     if variable == 'wap':
         if model == 'GISS-E2-H' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'inmcm4' or model == 'HadGEM2-CC' or model =='CESM1-BGC' or model == 'EC-EARTH':
-            data_exist = 'no'
+            data_exist = False
         if model == 'bcc-csm1-1' and experiment=='rcp85':
-            data_exist = 'no'
+            data_exist = False
 
     if variable == 'cl':
         if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO':
-            data_exist = 'no'
+            data_exist = False
         if (model == 'EC-EARTH' or model == 'CESM1-BGC') and experiment == 'rcp85':
-            data_exist = 'no'
+            data_exist = False
     return data_exist
 
 
@@ -115,7 +115,7 @@ def get_pr(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     variable = 'pr'
 
-    if data_exist(model, experiment, variable) == 'no':
+    if not data_exist(model, experiment, variable):
         ds_pr = xr.Dataset(
             data_vars = {'precip': np.nan}
             )
@@ -129,7 +129,7 @@ def get_pr(institute, model, experiment, resolution):
         precip = ds['pr']*60*60*24 # convert to mm/day
         precip.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9) # give new units
         
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_pr = xr.Dataset(
                 data_vars = {'precip': precip},
                 attrs = ds.attrs
@@ -150,7 +150,7 @@ def get_tas(institute, model, experiment, resolution):
         path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'   
 
     variable = 'tas'
-    if data_exist(model, experiment, variable) == 'no':
+    if not data_exist(model, experiment, variable):
         ds_tas = xr.Dataset(
             data_vars = {'precip': np.nan}
             )
@@ -164,7 +164,7 @@ def get_tas(institute, model, experiment, resolution):
         tas = ds['tas']-273.15 # convert to degrees Celsius
         tas.attrs['units']= '\u00B0C'
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_tas = xr.Dataset(
                 data_vars = {'tas': tas},
                 attrs = ds.attrs
@@ -183,7 +183,7 @@ def get_hus(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
     
     variable = 'hus'
-    if data_exist(model,variable) == 'no':
+    if not data_exist(model,variable):
         ds_hus = xr.Dataset(
             data_vars = {'hus': np.nan}
             )
@@ -196,7 +196,7 @@ def get_hus(institute, model, experiment, resolution):
         
         hus = ds['hus'] # unitless kg/kg
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_hus = xr.Dataset(
                 data_vars = {'hus': hus},
                 attrs = ds.attrs
@@ -215,7 +215,7 @@ def get_hur(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     
     variable = 'hur'
-    if data_exist(model,variable) == 'no':
+    if not data_exist(model,variable):
         ds_hur = xr.Dataset(
             data_vars = {'hur': np.nan}
             )
@@ -229,7 +229,7 @@ def get_hur(institute, model, experiment, resolution):
         hur = ds['hur'] # units in %
         hur.attrs['units']= '%'
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_hur = xr.Dataset(
                 data_vars = {'hur': hur},
                 attrs = ds.attrs
@@ -249,7 +249,7 @@ def get_wap(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
 
     variable = 'wap'
-    if data_exist(model,variable) == 'no':
+    if not data_exist(model,variable):
         ds_wap = xr.Dataset(
             data_vars = {'wap': np.nan}
             )
@@ -263,7 +263,7 @@ def get_wap(institute, model, experiment, resolution):
         wap = ds['wap']*60*60*24/100 # convert to hPa/day   
         wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_wap = xr.Dataset(
                 data_vars = {'wap': wap},
                 attrs = ds.attrs
@@ -283,7 +283,7 @@ def get_cl(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
 
     variable = 'cl'
-    if data_exist(model,variable) == 'no':
+    if not data_exist(model,variable):
         ds_cl = xr.Dataset(
             data_vars = {'cl': np.nan}
             )
@@ -297,7 +297,7 @@ def get_cl(institute, model, experiment, resolution):
 
         ds = concat_files(path_folder, experiment)
         
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_cl = ds # units in % on sigma pressure coordinates
 
             if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2': # different models have different conversions from height coordinate to pressure coordinate.
@@ -343,30 +343,30 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     models = [
-            # 'IPSL-CM5A-MR', # 1
-            'GFDL-CM3',     # 2
-            # 'GISS-E2-H',    # 3
-            # 'bcc-csm1-1',   # 4
-            # 'CNRM-CM5',     # 5
-            # 'CCSM4',        # 6
-            # 'HadGEM2-AO',   # 7
-            # 'BNU-ESM',      # 8
-            # 'EC-EARTH',     # 9
-            # 'FGOALS-g2',    # 10
-            # 'MPI-ESM-MR',   # 11
-            # 'CMCC-CM',      # 12
-            # 'inmcm4',       # 13
-            # 'NorESM1-M',    # 14
-            # 'CanESM2',      # 15 
-            # 'MIROC5',       # 16
-            # 'HadGEM2-CC',   # 17
-            # 'MRI-CGCM3',    # 18
-            # 'CESM1-BGC'     # 19
-            ]
+        # 'IPSL-CM5A-MR', # 1
+        'GFDL-CM3',     # 2
+        # 'GISS-E2-H',    # 3
+        # 'bcc-csm1-1',   # 4
+        # 'CNRM-CM5',     # 5
+        # 'CCSM4',        # 6
+        # 'HadGEM2-AO',   # 7
+        # 'BNU-ESM',      # 8
+        # 'EC-EARTH',     # 9
+        # 'FGOALS-g2',    # 10
+        # 'MPI-ESM-MR',   # 11
+        # 'CMCC-CM',      # 12
+        # 'inmcm4',       # 13
+        # 'NorESM1-M',    # 14
+        # 'CanESM2',      # 15 
+        # 'MIROC5',       # 16
+        # 'HadGEM2-CC',   # 17
+        # 'MRI-CGCM3',    # 18
+        # 'CESM1-BGC'     # 19
+        ]
 
 
     resolutions = [
-        # 'original',
+        # 'orig',
         'regridded'
         ]
     
@@ -415,34 +415,34 @@ if __name__ == '__main__':
             save_wap = False
             save_cl = False
             
-            folder = '/g/data/k10/cb4968/data/cmip5/ds/'
+            folder_save = '{}/data/cmip5/ds_cmip5_{}/{}'.format(home, resolutions[0], model)
             
             if save_pr:
                 fileName = model + '_precip_' + experiment + '.nc'
-                save_file(ds_pr, folder, fileName)
+                save_file(ds_pr, folder_save, fileName)
                 
             if save_tas:
                 fileName = model + '_tas_' + experiment + '.nc'
-                save_file(ds_tas, folder, fileName)
+                save_file(ds_tas, folder_save, fileName)
 
             if save_hus:
                 fileName = model + '_hus_' + experiment + '.nc'
-                save_file(ds_hus, folder, fileName)
+                save_file(ds_hus, folder_save, fileName)
 
             if save_hur:
                 fileName = model + '_hur_' + experiment + '.nc'
-                save_file(ds_hur, folder, fileName)
+                save_file(ds_hur, folder_save, fileName)
                 
             if save_wap:
                 fileName = model + '_wap_' + experiment + '.nc'
-                save_file(ds_wap, folder, fileName)
+                save_file(ds_wap, folder_save, fileName)
 
             if save_cl:
                 fileName = model + '_cl_' + experiment + '.nc'
-                save_file(ds_cl, folder, fileName)
+                save_file(ds_cl, folder_save, fileName)
                 
                 fileName = model + '_p_hybridsigma_' + experiment + '.nc'
-                save_file(ds_p_hybridsigma, folder, fileName)
+                save_file(ds_p_hybridsigma, folder_save, fileName)
 
 
 
