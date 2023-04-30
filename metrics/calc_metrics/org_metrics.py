@@ -295,20 +295,20 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        # 'TaiESM1',        # 1
-        # 'BCC-CSM2-MR',    # 2
-        # 'FGOALS-g3',      # 3
-        # 'CNRM-CM6-1',     # 4
-        # 'MIROC6',         # 5
-        # 'MPI-ESM1-2-HR',  # 6
-        # 'NorESM2-MM',     # 7
-        # 'GFDL-CM4',       # 8
-        # 'CanESM5',        # 9
-        # 'CMCC-ESM2',      # 10
-        # 'UKESM1-0-LL',    # 11
-        # 'MRI-ESM2-0',     # 12
-        # 'CESM2',          # 13
-        # 'NESM3'           # 14
+        'TaiESM1',        # 1
+        'BCC-CSM2-MR',    # 2
+        'FGOALS-g3',      # 3
+        'CNRM-CM6-1',     # 4
+        'MIROC6',         # 5
+        'MPI-ESM1-2-HR',  # 6
+        'NorESM2-MM',     # 7
+        'GFDL-CM4',       # 8
+        'CanESM5',        # 9
+        'CMCC-ESM2',      # 10
+        'UKESM1-0-LL',    # 11
+        'MRI-ESM2-0',     # 12
+        'CESM2',          # 13
+        'NESM3'           # 14
         ]
     
     observations = [
@@ -318,8 +318,8 @@ if __name__ == '__main__':
     datasets = models_cmip5 + models_cmip6 + observations
 
     resolutions = [
-        # 'orig',
-        'regridded'
+        'orig',
+        # 'regridded'
         ]
 
     experiments = [
@@ -350,7 +350,7 @@ if __name__ == '__main__':
                     from cmip6_variables import *
                     precip = get_pr(institutes[model], model, experiment)['precip']
             else:
-                precip = get_dsvariable('precip', dataset, experiment)
+                precip = get_dsvariable('precip', dataset, experiment, home, resolutions[0])['precip']
             
 
             # Calculate diagnostics and put into dataset
@@ -370,16 +370,16 @@ if __name__ == '__main__':
 
 
             # save
-            save_rome = False
-            save_numberIndex = False
-            save_oAreaAndPr = False
+            save_rome = True
+            save_numberIndex = True
+            save_oAreaAndPr = True
             
             if np.isin(models_cmip5, dataset).any():
-                folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
+                folder_save = '{}/data/cmip5/metrics_cmip5_{}/{}'.format(home, resolutions[0], dataset)
             if np.isin(models_cmip6, dataset).any():
-                folder_save = '{}/data/cmip6/metrics_cmip6_{}'.format(resolutions[0])
+                folder_save = '{}/data/cmip6/metrics_cmip6_{}/{}'.format(home, resolutions[0], dataset)
             if np.isin(observations, dataset).any():
-                folder_save = '{}/data/obs/metrics_obs_{}'.format(resolutions[0])
+                folder_save = '{}/data/obs/metrics_obs_{}/{}'.format(home, resolutions[0], dataset)
 
             if save_rome:
                 fileName = dataset + '_rome_' + experiment + '_' + resolutions[0] + '.nc'              
