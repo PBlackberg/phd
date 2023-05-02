@@ -155,7 +155,9 @@ def get_wap(institute, model, experiment, resolution):
     else:
         ensemble = choose_ensemble(model, experiment, variable)
         path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-        
+        if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
         cmip6_feature = last_letters(model, experiment, variable)
         version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
         path_folder =  os.path.join(path_gen, cmip6_feature, version)
@@ -165,7 +167,7 @@ def get_wap(institute, model, experiment, resolution):
         wap = ds['wap']*60*60*24/100 # convert to hPa/day   
         wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_wap = xr.Dataset(
                 data_vars = {'wap': wap},
                 attrs = ds.attrs
@@ -183,26 +185,25 @@ def get_wap(institute, model, experiment, resolution):
 
 
 def get_tas(institute, model, experiment, resolution):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    if model == 'FGOALS-g2':
-        path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'   
-
     variable = 'tas'
-    if data_exist(model, experiment, variable) == 'no':
-        ds_tas = xr.Dataset(
-            data_vars = {'precip': np.nan}
+    if not data_exist(model, experiment, variable):
+        ds_pr = xr.Dataset(
+            data_vars = {'tas': np.nan}
             )
     else:
         ensemble = choose_ensemble(model, experiment, variable)
-        version = pick_latestVersion(path_gen, ensemble)
-        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+        
+        cmip6_feature = last_letters(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
+        path_folder =  os.path.join(path_gen, cmip6_feature, version)
 
         ds = concat_files(path_folder, experiment)
         
         tas = ds['tas']-273.15 # convert to degrees Celsius
         tas.attrs['units']= '\u00B0C'
 
-        if resolution == 'original':
+        if resolution == 'orig':
             ds_tas = xr.Dataset(
                 data_vars = {'tas': tas},
                 attrs = ds.attrs
@@ -348,8 +349,8 @@ if __name__ == '__main__':
 
     
     models = [
-        'TaiESM1',        # 1 # rcp monthly (pr)
-        'BCC-CSM2-MR',    # 2 # rcp monthly   
+        'TaiESM1',        # 1 # rcp monthly (pr), monthly (wap) 
+        'BCC-CSM2-MR',    # 2 # rcp monthly, monthly (wap)
         'FGOALS-g3',      # 3 # rcp 0463 - 0614
         'CNRM-CM6-1',     # 4 # rcp 1850-1999
         'MIROC6',         # 5 # rcp 3200 - 3340
@@ -361,12 +362,12 @@ if __name__ == '__main__':
         'UKESM1-0-LL',    # 11 # rcp 1850 - 1999
         'MRI-ESM2-0',     # 12 # rcp 1850 - 2000
         'CESM2',          # 13 # rcp 0001 - 0990  (multiple fill values (check if all get converted to NaN), for historical)
-        'NESM3'           # 12 # rcp monthly
+        'NESM3'           # 12 # rcp monthly, monthly (wap)
         ]
 
 
     resolutions = [
-        'original',
+        'orig',
         # 'regridded'
         ]
 
@@ -417,7 +418,7 @@ if __name__ == '__main__':
         print(model)
         for experiment in experiments:
 
-            ds_pr = get_pr(institutes[model], model, experiment, resolution=resolutions[0])
+            # ds_pr = get_pr(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
@@ -437,30 +438,30 @@ if __name__ == '__main__':
             
             
             if save_pr:
-                fileName = model + '_precip_' + experiment + '.nc'
+                fileName = model + '_precip_' + experiment + '_' + resolutions[0] + '.nc'
                 save_file(ds_pr, folder_save, fileName)
                 
             if save_tas:
-                fileName = model + '_tas_' + experiment + '.nc'
+                fileName = model + '_tas_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_tas, folder_save, fileName)
 
             if save_hus:
-                fileName = model + '_hus_' + experiment + '.nc'
+                fileName = model + '_hus_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_hus, folder_save, fileName)
 
             if save_hur:
-                fileName = model + '_hur_' + experiment + '.nc'
+                fileName = model + '_hur_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_hur, folder_save, fileName)
                 
             if save_wap:
-                fileName = model + '_wap_' + experiment + '.nc'
+                fileName = model + '_wap_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_wap, folder_save, fileName)
 
             if save_cl:
-                fileName = model + '_cl_' + experiment + '.nc'
+                fileName = model + '_cl_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_cl, folder_save, fileName)
                 
-                fileName = model + '_p_hybridsigma_' + experiment + '.nc'
+                fileName = model + '_p_hybridsigma_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_p_hybridsigma, folder_save, fileName)
 
 
