@@ -270,6 +270,13 @@ def calc_oAreaAndPr(precip, conv_threshold):
     return ds_oAreaAndPr
 
 
+def data_exist(dataset, experiment):
+    data_exitsts = True
+    if (experiment == 'abrupt-4xCO2') and (dataset == 'TaiESM1' or dataset == 'BCC-CSM2-MR' or dataset == 'CanESM5' or dataset == 'CMCC-ESM2' or dataset == 'TaiESM1' or dataset == 'NESM3'):
+        data_exitsts = False
+    return data_exitsts
+
+
 if __name__ == '__main__':
    
     models_cmip5 = [
@@ -295,20 +302,20 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        'TaiESM1',        # 1
-        'BCC-CSM2-MR',    # 2
+        'TaiESM1',        # 1 ncp monthly
+        'BCC-CSM2-MR',    # 2 rcp monthly
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
         'MIROC6',         # 5
         'MPI-ESM1-2-HR',  # 6
         'NorESM2-MM',     # 7
         'GFDL-CM4',       # 8
-        'CanESM5',        # 9
-        'CMCC-ESM2',      # 10
+        'CanESM5',        # 9 need to redownload
+        'CMCC-ESM2',      # 10 rcp monthly
         'UKESM1-0-LL',    # 11
         'MRI-ESM2-0',     # 12
         'CESM2',          # 13
-        'NESM3'           # 14
+        'NESM3'           # 14 don't have rcp
         ]
     
     observations = [
@@ -318,84 +325,88 @@ if __name__ == '__main__':
     datasets = models_cmip5 + models_cmip6 + observations
 
     resolutions = [
-        'orig',
-        # 'regridded'
+        # 'orig',
+        'regridded'
         ]
 
     experiments = [
-        'historical',
+        # 'historical',
         # 'rcp85',
-        # 'abrupt-4xCO2'
+        'abrupt-4xCO2'
         # ''
         ]
 
     for dataset in datasets:
-        print(dataset, 'started')
+        print(dataset)
         start = timeit.default_timer()
 
         for experiment in experiments:
-            print(experiment, 'started') 
+            if not data_exist(dataset, experiment):
+                print(f'no {experiment} data')
+            else:
+                print(experiment)
 
-            # load data
-            if run_on_gadi:
-                if dataset == 'GPCP':
-                    from obs_variables import *
-                    precip = get_GPCP(institutes[model], model, experiment)['precip']
+                # load data
+                if run_on_gadi:
+                    if dataset == 'GPCP':
+                        from obs_variables import *
+                        precip = get_GPCP(institutes[model], model, experiment)['precip']
+                    
+                    if np.isin(models_cmip5, dataset).any():
+                        from cmip5_variables import *
+                        precip = get_pr(institutes[model], model, experiment)['precip']
+                    
+                    if run_on_gadi and np.isin(models_cmip6, dataset).any():
+                        from cmip6_variables import *
+                        precip = get_pr(institutes[model], model, experiment)['precip']
+                else:
+                    precip = get_dsvariable('precip', dataset, experiment, home, resolutions[0])['precip']
+                
+
+                # Calculate diagnostics and put into dataset
+                quantile_threshold = 0.97
+                conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
+                n = 8
+                rome = calc_rome(precip, conv_threshold)
+                rome_n = calc_rome_n(n, precip, conv_threshold)
+                ds_rome = xr.Dataset(
+                    data_vars = {'rome':rome, 
+                                'rome_n':rome_n},
+                    attrs = {'description': 'ROME based on all and the {} largest objects in the scene for each day'.format(n)}                  
+                    )
+                ds_numberIndex = calc_numberIndex(precip, conv_threshold)
+                ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
+
+
+
+                # save
+                save_rome = True
+                save_numberIndex = True
+                save_oAreaAndPr = True
                 
                 if np.isin(models_cmip5, dataset).any():
-                    from cmip5_variables import *
-                    precip = get_pr(institutes[model], model, experiment)['precip']
-                
-                if run_on_gadi and np.isin(models_cmip6, dataset).any():
-                    from cmip6_variables import *
-                    precip = get_pr(institutes[model], model, experiment)['precip']
-            else:
-                precip = get_dsvariable('precip', dataset, experiment, home, resolutions[0])['precip']
-            
+                    project = 'cmip5'
+                elif np.isin(models_cmip6, dataset).any():
+                    project = 'cmip6'
+                elif np.isin(observations, dataset).any():
+                    project = 'obs'
+                folder_save = home + '/data/' + project + '/' + 'metrics_' + project + '_' + resolutions[0] + '/' + dataset 
 
-            # Calculate diagnostics and put into dataset
-            quantile_threshold = 0.97
-            conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
-            n = 8
-            rome = calc_rome(precip, conv_threshold)
-            rome_n = calc_rome_n(n, precip, conv_threshold)
-            ds_rome = xr.Dataset(
-                data_vars = {'rome':rome, 
-                             'rome_n':rome_n},
-                attrs = {'description': 'ROME based on all and the {} largest objects in the scene for each day'.format(n)}                  
-                )
-            ds_numberIndex = calc_numberIndex(precip, conv_threshold)
-            ds_oAreaAndPr = calc_oAreaAndPr(precip, conv_threshold)
+                if save_rome:
+                    fileName = dataset + '_rome_' + experiment + '_' + resolutions[0] + '.nc'              
+                    save_file(ds_rome, folder_save, fileName)
+
+                if save_numberIndex:
+                    fileName = dataset + '_numberIndex_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_numberIndex, folder_save, fileName) 
+
+                if save_oAreaAndPr:
+                    fileName = dataset + '_oAreaAndPr_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_oAreaAndPr, folder_save, fileName)
 
 
-
-            # save
-            save_rome = True
-            save_numberIndex = True
-            save_oAreaAndPr = True
-            
-            if np.isin(models_cmip5, dataset).any():
-                folder_save = '{}/data/cmip5/metrics_cmip5_{}/{}'.format(home, resolutions[0], dataset)
-            if np.isin(models_cmip6, dataset).any():
-                folder_save = '{}/data/cmip6/metrics_cmip6_{}/{}'.format(home, resolutions[0], dataset)
-            if np.isin(observations, dataset).any():
-                folder_save = '{}/data/obs/metrics_obs_{}/{}'.format(home, resolutions[0], dataset)
-
-            if save_rome:
-                fileName = dataset + '_rome_' + experiment + '_' + resolutions[0] + '.nc'              
-                save_file(ds_rome, folder_save, fileName)
-
-            if save_numberIndex:
-                fileName = dataset + '_numberIndex_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_numberIndex, folder_save, fileName) 
-
-            if save_oAreaAndPr:
-                fileName = dataset + '_oAreaAndPr_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_oAreaAndPr, folder_save, fileName)
-
-
-        stop = timeit.default_timer()
-        print('dataset: {} took {} minutes to finsih'.format(dataset, (stop-start)/60))
+            stop = timeit.default_timer()
+            print('dataset: {} took {} minutes to finsih'.format(dataset, (stop-start)/60))
 
 
 

@@ -160,7 +160,7 @@ def to_monthly(da):
 
 
 
-def get_dsvariable(variable, dataset, experiment, home = os.path.expanduser("~") + '/Documents', resolution='regridded'):
+def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents', resolution='regridded'):
 
     folder = '{}/data/CMIP5/ds_cmip5_{}/{}'.format(home, resolution, dataset)
     filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
@@ -218,15 +218,14 @@ def get_metric(metric, dataset, experiment='historical', home=os.path.expanduser
 
 def regrid_conserv(M_in):
     # dimensions of model to regrid to
-    folder1 = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
-    fileName1 = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
-    path1 = folder1 + '/' + fileName1
+    folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
+    fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
+    path1 = folder + '/' + fileName
 
-    folder2 = '/Users/cbla0002/Documents/data/CMIP5/ds_cmip5/FGOALS-g2'
-    fileName2 = 'FGOALS-g2_precip_historical.nc'
-    path2 = folder2 + '/' + fileName2
+    folder = '/Users/cbla0002/Documents/data/CMIP5/ds_cmip5_orig/FGOALS-g2'
+    fileName = 'FGOALS-g2_precip_historical_orig.nc'
+    path2 = folder + '/' + fileName
     
-
     try:
         M_out = xr.open_dataset(path1)['pr'].sel(lat=slice(-30,30))
     except FileNotFoundError:
@@ -298,9 +297,9 @@ def regrid_conserv(M_in):
         )
 
     # interpolation
-    if ('plev' or 'lev') in M_in.dims:
+    if 'lev' in M_in.dims or 'plev' in M_in.dims:
         if 'lev' in M_in.dims:
-            M_n = M_n.rename({'lev': 'plev'})
+            M_in = M_in.rename({'lev': 'plev'})
 
         M_n = xr.DataArray(
             data = np.zeros([len(M_in.time.data), len(M_in.plev.data), len(lat_n), len(lon_n)]),
@@ -310,7 +309,6 @@ def regrid_conserv(M_in):
             )
 
         for day in np.arange(0,len(M_in.time.data)):
-            
             M_Wlat = xr.DataArray(
             data = np.zeros([len(M_in.plev), len(lat_n), len(lon)]),
             dims = ['plev', 'lat_n', 'lon']
@@ -351,13 +349,13 @@ def regrid_conserv(M_in):
 
 
 
-def save_file(dataset, folder, fileName):
+def save_file(dataset, folder, filename):
+
     os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + fileName
+    path = folder + '/' + filename
 
     if os.path.exists(path):
         os.remove(path)    
-    
     dataset.to_netcdf(path)
 
 
@@ -372,11 +370,14 @@ def resample_timeMean(y, timeMean_option=''):
             y = y.resample(time='Y').mean(dim='time', keep_attrs=True)
 
     if timeMean_option == 'seasonal':
-        y = y.resample(time='QS-DEC').mean(dim="time")
-        y = to_monthly(y)
-        y = y.rename({'month':'season'})
-        y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
-        y = y.isel(year=slice(1, None))
+        if len(y)<100:
+            pass
+        else:
+            y = y.resample(time='QS-DEC').mean(dim="time")
+            y = to_monthly(y)
+            y = y.rename({'month':'season'})
+            y = y.assign_coords(season = ["MAM", "JJA", "SON", "DJF"])
+            y = y.isel(year=slice(1, None))
 
     if timeMean_option == 'monthly':
         if len(y)<1000:
@@ -386,7 +387,6 @@ def resample_timeMean(y, timeMean_option=''):
 
     if timeMean_option == 'daily' or not timeMean_option:
         pass
-
     return y
 
 

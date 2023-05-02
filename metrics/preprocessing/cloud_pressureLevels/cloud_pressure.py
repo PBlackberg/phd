@@ -17,22 +17,22 @@ from myFuncs import *
 
 
 resolutions = [
-    'original',
-    # 'regridded'
+    'orig',
+    'regridded'
     ]
 
 def data_exist(model, experiment, variable):
     data_exist = True
     if variable == 'cl':
-        if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'EC-EARTH':
+        if model == 'CNRM-CM5' or model == 'CCSM4' or model == 'HadGEM2-AO' or model == 'EC-EARTH' or model =='GISS-E2-H':
             data_exist = False
         if model == 'CESM1-BGC' and experiment == 'rcp85':
             data_exist = False    
     return data_exist
 
 models_cmip5 = [
-    # 'IPSL-CM5A-MR', # 1
-    'GFDL-CM3',     # 2
+    'IPSL-CM5A-MR', # 1
+    # 'GFDL-CM3',     # 2
     # 'GISS-E2-H',    # 3
     # 'bcc-csm1-1',   # 4
     # 'CNRM-CM5',     # 5
@@ -72,8 +72,8 @@ models_cmip6 = [
 datasets = models_cmip5 + models_cmip6
 
 experiments = [
-    'historical',
-    # 'rcp85'
+    # 'historical',
+    'rcp85'
     ]
 
 
@@ -99,30 +99,39 @@ for dataset in datasets:
 
             # regrid data 
             data_regrid = regrid_conserv(data)
-            p_hybridSigma_regrid = regrid_conserv(p_hybridSigma)
+            p_hybridsigma_regrid = regrid_conserv(p_hybridSigma)
 
             # find low clouds and high clouds
-            cl_low = (data_regrid* xr.where((p_hybridSigma_regrid<=1500e2) & (p_hybridSigma_regrid>=600e2), 1, 0)).max(dim='plev')            
-            cl_high = (data_regrid * xr.where((p_hybridSigma_regrid<=250e2) & (p_hybridSigma_regrid>=0), 1, 0)).max(dim='plev')
+            cl_low = data_regrid.where((p_hybridsigma_regrid<=1500e2) & (p_hybridsigma_regrid>=600e2), 0).max(dim='plev')            
+            cl_high = data_regrid.where((p_hybridsigma_regrid<=250e2) & (p_hybridsigma_regrid>=0), 0).max(dim='plev')
 
             # organize into dataset
             ds_cl_low = xr.Dataset({'cl_low':cl_low})
             ds_cl_high = xr.Dataset({'cl_high':cl_high})
+            ds_p_hybridsigma = xr.Dataset(
+                data_vars = {'p_hybridsigma': p_hybridsigma_regrid},
+                attrs = ds.attrs
+                )
+
+            print('regridding finished')
 
             # save
             save_cl = True
 
             if np.isin(models_cmip5, dataset).any():
-                folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
+                folder_save = '{}/data/cmip5/ds_cmip5_{}/{}'.format(home, resolutions[1], dataset)
             if np.isin(models_cmip6, dataset).any():
-                folder_save = '{}/data/cmip6/metrics_cmip6_{}'.format(resolutions[0])
+                folder_save = '{}/data/cmip6/ds_cmip6_{}/{}'.format(home, resolutions[1], dataset)
 
             if save_cl:
-                fileName = dataset + '_cl_low' + experiment + '.nc'              
+                fileName = dataset + '_cl_low_' + experiment + '_' + resolutions[1] + '.nc'              
                 save_file(ds_cl_low, folder_save, fileName)
 
-                fileName = dataset + '_cl_high' + experiment + '.nc'              
+                fileName = dataset + '_cl_high_' + experiment + '_' + resolutions[1] + '.nc'              
                 save_file(ds_cl_high, folder_save, fileName)
+
+                fileName = dataset + '_cl_p_' + experiment + '_' + resolutions[1] + '.nc'              
+                save_file(ds_p_hybridsigma, folder_save, fileName)
 
 
 

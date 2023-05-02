@@ -132,12 +132,18 @@ def F_pr10(precip):
     return ds_F_pr10
 
 
+def data_exist(dataset, experiment):
+    data_exitsts = True
+    if (experiment == 'abrupt-4xCO2') and (dataset == 'TaiESM1' or dataset == 'BCC-CSM2-MR' or dataset == 'CanESM5' or dataset == 'CMCC-ESM2' or dataset == 'TaiESM1' or dataset == 'NESM3'):
+        data_exitsts = False
+    return data_exitsts
+
 
 if __name__ == '__main__':
 
     models_cmip5 = [
         # 'IPSL-CM5A-MR', # 1
-        'GFDL-CM3',     # 2
+        # 'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
@@ -158,20 +164,20 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        # 'TaiESM1',        # 1
-        # 'BCC-CSM2-MR',    # 2
-        # 'FGOALS-g3',      # 3
-        # 'CNRM-CM6-1',     # 4
-        # 'MIROC6',         # 5
-        # 'MPI-ESM1-2-HR',  # 6
-        # 'NorESM2-MM',     # 7
-        # 'GFDL-CM4',       # 8
-        # 'CanESM5',        # 9
-        # 'CMCC-ESM2',      # 10
-        # 'UKESM1-0-LL',    # 11
-        # 'MRI-ESM2-0',     # 12
-        # 'CESM2',          # 13
-        # 'NESM3'           # 14
+        'TaiESM1',        # 1
+        'BCC-CSM2-MR',    # 2
+        'FGOALS-g3',      # 3
+        'CNRM-CM6-1',     # 4
+        'MIROC6',         # 5
+        'MPI-ESM1-2-HR',  # 6
+        'NorESM2-MM',     # 7
+        'GFDL-CM4',       # 8
+        'CanESM5',        # 9
+        'CMCC-ESM2',      # 10
+        'UKESM1-0-LL',    # 11
+        'MRI-ESM2-0',     # 12
+        'CESM2',          # 13
+        'NESM3'           # 14
         ]
     
     observations = [
@@ -188,68 +194,75 @@ if __name__ == '__main__':
     experiments = [
         'historical',
         # 'rcp85',
-        # 'abrupt-4xCO2',
+        'abrupt-4xCO2',
         # ''
         ]
 
     for dataset in datasets:
+        print(dataset)
         for experiment in experiments:
-
-            # load data
-            if run_on_gadi:
-                if dataset == 'GPCP':
-                    from obs_variables import *
-                    precip = get_GPCP(institutes[model], model, experiment)['precip']
-                
-                if np.isin(models_cmip5, dataset).any():
-                    from cmip5_variables import *
-                    precip = get_pr(institutes[model], model, experiment)['precip']
-                
-                if run_on_gadi and np.isin(models_cmip6, dataset).any():
-                    from cmip6_variables import *
-                    precip = get_pr(institutes[model], model, experiment)['precip']
+            if not data_exist(dataset, experiment):
+                print(f'no {experiment} data')
             else:
-                precip = get_dsvariable('precip', dataset, experiment)
+                print(experiment)
+
+                # load data
+                if run_on_gadi:
+                    if dataset == 'GPCP':
+                        from obs_variables import *
+                        precip = get_GPCP(institutes[model], model, experiment)['precip']
+                    
+                    if np.isin(models_cmip5, dataset).any():
+                        from cmip5_variables import *
+                        precip = get_pr(institutes[model], model, experiment)['precip']
+                    
+                    if run_on_gadi and np.isin(models_cmip6, dataset).any():
+                        from cmip6_variables import *
+                        precip = get_pr(institutes[model], model, experiment)['precip']
+                else:
+                    precip = get_dsvariable('precip', dataset, experiment)['precip']
 
 
-            # Calculate diagnostics and put into dataset
-            ds_rxday = rxday(precip)
-            ds_prPercentiles = pr_percentiles(precip)
-            ds_prMeanPercentiles = pr_MeanPercentiles(precip)
-            ds_F_pr10 = F_pr10(precip)
+                # Calculate diagnostics and put into dataset
+                ds_rxday = rxday(precip)
+                ds_prPercentiles = pr_percentiles(precip)
+                ds_prMeanPercentiles = pr_MeanPercentiles(precip)
+                ds_F_pr10 = F_pr10(precip)
 
 
-            # save
-            save_rxday = False
-            save_prPercentiles = False
-            save_prMeanPercentiles = False
-            save_F_pr10 = False
+                # save
+                save_rxday = True
+                save_prPercentiles = True
+                save_prMeanPercentiles = True
+                save_F_pr10 = True
 
 
-            if np.isin(models_cmip5, dataset).any():
-                folder_save = '{}/data/cmip5/metrics_cmip5_{}'.format(resolutions[0])
-            if np.isin(models_cmip6, dataset).any():
-                folder_save = '{}/data/cmip6/metrics_cmip6_{}'.format(resolutions[0])
-            if np.isin(observations, dataset).any():
-                folder_save = '{}/data/obs/metrics_obs_{}'.format(resolutions[0])
+                if np.isin(models_cmip5, dataset).any():
+                    project = 'cmip5'
+                elif np.isin(models_cmip6, dataset).any():
+                    project = 'cmip6'
+                elif np.isin(observations, dataset).any():
+                    project = 'obs'
+                folder_save = home + '/data/' + project + '/' + 'metrics_' + project + '_' + resolutions[0] + '/' + dataset 
 
 
-            if save_rxday:
-                fileName = dataset + '_rxday_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_rxday, folder_save, fileName)
+                if save_rxday:
+                    fileName = dataset + '_rxday_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_rxday, folder_save, fileName)
 
-            if save_prPercentiles:
-                fileName = dataset + '_prPercentiles_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_prPercentiles, folder_save, fileName)
+                if save_prPercentiles:
+                    fileName = dataset + '_prPercentiles_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_prPercentiles, folder_save, fileName)
 
-            if save_prMeanPercentiles:
-                fileName = dataset + '_prMeanPercentiles_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_prMeanPercentiles, folder_save, fileName)
+                if save_prMeanPercentiles:
+                    fileName = dataset + '_prMeanPercentiles_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_prMeanPercentiles, folder_save, fileName)
 
-            if save_F_pr10 :
-                fileName = dataset + '_F_pr10_' + experiment + '_' + resolutions[0] + '.nc'
-                save_file(ds_F_pr10, folder_save, fileName)
-
+                if save_F_pr10 :
+                    fileName = dataset + '_F_pr10_' + experiment + '_' + resolutions[0] + '.nc'
+                    save_file(ds_F_pr10, folder_save, fileName)
+                
+                print('finished')
 
 
 
