@@ -31,25 +31,25 @@ def data_exist(model, experiment, variable):
     return data_exist
 
 models_cmip5 = [
-    'IPSL-CM5A-MR', # 1
-    # 'GFDL-CM3',     # 2
-    # 'GISS-E2-H',    # 3
-    # 'bcc-csm1-1',   # 4
-    # 'CNRM-CM5',     # 5
-    # 'CCSM4',        # 6
-    # 'HadGEM2-AO',   # 7
-    # 'BNU-ESM',      # 8
-    # 'EC-EARTH',     # 9
-    # 'FGOALS-g2',    # 10
-    # 'MPI-ESM-MR',   # 11
-    # 'CMCC-CM',      # 12
-    # 'inmcm4',       # 13
-    # 'NorESM1-M',    # 14
-    # 'CanESM2',      # 15
-    # 'MIROC5',       # 16
-    # 'HadGEM2-CC',   # 17
-    # 'MRI-CGCM3',    # 18
-    # 'CESM1-BGC'     # 19
+    # 'IPSL-CM5A-MR', # 1
+    'GFDL-CM3',     # 2
+    'GISS-E2-H',    # 3
+    'bcc-csm1-1',   # 4
+    'CNRM-CM5',     # 5
+    'CCSM4',        # 6
+    'HadGEM2-AO',   # 7
+    'BNU-ESM',      # 8
+    'EC-EARTH',     # 9
+    'FGOALS-g2',    # 10
+    'MPI-ESM-MR',   # 11
+    'CMCC-CM',      # 12
+    'inmcm4',       # 13
+    'NorESM1-M',    # 14
+    'CanESM2',      # 15
+    'MIROC5',       # 16
+    'HadGEM2-CC',   # 17
+    'MRI-CGCM3',    # 18
+    'CESM1-BGC'     # 19
     ]
 
 models_cmip6 = [

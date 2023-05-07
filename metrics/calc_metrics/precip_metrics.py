@@ -114,9 +114,9 @@ def pr_MeanPercentiles(precip):
         )
     
     ds_prPercentiles = xr.Dataset(
-        data_vars = {'pr95Mean': pr95Mean, 
-                     'prMean97': pr97Mean, 
-                     'prMean99': pr99Mean}
+        data_vars = {'pr95': pr95Mean, 
+                     'pr97': pr97Mean, 
+                     'pr99': pr99Mean}
         ) 
     return ds_prPercentiles
 
