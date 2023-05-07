@@ -31,6 +31,8 @@ def last_letters(model, experiment, variable):
 
     if model == 'GFDL-CM4':
         folder = 'gr2'
+        if experiment == 'abrupt-4xCO2':
+            folder = 'gr1'
         
     return folder
 
@@ -45,25 +47,25 @@ def pick_latestVersion(path_gen):
 
 
 def rcp_years(model):
-    yearEnd_first = 1970
-    yearStart_last = 1999
+    yearEnd_first = '1970'
+    yearStart_last = '1999'
     
     if model == 'FGOALS-g3':
         yearEnd_first = '0470'
         yearStart_last = '0499'
     
-    if model == 'NorESM2-MM' or model == 'GFDL-CM4' or  model =='CESM2':
+    if model == 'TaiESM1' or model == 'NorESM2-MM' or model == 'GFDL-CM4' or  model =='CESM2':
         yearEnd_first = '0001'
-        yearStart_last = '0070'
+        yearStart_last = '0030'
         
     if model == 'MIROC6':
-        yearEnd_first = 3270
-        yearStart_last = 3399
+        yearEnd_first = '3270'
+        yearStart_last = '3299'
         
     return str(yearEnd_first), str(yearStart_last)
     
     
-def concat_files(path_folder, experiment):
+def concat_files(path_folder, experiment, model):
     if experiment == 'historical':
         yearEnd_first = 1970
         yearStart_last = 1999
@@ -125,7 +127,7 @@ def get_pr(institute, model, experiment, resolution):
         version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
         path_folder =  os.path.join(path_gen, cmip6_feature, version)
 
-        ds = concat_files(path_folder, experiment) # picks out lat: -35, 35
+        ds = concat_files(path_folder, experiment, model) # picks out lat: -35, 35
 
         precip = ds['pr']*60*60*24 # convert to mm/day
         precip.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9) # give new units
@@ -155,14 +157,14 @@ def get_wap(institute, model, experiment, resolution):
     else:
         ensemble = choose_ensemble(model, experiment, variable)
         path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-        if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
+        if (model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3') or experiment == 'abrupt-4xCO2' :
             path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
 
         cmip6_feature = last_letters(model, experiment, variable)
         version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
         path_folder =  os.path.join(path_gen, cmip6_feature, version)
 
-        ds = concat_files(path_folder, experiment)
+        ds = concat_files(path_folder, experiment, model)
         
         wap = ds['wap']*60*60*24/100 # convert to hPa/day   
         wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
@@ -194,11 +196,15 @@ def get_tas(institute, model, experiment, resolution):
         ensemble = choose_ensemble(model, experiment, variable)
         path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
         
+        if (model == 'BCC-CSM2-MR' or model == 'NESM3') and experiment == 'abrupt-4xCO2' :
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        
         cmip6_feature = last_letters(model, experiment, variable)
         version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
         path_folder =  os.path.join(path_gen, cmip6_feature, version)
 
-        ds = concat_files(path_folder, experiment)
+        ds = concat_files(path_folder, experiment, model)
         
         tas = ds['tas']-273.15 # convert to degrees Celsius
         tas.attrs['units']= '\u00B0C'
@@ -216,6 +222,66 @@ def get_tas(institute, model, experiment, resolution):
                 attrs = ds.attrs
                 )
     return ds_tas
+
+
+def get_cl(institute, model, experiment, resolution):
+    variable = 'cl'
+    if not data_exist(model, experiment, variable):
+        ds_pr = xr.Dataset(
+            data_vars = {'tas': np.nan}
+            )
+    else:
+        ensemble = choose_ensemble(model, experiment, variable)
+        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+        
+        if (model == 'BCC-CSM2-MR' or model == 'NESM3') and experiment == 'abrupt-4xCO2' :
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        
+        cmip6_feature = last_letters(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
+        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+
+        ds = concat_files(path_folder, experiment, model)
+        
+        if resolution == 'orig':
+            ds_cl = ds # units in % on sigma pressure coordinates
+
+        if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2': # different models have different conversions from height coordinate to pressure coordinate.
+            p_hybridsigma = ds.ap + ds.b*ds.ps
+        elif model == 'FGOALS-g2':
+            p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
+        elif model == 'HadGEM2-CC':
+            p_hybridsigma = ds.lev+ds.b*ds.orog
+        else:
+            p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
+
+        ds_p_hybridsigma = xr.Dataset(
+            data_vars = {
+                'p_hybridsigma': p_hybridsigma},
+            attrs = ds.attrs
+            )
+
+        if resolution == 'regridded':
+            cl = ds['cl'] # units in % on sigma pressure coordinates
+
+            regridder = regrid_conserv_xesmf(ds)
+            cl_n = regridder(cl)
+            p_hybridsigma_n = regridder(p_hybridsigma)
+
+            ds_cl = xr.Dataset(
+                data_vars = {
+                    'cl': cl_n},
+                attrs = ds.attrs
+                )
+            ds_p_hybridsigma = xr.Dataset(
+                data_vars = {
+                    'p_hybridsigma': p_hybridsigma_n},
+                attrs = ds.attrs
+                )
+    return ds_cl, ds_p_hybridsigma
+
+
 
 
 def get_hus(institute, model, experiment, resolution):
@@ -284,60 +350,7 @@ def get_hur(institute, model, experiment, resolution):
 
 
 
-def get_cl(institute, model, experiment, resolution):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
 
-    variable = 'cl'
-    if data_exist(model,variable) == 'no':
-        ds_cl = xr.Dataset(
-            data_vars = {'cl': np.nan}
-            )
-        ds_p_hybridsigma = xr.Dataset(
-            data_vars = {'p_hybridsigma': np.nan}
-            )
-    else:
-        ensemble = choose_ensemble(model, variable)
-        version = pick_latestVersion(path_gen, ensemble)
-        path_folder =  os.path.join(path_gen, ensemble, version, variable)
-
-        ds = concat_files(path_folder, experiment)
-        
-        if resolution == 'original':
-            ds_cl = ds # units in % on sigma pressure coordinates
-
-            if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2': # different models have different conversions from height coordinate to pressure coordinate.
-                p_hybridsigma = ds.ap + ds.b*ds.ps
-            elif model == 'FGOALS-g2':
-                p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-            elif model == 'HadGEM2-CC':
-                p_hybridsigma = ds.lev+ds.b*ds.orog
-            else:
-                p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
-            
-            ds_p_hybridsigma = xr.Dataset(
-                data_vars = {
-                    'p_hybridsigma': p_hybridsigma},
-                attrs = ds.attrs
-                )
-
-        elif resolution == 'regridded':
-            cl = ds['cl'] # units in % on sigma pressure coordinates
-
-            regridder = regrid_conserv_xesmf(ds)
-            cl_n = regridder(cl)
-            p_hybridsigma_n = regridder(p_hybridsigma)
-
-            ds_cl = xr.Dataset(
-                data_vars = {
-                    'cl': cl_n},
-                attrs = ds.attrs
-                )
-            ds_p_hybridsigma = xr.Dataset(
-                data_vars = {
-                    'p_hybridsigma': p_hybridsigma_n},
-                attrs = ds.attrs
-                )
-    return ds_cl, ds_p_hybridsigma
 
 
 
