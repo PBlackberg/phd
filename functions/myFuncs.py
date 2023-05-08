@@ -446,6 +446,23 @@ institutes_cmip6 = {
     'NESM3':'NUIST'
     }
 
+# not included from cmip6:
+# 'IITM-ESM':'CCCR-IITM'
+# 'EC-Earth3':'EC-Earth-Consortium'
+# 'HAMMOZ-Consortium':'MPI-ESM-1-2-HAM'
+# 'IPSL-CM6A-LR':'IPSL'
+# 'GISS-E2-1-H':'NASA-GISS' (only monthly for all variables)
+# 'SNU':'SAM0-UNICON'
+# 'MCM-UA-1-0':UA
+# 'AWI-CM-1-1-MR':AWI
+# 'CAMS-CSM1-0':'CAMS'
+# 'E3SM-1-0':'E3SM-Project'
+# 'FIO-ESM-2-0':'FIO-QLNM'
+# 'INM-CM5-0':'INM'
+# 'KIOST-ESM':'KIOST'
+# 'KACE-1-0-G':'NIMS-KMA' (this institute has data for UKESM1-0-LL which is already included from a different institute)
+# 'CIESM':'THU'
+
 
 institutes = {**institutes_cmip5, **institutes_cmip6}
 
