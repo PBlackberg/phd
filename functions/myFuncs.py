@@ -160,7 +160,7 @@ def to_monthly(da):
 
 
 
-def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents', resolution='regridded'):
+def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents/', resolution='regridded'):
 
     folder = '{}/data/CMIP5/ds_cmip5_{}/{}'.format(home, resolution, dataset)
     filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
