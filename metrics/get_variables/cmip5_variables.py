@@ -169,7 +169,7 @@ def get_hus(institute, model, experiment, resolution):
     if model ==  'CESM1-BGC' or ((model == 'HadGEM2-AO' or model == 'EC-EARTH') and experiment == 'rcp85'):
         path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'   
     variable = 'hus'
-    if not data_exist(model,variable):
+    if not data_exist(model,experiment, variable):
         ds_hus = xr.Dataset(
             data_vars = {'hus': np.nan}
             )
@@ -200,7 +200,7 @@ def get_hus(institute, model, experiment, resolution):
 def get_hur(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     variable = 'hur'
-    if not data_exist(model,variable):
+    if not data_exist(model,experiment,variable):
         ds_hur = xr.Dataset(
             data_vars = {'hur': np.nan}
             )
@@ -236,7 +236,7 @@ def get_wap(institute, model, experiment, resolution):
         path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/mon/atmos/Amon'   
     
     variable = 'wap'
-    if not data_exist(model,variable):
+    if not data_exist(model,experiment,variable):
         ds_wap = xr.Dataset(
             data_vars = {'wap': np.nan}
             )
@@ -247,8 +247,8 @@ def get_wap(institute, model, experiment, resolution):
 
         ds = concat_files(path_folder, experiment)
         
-        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
-        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
+        wap = ds['wap'] #*60*60*24/100 # convert to hPa/day   
+        #wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
 
         if resolution == 'orig':
             ds_wap = xr.Dataset(
@@ -269,7 +269,7 @@ def get_wap(institute, model, experiment, resolution):
 def get_cl(institute, model, experiment, resolution):
     path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
     variable = 'cl'
-    if not data_exist(model,variable):
+    if not data_exist(model,experiment,variable):
         ds_cl = xr.Dataset(
             data_vars = {'cl': np.nan}
             )
