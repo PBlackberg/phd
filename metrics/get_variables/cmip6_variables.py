@@ -19,11 +19,15 @@ def choose_ensemble(model, experiment):
     ensemble = 'r1i1p1f1'
     if model == 'CNRM-CM6-1' or model =='UKESM1-0-LL':
         ensemble = 'r1i1p1f2'
+    
+    if model == 'CESM2':
+        ensemble = 'r11i1p1f1'
+        
     return ensemble
 
 
-def last_letters(model, experiment, variable):
-    ''' Some models have a different last folder in path to files'''
+def grid_label(model, experiment, variable):
+    ''' Some models have a different grid folder in path to files'''
     folder = 'gn'
     if model == 'CNRM-CM6-1':
         folder = 'gr'
@@ -47,6 +51,10 @@ def concat_files(path_folder, experiment, model):
     if experiment == 'historical':
         yearEnd_first = 1970
         yearStart_last = 1999
+        
+    if experiment == 'ssp585':
+        yearEnd_first = 2070
+        yearStart_last = 2099
 
     files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
     if 'Amon' in path_folder:
@@ -84,13 +92,19 @@ def get_pr(institute, model, experiment, resolution):
             )
     else:
         ensemble = choose_ensemble(model, experiment)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-        cmip6_feature = last_letters(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
-        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
 
+            
+        folder_grid = grid_label(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
+        path_folder =  os.path.join(path_gen, folder_grid, version)
+        
         ds = concat_files(path_folder, experiment, model) # picks out lat: -35, 35
-
         precip = ds['pr']*60*60*24 # convert to mm/day
         precip.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9) # give new units
         
@@ -102,6 +116,8 @@ def get_pr(institute, model, experiment, resolution):
         elif resolution == 'regridded':
             regridder = regrid_conserv_xesmf(ds) # define regridder based of grid from other model
             precip_n = regridder(precip) # conservatively interpolate to grid from other model, onto lat: -30, 30 (_n is new grid)
+            precip_n.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9) # give new units
+            
             ds_pr = xr.Dataset(
                 data_vars = {'precip': precip_n},
                 attrs = ds.attrs
@@ -119,12 +135,20 @@ def get_wap(institute, model, experiment, resolution):
             )
     else:
         ensemble = choose_ensemble(model, experiment)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-        if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
-            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable) # some models only have monthly data for variable
-        cmip6_feature = last_letters(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
-        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+            # if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
+            #     path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable) # some models only have monthly data for variable
+
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+            
+        folder_grid = grid_label(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
+        path_folder =  os.path.join(path_gen, folder_grid, version)
 
         ds = concat_files(path_folder, experiment, model)
         
@@ -156,12 +180,21 @@ def get_tas(institute, model, experiment, resolution):
             )
     else:
         ensemble = choose_ensemble(model, experiment)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-        if model == 'BCC-CSM2-MR' or model == 'NESM3':
-            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
-        cmip6_feature = last_letters(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
-        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+        
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
+
+        
+#         if model == 'NESM3':
+#             path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+            
+        folder_grid = grid_label(model, experiment, variable)
+        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
+        path_folder =  os.path.join(path_gen, folder_grid, version)
 
         ds = concat_files(path_folder, experiment, model)
         
@@ -307,12 +340,12 @@ if __name__ == '__main__':
 
     
     models = [
-        'TaiESM1',        # 1
+        # 'TaiESM1',        # 1
         'BCC-CSM2-MR',    # 2
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
         'MIROC6',         # 5
-        'MPI-ESM1-2-HR',  # 6
+        'MPI-ESM1-2-HR',  # 6 # LR for future run
         'NorESM2-MM',     # 7
         'GFDL-CM4',       # 8
         'CanESM5',        # 9
@@ -324,8 +357,9 @@ if __name__ == '__main__':
         ]
 
     experiments = [
-    'historical',
-    ]
+        # 'historical',
+        'ssp585'
+        ]
 
     resolutions = [
         # 'orig',
@@ -342,7 +376,7 @@ if __name__ == '__main__':
             # ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
     
 
@@ -350,7 +384,7 @@ if __name__ == '__main__':
             save_tas = False
             save_hus = False
             save_hur = False
-            save_wap = False
+            save_wap = True
             save_cl = False
             
 

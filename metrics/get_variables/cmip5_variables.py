@@ -247,8 +247,8 @@ def get_wap(institute, model, experiment, resolution):
 
         ds = concat_files(path_folder, experiment)
         
-        wap = ds['wap'] #*60*60*24/100 # convert to hPa/day   
-        #wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
+        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
+        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
 
         if resolution == 'orig':
             ds_wap = xr.Dataset(
@@ -330,29 +330,29 @@ if __name__ == '__main__':
     
     models = [
         # 'IPSL-CM5A-MR', # 1
-        'GFDL-CM3',     # 2
+        # 'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
-        # 'bcc-csm1-1',   # 4
+        'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
-        # 'CCSM4',        # 6
-        # 'HadGEM2-AO',   # 7
+        'CCSM4',        # 6
+        'HadGEM2-AO',   # 7
         # 'BNU-ESM',      # 8
         # 'EC-EARTH',     # 9
         # 'FGOALS-g2',    # 10
         # 'MPI-ESM-MR',   # 11
         # 'CMCC-CM',      # 12
-        # 'inmcm4',       # 13
+        'inmcm4',       # 13
         # 'NorESM1-M',    # 14
         # 'CanESM2',      # 15 
         # 'MIROC5',       # 16
         # 'HadGEM2-CC',   # 17
         # 'MRI-CGCM3',    # 18
-        # 'CESM1-BGC'     # 19
+        'CESM1-BGC'     # 19
         ]
     
     experiments = [
         'historical',
-        # 'rcp85'
+        'rcp85'
         ]
     
     resolutions = [
@@ -370,7 +370,7 @@ if __name__ == '__main__':
             # ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
     
 
@@ -378,7 +378,7 @@ if __name__ == '__main__':
             save_tas = False
             save_hus = False
             save_hur = False
-            save_wap = False
+            save_wap = True
             save_cl = False
             
             folder_save = '{}/data/cmip5/ds/'.format(home)
