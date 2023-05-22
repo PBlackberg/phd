@@ -390,17 +390,48 @@ def resample_timeMean(y, timeMean_option=''):
     return y
 
 
+def orderByTas(use = True, datasets=[''], experiment = 'historical', resolution = 'regridded'):
+    if use:
+        order_list = []
+        for dataset in datasets:
+            tas = get_metric('tas_sMean', dataset, experiment=experiment, resolution=resolution)['tas_sMean'].mean(dim='time')
+            order_list = np.append(order_list, tas)
+        order = np.argsort(order_list)[::-1]
+        n = len(datasets)
+        n_half = n // 2
+        colors = ['#EE0000'] * n_half + ['royalblue'] * n_half
+        if n % 2 == 1:
+            colors.append('royalblue')
+    else:
+        order = np.arange(len(datasets), dtype=int)
+        colors = ['black'] * n
+    return order, colors
 
 
+def orderByTasdiff(use = True, datasets=[''], models_cmip5 = [''], resolution = 'regridded'):
+    if use:
+        order_list = []
+        for dataset in datasets:
+            tas_historical = get_metric('tas_sMean', dataset, experiment='historical', resolution=resolution)['tas_sMean'].mean(dim='time')
+            if np.isin(models_cmip5, dataset).any():
+                tas_rcp = get_metric('tas_sMean', dataset, experiment='rcp85', resolution=resolution)['tas_sMean'].mean(dim='time')
+            else:
+                tas_rcp = get_metric('tas_sMean', dataset, experiment='ssp585', resolution=resolution)['tas_sMean'].mean(dim='time')
+            tasdiff = tas_rcp - tas_historical
+            order_list = np.append(order_list, tasdiff)
+        order = np.argsort(order_list)[::-1]
+        n = len(datasets)
+        n_half = n // 2
+        colors = ['#EE0000'] * n_half + ['royalblue'] * n_half
+        if n % 2 == 1:
+            colors.append('royalblue')
+    else:
+        order = np.arange(len(datasets), dtype=int)
+        colors = ['black'] * n
+    return order, colors
 
 
-
-def onePlus(a):
-    return a+1
-
-
-
-
+    
 
 
 
@@ -467,7 +498,7 @@ institutes_cmip6 = {
 institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
-
+markers = ['o','d','X','s','D', '^','v', '<', '>', 'P']
 
 
 

@@ -11,7 +11,7 @@ if run_on_gadi:
     sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
 else:
     home = os.path.expanduser("~") + '/Documents'
-sys.path.insert(0, '{}/phd/functions'.format(home))
+sys.path.insert(0, '{}/code/phd/functions'.format(home))
 from myFuncs import *
 # import constructed_fields as cf
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        'TaiESM1',        # 1
+        # 'TaiESM1',        # 1
         'BCC-CSM2-MR',    # 2
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
@@ -192,10 +192,9 @@ if __name__ == '__main__':
         ]
     
     experiments = [
-        'historical',
+        # 'historical',
         # 'rcp85',
-        'abrupt-4xCO2',
-        # ''
+        'ssp585',
         ]
 
     for dataset in datasets:
@@ -234,7 +233,7 @@ if __name__ == '__main__':
                 save_rxday = True
                 save_prPercentiles = True
                 save_prMeanPercentiles = True
-                save_F_pr10 = True
+                save_F_pr10 = False
 
 
                 if np.isin(models_cmip5, dataset).any():

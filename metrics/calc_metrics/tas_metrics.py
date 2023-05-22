@@ -11,7 +11,7 @@ if run_on_gadi:
     sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
 else:
     home = os.path.expanduser("~") + '/Documents'
-sys.path.insert(0, '{}/phd/functions'.format(home))
+sys.path.insert(0, '{}/code/phd/functions'.format(home))
 from myFuncs import *
 # import constructed_fields as cf
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     models_cmip5 = [
         # 'IPSL-CM5A-MR', # 1
-        'GFDL-CM3',     # 2
+        # 'GFDL-CM3',     # 2
         # 'GISS-E2-H',    # 3
         # 'bcc-csm1-1',   # 4
         # 'CNRM-CM5',     # 5
@@ -61,20 +61,20 @@ if __name__ == '__main__':
     
 
     models_cmip6 = [
-        # 'TaiESM1',        # 1
-        # 'BCC-CSM2-MR',    # 2
-        # 'FGOALS-g3',      # 3
-        # 'CNRM-CM6-1',     # 4
-        # 'MIROC6',         # 5
-        # 'MPI-ESM1-2-HR',  # 6
-        # 'NorESM2-MM',     # 7
-        # 'GFDL-CM4',       # 8
-        # 'CanESM5',        # 9
-        # 'CMCC-ESM2',      # 10
-        # 'UKESM1-0-LL',    # 11
-        # 'MRI-ESM2-0',     # 12
-        # 'CESM2',          # 13
-        # 'NESM3'           # 14
+        'TaiESM1',        # 1
+        'BCC-CSM2-MR',    # 2
+        'FGOALS-g3',      # 3
+        'CNRM-CM6-1',     # 4
+        'MIROC6',         # 5
+        'MPI-ESM1-2-HR',  # 6
+        'NorESM2-MM',     # 7
+        'GFDL-CM4',       # 8
+        'CanESM5',        # 9
+        'CMCC-ESM2',      # 10
+        'UKESM1-0-LL',    # 11
+        'MRI-ESM2-0',     # 12
+        'CESM2',          # 13
+        'NESM3'           # 14
             ]
 
     datasets = models_cmip5 + models_cmip6
@@ -86,8 +86,8 @@ if __name__ == '__main__':
     
     experiments = [
         # 'historical',
-        'rcp85'
-        # 'abrupt-4xCO2'
+        # 'rcp85'
+        'ssp585'
         ]
 
 

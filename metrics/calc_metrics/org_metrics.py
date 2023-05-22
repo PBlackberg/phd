@@ -12,7 +12,7 @@ if run_on_gadi:
     sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
 else:
     home = os.path.expanduser("~") + '/Documents'
-sys.path.insert(0, '{}/phd/functions'.format(home))
+sys.path.insert(0, '{}/code/phd/functions'.format(home))
 from myFuncs import *
 # import constructed_fields as cf
 
@@ -272,8 +272,7 @@ def calc_oAreaAndPr(precip, conv_threshold):
 
 def data_exist(dataset, experiment):
     data_exitsts = True
-    if (experiment == 'abrupt-4xCO2') and (dataset == 'TaiESM1' or dataset == 'BCC-CSM2-MR' or dataset == 'CanESM5' or dataset == 'CMCC-ESM2' or dataset == 'TaiESM1' or dataset == 'NESM3'):
-        data_exitsts = False
+
     return data_exitsts
 
 
@@ -302,20 +301,20 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        'TaiESM1',        # 1 ncp monthly
-        'BCC-CSM2-MR',    # 2 rcp monthly
+        'TaiESM1',        # 1 
+        'BCC-CSM2-MR',    # 2 
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
         'MIROC6',         # 5
         'MPI-ESM1-2-HR',  # 6
         'NorESM2-MM',     # 7
         'GFDL-CM4',       # 8
-        'CanESM5',        # 9 need to redownload
-        'CMCC-ESM2',      # 10 rcp monthly
+        'CanESM5',        # 9 need to redownload for historical
+        'CMCC-ESM2',      # 10
         'UKESM1-0-LL',    # 11
         'MRI-ESM2-0',     # 12
         'CESM2',          # 13
-        'NESM3'           # 14 don't have rcp
+        'NESM3'           # 14
         ]
     
     observations = [
@@ -332,8 +331,7 @@ if __name__ == '__main__':
     experiments = [
         # 'historical',
         # 'rcp85',
-        'abrupt-4xCO2'
-        # ''
+        'ssp585'
         ]
 
     for dataset in datasets:
@@ -368,10 +366,10 @@ if __name__ == '__main__':
                 conv_threshold = precip.quantile(quantile_threshold,dim=('lat','lon'),keep_attrs=True).mean(dim='time',keep_attrs=True)
                 n = 8
                 rome = calc_rome(precip, conv_threshold)
-                rome_n = calc_rome_n(n, precip, conv_threshold)
+                # rome_n = calc_rome_n(n, precip, conv_threshold)
                 ds_rome = xr.Dataset(
                     data_vars = {'rome':rome, 
-                                'rome_n':rome_n},
+                                'rome_n':np.nan},
                     attrs = {'description': 'ROME based on all and the {} largest objects in the scene for each day'.format(n)}                  
                     )
                 ds_numberIndex = calc_numberIndex(precip, conv_threshold)
