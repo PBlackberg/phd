@@ -121,6 +121,7 @@ def pr_MeanPercentiles(precip):
     return ds_prPercentiles
 
 def F_pr10(precip):
+    precip = precip.resample(time='M').mean(dim='time', keep_attrs=True)
     mask = xr.where(precip>10,1,0)
     F_pr10 = (mask).sum(dim=('lat','lon'))
     F_pr10.attrs['units'] = 'Nb'
@@ -164,7 +165,7 @@ if __name__ == '__main__':
         ]
     
     models_cmip6 = [
-        # 'TaiESM1',        # 1
+        'TaiESM1',        # 1
         'BCC-CSM2-MR',    # 2
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
@@ -192,7 +193,7 @@ if __name__ == '__main__':
         ]
     
     experiments = [
-        # 'historical',
+        'historical',
         # 'rcp85',
         'ssp585',
         ]
@@ -219,19 +220,19 @@ if __name__ == '__main__':
                         from cmip6_variables import *
                         precip = get_pr(institutes[model], model, experiment)['precip']
                 else:
-                    precip = get_dsvariable('precip', dataset, experiment)['precip']
+                    precip = get_dsvariable('precip', dataset, experiment, timescale = 'daily')['precip']
 
 
                 # Calculate diagnostics and put into dataset
-                ds_rxday = rxday(precip)
-                ds_prPercentiles = pr_percentiles(precip)
+                # ds_rxday = rxday(precip)
+                # ds_prPercentiles = pr_percentiles(precip)
                 ds_prMeanPercentiles = pr_MeanPercentiles(precip)
-                ds_F_pr10 = F_pr10(precip)
+                # ds_F_pr10 = F_pr10(precip)
 
 
                 # save
-                save_rxday = True
-                save_prPercentiles = True
+                save_rxday = False
+                save_prPercentiles = False
                 save_prMeanPercentiles = True
                 save_F_pr10 = False
 

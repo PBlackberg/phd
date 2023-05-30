@@ -11,7 +11,8 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 import os
-
+# from os.path import expanduser
+# home = expanduser("~")
 
 
 # -------------------------------------------------------------------------------------- basic plot functions --------------------------------------------------------------------------------------------------------------- #
@@ -159,33 +160,30 @@ def to_monthly(da):
     return da.set_index(time=("year", "month")).unstack("time")
 
 
-
-def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents/', resolution='regridded'):
-
+def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents', resolution='regridded', timescale = 'monthly'):
+    ''' Get variable from specified: model, timescale, experiment, and resolution '''
     folder = '{}/data/CMIP5/ds_cmip5_{}/{}'.format(home, resolution, dataset)
-    filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
+    filename = dataset + '_' + variable + '_' + timescale +'_' + experiment + '_' + resolution + '.nc'
     path_cmip5 = os.path.join(folder, filename)
-
-    folder = '{}/data/CMIP6/ds_cmip6_{}/{}'.format(home, resolution, dataset)
-    filename = dataset + '_' + variable + '_' + experiment + '_' + resolution + '.nc'
-    path_cmip6 = os.path.join(folder, filename)
-
-    folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
-    filename = dataset + '_' + variable + '_' + resolution + '.nc'
-    path_obs = os.path.join(folder, filename)
-
     try:
         ds = xr.open_dataset(path_cmip5)
     except FileNotFoundError:
+
         try:
+            folder = '{}/data/CMIP6/ds_cmip6_{}/{}'.format(home, resolution, dataset)
+            filename = dataset + '_' + variable + '_' + timescale +'_' + experiment + '_' + resolution + '.nc'
+            path_cmip6 = os.path.join(folder, filename)
             ds = xr.open_dataset(path_cmip6)
         except FileNotFoundError:
+
             try:
+                folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
+                filename = dataset + '_' + variable + '_' + timescale +'_' + resolution + '.nc'
+                path_obs = os.path.join(folder, filename)
                 ds = xr.open_dataset(path_obs)
             except FileNotFoundError:
                 print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
     return ds
-
                         
 
 def get_metric(metric, dataset, experiment='historical', home=os.path.expanduser("~") + '/Documents', resolution='regridded'):
@@ -403,7 +401,8 @@ def orderByTas(use = True, datasets=[''], experiment = 'historical', resolution 
         if n % 2 == 1:
             colors.append('royalblue')
     else:
-        order = np.arange(len(datasets), dtype=int)
+        n = len(datasets)
+        order = np.arange(n, dtype=int)
         colors = ['black'] * n
     return order, colors
 
@@ -426,14 +425,36 @@ def orderByTasdiff(use = True, datasets=[''], models_cmip5 = [''], resolution = 
         if n % 2 == 1:
             colors.append('royalblue')
     else:
-        order = np.arange(len(datasets), dtype=int)
+        n = len(datasets)
+        order = np.arange(n, dtype=int)
         colors = ['black'] * n
     return order, colors
 
 
+def pick_region(data, dataset, experiment = 'historical', region = 'descent'):
+    wap = get_dsvariable('wap500', dataset, experiment)['wap500']
+    if 'time' in data.dims:
+        wap = wap.assign_coords(time=data.time)
+    else:
+        wap = wap.mean(dim='time')
+
+    if region == 'total':
+        pass
+    elif region == 'descent':
+        data = data.where(wap>0)
+    elif region == 'ascent':
+        data = data.where(wap<0)
+    return data
     
 
+def get_super(x):
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+  
 
+  
 
 # --------------------------------------------------------------------------   commonly used variables   ---------------------------------------------------------------------------------- #
 
