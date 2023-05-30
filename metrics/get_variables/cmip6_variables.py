@@ -19,9 +19,6 @@ def choose_ensemble(model, experiment):
     ensemble = 'r1i1p1f1'
     if model == 'CNRM-CM6-1' or model =='UKESM1-0-LL':
         ensemble = 'r1i1p1f2'
-    
-    if model == 'CESM2':
-        ensemble = 'r11i1p1f1'
         
     return ensemble
 
@@ -46,8 +43,12 @@ def pick_latestVersion(path):
     return version
     
     
-def concat_files(path_folder, experiment, model):
+def concat_files(path_gen, experiment, model, variable):
     ''' Concatenates files of monthly or daily data between specified years '''
+    folder_grid = grid_label(model, experiment, variable)
+    version = pick_latestVersion(os.path.join(path_gen, folder_grid))
+    path_folder =  os.path.join(path_gen, folder_grid, version)
+        
     if experiment == 'historical':
         yearEnd_first = 1970
         yearStart_last = 1999
@@ -81,15 +82,13 @@ def regrid_conserv_xesmf(ds_in):
 
 
 
-# -------------------------------------------------------------------------------- getting specific variable -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------- Create path to files for data and concatenate to dataset  -------------------------------------------------------------------------------
 
 def get_pr(institute, model, experiment, resolution):
-    ''' Create path to files for precipitation data and concatenate to dataset (including regridding if necessary) '''
+    ''' Surfae precipitation (daily) '''
     variable = 'pr'
     if not data_exist(model, experiment, variable):
-        ds_pr = xr.Dataset(
-            data_vars = {'precip': np.nan}
-            )
+        ds_pr = xr.Dataset({'precip': np.nan})
     else:
         ensemble = choose_ensemble(model, experiment)
         if experiment == 'historical':
@@ -99,12 +98,8 @@ def get_pr(institute, model, experiment, resolution):
                 model ='MPI-ESM1-2-LR'
             path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
 
-            
-        folder_grid = grid_label(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
-        path_folder =  os.path.join(path_gen, folder_grid, version)
-        
-        ds = concat_files(path_folder, experiment, model) # picks out lat: -35, 35
+                    
+        ds = concat_files(path_gen, experiment, model, variable) # picks out lat: -35, 35
         precip = ds['pr']*60*60*24 # convert to mm/day
         precip.attrs['units']= 'mm day' + chr(0x207B) + chr(0x00B9) # give new units
         
@@ -125,54 +120,8 @@ def get_pr(institute, model, experiment, resolution):
     return ds_pr
 
 
-
-def get_wap(institute, model, experiment, resolution):
-    ''' Most models have daily variable (3 models have monthly)'''
-    variable = 'wap'
-    if not data_exist(model, experiment, variable):
-        ds_wap = xr.Dataset(
-            data_vars = {'wap': np.nan}
-            )
-    else:
-        ensemble = choose_ensemble(model, experiment)
-        if experiment == 'historical':
-            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
-            # if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
-            #     path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable) # some models only have monthly data for variable
-
-        elif experiment == 'ssp585':
-            if model == 'MPI-ESM1-2-HR':
-                model ='MPI-ESM1-2-LR'
-            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
-
-            
-        folder_grid = grid_label(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
-        path_folder =  os.path.join(path_gen, folder_grid, version)
-
-        ds = concat_files(path_folder, experiment, model)
-        
-        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
-        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
-
-        if resolution == 'orig':
-            ds_wap = xr.Dataset(
-                data_vars = {'wap': wap},
-                attrs = ds.attrs
-                )
-        elif resolution == 'regridded':
-            regridder = regrid_conserv_xesmf(ds)
-            wap_n = regridder(wap)
-            ds_wap = xr.Dataset(
-                data_vars = {'wap': wap_n},
-                attrs = ds.attrs
-                )
-    return ds_wap
-
-
-
 def get_tas(institute, model, experiment, resolution):
-    ''' Most models have daily variable (2 models have monthly)'''
+    ''' Surface temperature (daily) '''
     variable = 'tas'
     if not data_exist(model, experiment, variable):
         ds_pr = xr.Dataset(
@@ -188,15 +137,7 @@ def get_tas(institute, model, experiment, resolution):
                 model ='MPI-ESM1-2-LR'
             path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/day/{}'.format(institute, model, experiment, ensemble, variable)
 
-        
-#         if model == 'NESM3':
-#             path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
-            
-        folder_grid = grid_label(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, folder_grid))
-        path_folder =  os.path.join(path_gen, folder_grid, version)
-
-        ds = concat_files(path_folder, experiment, model)
+        ds = concat_files(path_gen, experiment, model, variable)
         
         tas = ds['tas']-273.15 # convert to degrees Celsius
         tas.attrs['units']= '\u00B0C'
@@ -209,6 +150,7 @@ def get_tas(institute, model, experiment, resolution):
         elif resolution == 'regridded':
             regridder = regrid_conserv_xesmf(ds)
             tas_n = regridder(tas)
+            tas_n.attrs['units']= '\u00B0C'
             ds_tas = xr.Dataset(
                 data_vars = {'tas': tas_n},
                 attrs = ds.attrs
@@ -216,23 +158,62 @@ def get_tas(institute, model, experiment, resolution):
     return ds_tas
 
 
-def get_cl(institute, model, experiment, resolution):
-    ''' Monthly data '''
-    variable = 'cl'
+def get_wap(institute, model, experiment, resolution):
+    ''' Vertical pressure velocity (monthly) '''
+    variable = 'wap'
     if not data_exist(model, experiment, variable):
-        ds_cl = xr.Dataset(
-            data_vars = {'cl': np.nan}
-            )
+        ds_wap = xr.Dataset(data_vars = {'wap': np.nan})
     else:
         ensemble = choose_ensemble(model, experiment)
-        path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
-        cmip6_feature = last_letters(model, experiment, variable)
-        version = pick_latestVersion(os.path.join(path_gen, cmip6_feature))
-        path_folder =  os.path.join(path_gen, cmip6_feature, version)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+            # if model == 'TaiESM1' or model == 'BCC-CSM2-MR' or model == 'NESM3':
+            #     path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable) # some models only have monthly data for variable
 
-        ds = concat_files(path_folder, experiment, model)
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+            
+        ds = concat_files(path_gen, experiment, model, variable)
         
-        if model == 'MPI-ESM1-2-HR' or model=='CanESM5' or model == 'CNRM-CM6-1' or model == 'GFDL-CM4': # different models have different conversions from height coordinate to pressure coordinate.
+        wap = ds['wap']*60*60*24/100 # convert to hPa/day   
+        wap.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
+
+        if resolution == 'orig':
+            ds_wap = xr.Dataset(
+                data_vars = {'wap': wap},
+                attrs = ds.attrs
+                )
+        elif resolution == 'regridded':
+            regridder = regrid_conserv_xesmf(ds)
+            wap_n = regridder(wap)
+            wap_n.attrs['units']= 'hPa day' + chr(0x207B) + chr(0x00B9) 
+            ds_wap = xr.Dataset(
+                data_vars = {'wap': wap_n},
+                attrs = ds.attrs
+                )
+    return ds_wap
+
+
+
+def get_cl(institute, model, experiment, resolution):
+    ''' Cloud pressure on hybrid-sigma vertical levels '''
+    variable = 'cl'
+    if not data_exist(model, experiment, variable):
+        ds_pr = xr.Dataset(data_vars = {'precip': np.nan})
+    else:
+        ensemble = choose_ensemble(model, experiment)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        ds = concat_files(path_gen, experiment, model, variable)
+        
+        if model == 'MPI-ESM1-2-HR' or model =='MPI-ESM1-2-LR' or model=='CanESM5' or model == 'CNRM-CM6-1' or model == 'GFDL-CM4': # different models have different conversions from height coordinate to pressure coordinate.
             p_hybridsigma = ds.ap + ds.b*ds.ps
         elif model == 'FGOALS-g3':
             p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
@@ -265,52 +246,23 @@ def get_cl(institute, model, experiment, resolution):
     return ds_cl, ds_p_hybridsigma
 
 
-def get_hus(institute, model, experiment, resolution):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute +'/'+ model +'/'+ experiment +'/day/atmos/day'
-    
-    variable = 'hus'
-    if data_exist(model,variable) == 'no':
-        ds_hus = xr.Dataset(
-            data_vars = {'hus': np.nan}
-            )
-    else:
-        ensemble = choose_ensemble(model, experiment)
-        version = pick_latestVersion(path_gen, ensemble)
-        path_folder =  os.path.join(path_gen, ensemble, version, variable)
-
-        ds = concat_files(path_folder, experiment)
-        
-        hus = ds['hus'] # unitless kg/kg
-
-        if resolution == 'original':
-            ds_hus = xr.Dataset(
-                data_vars = {'hus': hus},
-                attrs = ds.attrs
-                )
-        elif resolution == 'regridded':
-            regridder = regrid_conserv_xesmf(ds)
-            hus_n = regridder(hus)
-            ds_hus = xr.Dataset(
-                data_vars = {'hus': hus_n},
-                attrs = ds.attrs
-                )
-    return ds_hus
-
 
 def get_hur(institute, model, experiment, resolution):
-    path_gen = '/g/data/al33/replicas/CMIP5/combined/'+ institute + '/' + model + '/' + experiment + '/mon/atmos/Amon'
-    
+    ''' Relative humidity (monthly) '''
     variable = 'hur'
-    if data_exist(model,variable) == 'no':
-        ds_hur = xr.Dataset(
-            data_vars = {'hur': np.nan}
-            )
+    if not data_exist(model, experiment, variable):
+        ds_hur = xr.Dataset(data_vars = {'hur': np.nan})
     else:
         ensemble = choose_ensemble(model, experiment)
-        version = pick_latestVersion(path_gen, ensemble)
-        path_folder =  os.path.join(path_gen, ensemble, version, variable)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
 
-        ds = concat_files(path_folder, experiment)
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        ds = concat_files(path_gen, experiment, model, variable)
         
         hur = ds['hur'] # units in %
         hur.attrs['units']= '%'
@@ -331,6 +283,79 @@ def get_hur(institute, model, experiment, resolution):
 
 
 
+def get_hus(institute, model, experiment, resolution):
+    ''' Specific humidity (monthly) '''
+    variable = 'hus'
+    if not data_exist(model, experiment, variable):
+        ds_hur = xr.Dataset(data_vars = {'hur': np.nan})
+    else:
+        ensemble = choose_ensemble(model, experiment)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        ds = concat_files(path_gen, experiment, model, variable)
+        
+        hus = ds['hus'] # unitless kg/kg
+
+        if resolution == 'original':
+            ds_hus = xr.Dataset(
+                data_vars = {'hus': hus},
+                attrs = ds.attrs
+                )
+        elif resolution == 'regridded':
+            regridder = regrid_conserv_xesmf(ds)
+            hus_n = regridder(hus)
+            ds_hus = xr.Dataset(
+                data_vars = {'hus': hus_n},
+                attrs = ds.attrs
+                )
+    return ds_hus
+
+
+
+
+def get_rlut(institute, model, experiment, resolution):
+    ''' OLR upwelling TOA (monthly) '''
+    variable = 'rlut'
+    if not data_exist(model, experiment, variable):
+        ds_data = xr.Dataset(data_vars = {'rlut': np.nan})
+    else:
+        ensemble = choose_ensemble(model, experiment)
+        if experiment == 'historical':
+            path_gen = '/g/data/oi10/replicas/CMIP6/CMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        elif experiment == 'ssp585':
+            if model == 'MPI-ESM1-2-HR':
+                model ='MPI-ESM1-2-LR'
+            path_gen = '/g/data/oi10/replicas/CMIP6/ScenarioMIP/{}/{}/{}/{}/Amon/{}'.format(institute, model, experiment, ensemble, variable)
+
+        ds = concat_files(path_gen, experiment, model, variable)
+        
+        data = ds['rlut'] # W/m^2
+
+        if resolution == 'original':
+            ds_data = xr.Dataset(
+                data_vars = {'rlut': data},
+                attrs = ds.attrs
+                )
+        elif resolution == 'regridded':
+            regridder = regrid_conserv_xesmf(ds)
+            data_n = regridder(data)
+            ds_data = xr.Dataset(
+                data_vars = {'rlut': data_n},
+                attrs = ds.attrs
+                )
+    return ds_data
+
+
+
+
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -340,7 +365,7 @@ if __name__ == '__main__':
 
     
     models = [
-        # 'TaiESM1',        # 1
+        'TaiESM1',        # 1
         'BCC-CSM2-MR',    # 2
         'FGOALS-g3',      # 3
         'CNRM-CM6-1',     # 4
@@ -352,12 +377,17 @@ if __name__ == '__main__':
         'CMCC-ESM2',      # 10
         'UKESM1-0-LL',    # 11
         'MRI-ESM2-0',     # 12
-        'CESM2',          # 13
+        # 'CESM2',          # 13 (check ensemble common to all variable for run)
         'NESM3'           # 12
         ]
 
+    timescales = [
+        # 'daily',
+        'monthly'
+        ]
+    
     experiments = [
-        # 'historical',
+        'historical',
         'ssp585'
         ]
 
@@ -374,49 +404,60 @@ if __name__ == '__main__':
 
             # ds_pr = get_pr(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_tas = get_tas(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
-            # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
-            ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
+            # ds_wap = get_wap(institutes[model], model, experiment, resolution=resolutions[0])
             # ds_cl, ds_p_hybridsigma = get_cl(institutes[model], model, experiment, resolution=resolutions[0])
-    
+            # ds_hur = get_hur(institutes[model], model, experiment, resolution=resolutions[0])
+            # ds_hus = get_hus(institutes[model], model, experiment, resolution=resolutions[0])
+            ds_rlut = get_rlut(institutes[model], model, experiment, resolution=resolutions[0])
+
 
             save_pr = False
             save_tas = False
-            save_hus = False
-            save_hur = False
-            save_wap = True
+            save_wap = False
             save_cl = False
-            
+            save_hur = False
+            save_hus = False
+            save_rlut = True
+
 
             folder_save = '{}/data/cmip6/ds/'.format(home)
             
             
             if save_pr:
-                fileName = model + '_precip_' + experiment + '_' + resolutions[0] + '.nc'
+                fileName = model + '_precip_' + timescales[0] + '_' + experiment + '_' + resolutions[0] + '.nc'
                 save_file(ds_pr, folder_save, fileName)
                 
             if save_tas:
-                fileName = model + '_tas_' + experiment + '_' + resolutions[0] +  '.nc'
+                fileName = model + '_tas_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_tas, folder_save, fileName)
-
-            if save_hus:
-                fileName = model + '_hus_' + experiment + '_' + resolutions[0] +  '.nc'
-                save_file(ds_hus, folder_save, fileName)
-
-            if save_hur:
-                fileName = model + '_hur_' + experiment + '_' + resolutions[0] +  '.nc'
-                save_file(ds_hur, folder_save, fileName)
                 
             if save_wap:
-                fileName = model + '_wap_' + experiment + '_' + resolutions[0] +  '.nc'
+                fileName = model + '_wap_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_wap, folder_save, fileName)
-
+                
             if save_cl:
-                fileName = model + '_cl_' + experiment + '_' + resolutions[0] +  '.nc'
+                fileName = model + '_cl_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_cl, folder_save, fileName)
                 
-                fileName = model + '_p_hybridsigma_' + experiment + '_' + resolutions[0] +  '.nc'
+                fileName = model + '_p_hybridsigma_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
                 save_file(ds_p_hybridsigma, folder_save, fileName)
+                
+            if save_hur:
+                fileName = model + '_hur_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
+                save_file(ds_hur, folder_save, fileName)
+
+            if save_hus:
+                fileName = model + '_hus_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
+                save_file(ds_hus, folder_save, fileName)
+
+            if save_rlut:
+                fileName = model + '_rlut_' + timescales[0] + '_' + experiment + '_' + resolutions[0] +  '.nc'
+                save_file(ds_rlut, folder_save, fileName)
+
+                
+
+
+
 
 
 

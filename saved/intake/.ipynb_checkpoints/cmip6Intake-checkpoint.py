@@ -368,7 +368,27 @@ if __name__ == '__main__':
 
 
 
+# import intake
+# ds_dict= intake.cat.nci['esgf']
+# ds_dict.cmip6.unique()['table_id']
+# model = 'TaiESM1'
+# experiment_id = 'ssp585'
+# member_id='r1i1p1f1'
+# variable_id = 'pr'
+# table_id='day'
+# # table_id='Amon'
 
+# ds_dict= intake.cat.nci['esgf'].cmip6.search(
+#                                 source_id=model, 
+#                                 experiment_id=experiment_id, 
+#                                 member_id=member_id, 
+#                                 variable_id=variable_id, 
+#                                 table_id=table_id).to_dataset_dict()
+
+# period=slice('2070-01','2099-12')
+# ds = ds_dict[list(ds_dict.keys())[-1]].sel(time=period, lat=slice(-35,35))
+# precip=ds['pr']
+# precip
 
 
 
