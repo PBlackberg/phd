@@ -1,19 +1,17 @@
 import numpy as np
 import xarray as xr
-import scipy
-
 import timeit
+
 import os
 import sys
-run_on_gadi = False
-if run_on_gadi:
-    home = '/g/data/k10/cb4968'
-    sys.path.insert(0, '{}/phd/metrics/get_variables'.format(home))
-else:
-    home = os.path.expanduser("~") + '/Documents'
-sys.path.insert(0, '{}/phd/functions'.format(home))
-from myFuncs import *
-# import constructed_fields as cf
+home = os.path.expanduser("~")
+folder_code = f'{home}/Documents/code/phd'
+sys.path.insert(0, f'{folder_code}/functions')
+import myFuncs as mF # imports common operators
+import myVars as mV # imports common variables
+import constructed_fields as cF # imports fields for testing
+import get_data.pr_data as pD # imports functions to get data from gadi
+
 
 
 def snapshot(var):

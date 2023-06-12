@@ -1,97 +1,7 @@
-import xarray as xr
 import numpy as np
 
-import os
 
-# ---------------------------------------------------------------------------------------- Load/save data ----------------------------------------------------------------------------------------------------------#
-
-def save_file(data, folder, filename):
-    ''' Saves file to specified folder and filename '''
-    os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + filename
-    if os.path.exists(path):
-        os.remove(path)    
-    data.to_netcdf(path)
-    return
-
-def save_figure(figure, folder, filename):
-    ''' Save figure to specified folder and filename '''
-    os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, filename)
-
-    if os.path.exists(path):
-        os.remove(path)    
-    figure.savefig(path)
-    return
-
-
-def save_sample_data(folder_save, variable_name, data, source, dataset, experiment='historical', timescale='monthly', resolution='regridded'):
-    ''' Save sample data (gadi) '''
-    folder = f'{folder_save}/sample_data/{source}'
-    os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{variable_name}_{timescale}_{experiment}_{resolution}.nc'
-
-    save_file(data, folder, filename)
-    return
-
-
-def load_sample_data(variable_name, dataset, experiment='historical', timescale='monthly', resolution='regridded', folder_load = f'{os.path.expanduser("~")}/Documents/data'):
-    ''' Load saved sample data'''
-    data_sources = ['cmip5', 'cmip6', 'obs']
-
-    for source in data_sources:
-        folder = f'{folder_load}/{variable_name}/sample_data/{source}'
-        filename = f'{dataset}_{variable_name}_{timescale}_{experiment}_{resolution}.nc'
-        file_path = os.path.join(folder, filename)
-        try:
-            ds = xr.open_dataset(file_path)
-            return ds
-        except FileNotFoundError:
-            continue
-    print(f'Error: no file at {file_path}')
-    return None
-
-
-def save_metric(metric, data, folder_save, source, dataset, experiment='historical', resolution='regridded'):
-    ''' Save calculated metric to file '''
-    folder = f'{folder_save}/metrics/{metric}/{source}'
-    os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
-    
-    save_file(data, folder, filename)
-    return
-
-def load_metric(variable_name, metric, dataset, experiment='historical', folder_load=os.path.expanduser("~") + '/Documents/data', resolution='regridded'):
-    ''' Load metric data '''
-    data_sources = ['cmip5', 'cmip6', 'obs']
-
-    for source in data_sources:
-        folder = f'{folder_load}/{variable_name}/metrics/{metric}/{source}'
-        filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
-        file_path = os.path.join(folder, filename)
-
-        try:
-            ds = xr.open_dataset(file_path)
-            return ds
-        except FileNotFoundError:
-            continue
-
-    print(f"Error: no file found for {dataset} - {metric}, example: {file_path}")
-    return None
-
-
-def save_metric_figure(name, metric, figure, folder_save, source, resolution='regridded'):
-    ''' Save calculated metric to file '''
-    folder = f'{folder_save}/figures/{metric}/{source}'
-    os.makedirs(folder, exist_ok=True)
-    filename = f'{name}_{resolution}.pdf'
-    
-    save_figure(figure, folder, filename)
-    return None
-
-
-
-# ------------------------------------------------------------------------------------- common operations functions --------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- functions for common operations --------------------------------------------------------------------------------------------------- #
 
 def snapshot(da):
     ''' Take a snapshot from a timestep of the dataset '''
@@ -110,6 +20,53 @@ def mean(da):
     ''' Calculate spatial mean, then time-mean '''
     return tMean(sMean(da))
 
+def get_super(x):
+    ''' For adding superscripts in strings (input is string) '''
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------- functions for scenes --------------------------------------------------------------------------------------------------- #
+
+def connect_boundary(da):
+    ''' Connect objects across boundary 
+    Objects that touch across lon=0, lon=360 boundary are the same object.
+    Takes array(lat, lon)) 
+    '''
+    s = np.shape(da)
+    for row in np.arange(0,s[0]):
+        if da[row,0]>0 and da[row,-1]>0:
+            da[da==da[row,0]] = min(da[row,0],da[row,-1])
+            da[da==da[row,-1]] = min(da[row,0],da[row,-1])
+
+def haversine_dist(lat1, lon1, lat2, lon2):
+    '''Great circle distance (from Haversine formula) (used for distance between objects)
+    h = sin^2(phi_1 - phi_2) + (cos(phi_1)cos(phi_2))sin^2(lambda_1 - lambda_2)
+    (1) h = sin(theta/2)^2
+    (2) theta = d_{great circle} / R    (central angle, theta)
+    (1) in (2) and rearrange for d gives
+    d = R * sin^-1(sqrt(h))*2 
+
+    where 
+    phi -latitutde
+    lambda - longitude
+    (Takes vectorized input)
+    '''
+    R = 6371 # radius of earth in km
+    lat1 = np.deg2rad(lat1)                       
+    lon1 = np.deg2rad(lon1-180) # function requires lon [-180 to 180]
+    lat2 = np.deg2rad(lat2)                       
+    lon2 = np.deg2rad(lon2-180)
+    
+    h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
+    return 2 * R * np.arcsin(np.sqrt(h))
+
 def pick_region(da, dataset, experiment = 'historical', region = 'total', timeMean_option='monthly'):
     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
     wap500 = get_wap(dataset, experiment)['wap'].sel(plev = 500e2)
@@ -126,6 +83,26 @@ def pick_region(da, dataset, experiment = 'historical', region = 'total', timeMe
         da = da.where(wap500<0)
     return da
 
+# def pick_region(data, dataset, experiment = 'historical', region = 'descent'):
+#     ''' Picks out total region, region of descent, or region of ascent based on vertical pressure velocity at 500 hPa'''
+#     wap = get_dsvariable('wap500', dataset, experiment)['wap500']
+#     if 'time' in data.dims:
+#         wap = wap.assign_coords(time=data.time)
+#     else:
+#         wap = wap.mean(dim='time')
+
+#     if region == 'total':
+#         pass
+#     elif region == 'descent':
+#         data = data.where(wap>0)
+#     elif region == 'ascent':
+#         data = data.where(wap<0)
+#     return data
+
+
+
+# ------------------------------------------------------------------------------------- functions for time series --------------------------------------------------------------------------------------------------- #
+
 def monthly_clim(da):
     ''' Creates a data array with the climatology of each month  '''
     year = da.time.dt.year
@@ -140,7 +117,7 @@ def resample_timeMean(da, timeMean_option=''):
 
     elif timeMean_option == 'seasonal' and len(da) >= 100:
         da = da.resample(time='QS-DEC').mean(dim="time")
-        da = to_monthly(da)
+        da = monthly_clim(da)
         da = da.rename({'month':'season'})
         da = da.assign_coords(season=["MAM", "JJA", "SON", "DJF"])
         da = da.isel(year=slice(1, None))
@@ -152,28 +129,9 @@ def resample_timeMean(da, timeMean_option=''):
         pass
     return da
 
-def pick_region(data, dataset, experiment = 'historical', region = 'descent'):
-    ''' Picks out total region, region of descent, or region of ascent based on vertical pressure velocity at 500 hPa'''
-    wap = get_dsvariable('wap500', dataset, experiment)['wap500']
-    if 'time' in data.dims:
-        wap = wap.assign_coords(time=data.time)
-    else:
-        wap = wap.mean(dim='time')
 
-    if region == 'total':
-        pass
-    elif region == 'descent':
-        data = data.where(wap>0)
-    elif region == 'ascent':
-        data = data.where(wap<0)
-    return data
     
-def get_super(x):
-    ''' For adding superscripts in strings '''
-    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
-    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
-    res = x.maketrans(''.join(normal), ''.join(super_s))
-    return x.translate(res)
+
 
 
 
@@ -240,6 +198,27 @@ def get_super(x):
 #             except FileNotFoundError:
 #                 print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
 #     return ds
+
+
+
+
+
+
+# for experiment in experiments:
+#     if experiment and source in ['cmip5', 'cmip6']:
+#         print(f'\t {experiment}') if pD.prData_exist(dataset, experiment) else print(f'\t no {experiment} data')
+#     print( '\t obserational dataset') if not experiment and source == 'obs' else None
+
+#     if mV.no_data(source, experiment, pD.prData_exist(dataset, experiment)):
+#         continue
+
+#     da = load_data(switch, dataset, experiment, folder_save, timescale, resolution)
+#     calc_metrics(switch, da, folder_save, source, dataset, experiment)
+
+
+
+
+
 
 
 

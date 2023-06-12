@@ -1,6 +1,8 @@
 import numpy as np
+import xarray as xr
+import os
 
-# -------------------------------------------------------------------------------------- For choosing dataset / model ----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------- For choosing dataset / model----------------------------------------------------------------------------------------------------- #
 
 models_cmip5 = [
     # 'IPSL-CM5A-MR', # 1
@@ -24,7 +26,6 @@ models_cmip5 = [
     # 'CESM1-BGC'     # 19
     ]
 
-
 models_cmip6 = [
     'TaiESM1',        # 1
     'BCC-CSM2-MR',    # 2
@@ -34,35 +35,147 @@ models_cmip6 = [
     'MPI-ESM1-2-HR',  # 6
     'NorESM2-MM',     # 7
     'GFDL-CM4',       # 8
-    # 'CanESM5',        # 9
+    'CanESM5',        # 9
     'CMCC-ESM2',      # 10
     'UKESM1-0-LL',    # 11
     'MRI-ESM2-0',     # 12
-    'CESM2',          # 13
+    # 'CESM2',          # 13 # get this again (currently original res)
     'NESM3'           # 14
     ]
-
 
 observations = [
     # 'GPCP'
     ]
+
 datasets = models_cmip5 + models_cmip6 + observations
 
+experiments = [
+    # 'historical',
+    # 'rcp85',
+    'ssp585',
+    # ''
+    ]
+
+timescales = [
+    # 'daily',
+    'monthly'
+    ]
 
 resolutions = [
     # 'orig',
     'regridded'
     ]
 
-experiments = [
-    'historical',
-    # 'rcp85',
-    'ssp585',
-    # ''
-    ]
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------- Determining folder to save to ----------------------------------------------------------------------------------------------------- #
+
+folder_save = f'{os.path.expanduser("~")}/Documents/data'
+folder_save_gadi = '/g/data/k10/cb4968/data'
+
+# --------------------
+# structure of folders 
+# for metric: folder_save/variable_type/metrics/metric/source/dataset_filename ex: pr/metrics/rxday/cmip6/FGOALS-g3_rxday_historical_regridded.nc
+# for figure: folder_save/variable_type/figures/plot_metric/source/source_filename ex: pr/figures/rxday_tMean/cmip6/cmip6_rx1day_regridded.pdf 
+# --------------------
+
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------------------------ save / load ----------------------------------------------------------------------------------------------------- #
+
+def save_file(data, folder, filename):
+    ''' Saves file to specified folder and filename '''
+    os.makedirs(folder, exist_ok=True)
+    path = folder + '/' + filename
+    if os.path.exists(path):
+        os.remove(path)    
+    data.to_netcdf(path)
+    return
+
+def save_figure(figure, folder, filename):
+    ''' Save figure to specified folder and filename '''
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, filename)
+    if os.path.exists(path):
+        os.remove(path)    
+    figure.savefig(path)
+    return
+
+def save_sample_data(data, folder_save, source, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+    ''' Save sample data (gadi) '''
+    folder = f'{folder_save}/sample_data/{source}'
+    os.makedirs(folder, exist_ok=True)
+    filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
+    save_file(data, folder, filename)
+    return
+
+def save_metric(data, folder_save, metric, source, dataset, experiment='historical', resolution='regridded'):
+    ''' Save calculated metric to file '''
+    folder = f'{folder_save}/metrics/{metric}/{source}'
+    os.makedirs(folder, exist_ok=True)
+    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
+    save_file(data, folder, filename)
+    return
+
+def save_metric_figure(figure, folder_save, metric, source, name, resolution='regridded'):
+    ''' Save plot of metric calculation to file '''
+    folder = f'{folder_save}/figures/{metric}/{source}'
+    os.makedirs(folder, exist_ok=True)
+    filename = f'{name}_{resolution}.pdf'
+    save_figure(figure, folder, filename)
+    return None
+
+
+
+def load_sample_data(folder_save, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+    ''' Load saved sample data'''
+    data_sources = ['cmip5', 'cmip6', 'obs']
+    for source in data_sources:
+        folder = f'{folder_save}/sample_data/{source}'
+        filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
+        file_path = os.path.join(folder, filename)
+        try:
+            ds = xr.open_dataset(file_path)
+            return ds
+        except FileNotFoundError:
+            continue
+    print(f'Error: no file at ex: {file_path}')
+    return None
+
+def load_metric(folder_save, variable_type, metric, dataset, experiment='historical', resolution='regridded'):
+    ''' Load metric data '''
+    data_sources = ['cmip5', 'cmip6', 'obs']
+    for source in data_sources:
+        folder = f'{folder_save}/{variable_type}/metrics/{metric}/{source}'
+        filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
+        file_path = os.path.join(folder, filename)
+        try:
+            ds = xr.open_dataset(file_path)
+            return ds
+        except FileNotFoundError:
+            continue
+    print(f"Error: no file found for {dataset} - {metric}, example: {file_path}")
+    return None
+
+
+
+
+# ---------------------------------------------------------------------------------------- Other variables / functions ----------------------------------------------------------------------------------------------------- #
 
 
 def find_source(dataset, models_cmip5, models_cmip6, observations):
+    '''Determining source of dataset '''
     if np.isin(models_cmip5, dataset).any():
         source = 'cmip5' 
     elif np.isin(models_cmip6, dataset).any():
@@ -73,36 +186,51 @@ def find_source(dataset, models_cmip5, models_cmip6, observations):
         source = 'test' 
     return source
 
-
 def find_list_source(datasets, models_cmip5, models_cmip6, observations):
-    source = set()
+    ''' Determining source of dataset list '''
+    sources = set()
     for dataset in datasets:
-        if dataset in models_cmip5:
-            source.add('cmip5')
-        elif dataset in models_cmip6:
-            source.add('cmip6')
-        elif dataset in observations:
-            source.add('observations')
-
-    if len(source) == 1:
-        return source.pop()
-    elif len(source) == 2:
-        if 'cmip5' in source and 'cmip6' in source:
-            return 'mixed'
-        elif 'cmip5' in source and 'observations' in source:
-            return 'cmip5'
-        elif 'cmip6' in source and 'observations' in source:
-            return 'cmip6'
-    return
+        sources.add('cmip5') if dataset in models_cmip5 else None
+        sources.add('cmip6') if dataset in models_cmip6 else None
+        sources.add('obs') if dataset in observations else None
+    if   'cmip5' in sources and 'cmip6' in sources:
+         return 'mixed'
+    elif 'cmip5' in sources:
+         return 'cmip5'
+    elif 'cmip6' in sources:
+         return 'cmip6'
+    else:
+         return 'obs'
 
 def find_ifWithObs(datasets, observations):
+    ''' Indicate if there is observations in the dataset list (for filename of figures) '''
     for dataset in datasets:
         if dataset in observations:
             return '_withObs'
     return ''
 
+# def print_experiment(source, experiment, data_exists):
+#     if experiment and source in ['cmip5', 'cmip6']:
+#         print(f'\t {experiment}') if data_exists else print(f'\t no {experiment} data')
+#     print( '\t obserational dataset') if not experiment and source == 'obs' else None
 
-# -------------------------------------------------------------------------------------- Other variables ----------------------------------------------------------------------------------------------------- #
+
+def no_data(source, experiment, data_exists):
+    if experiment and source in ['cmip5', 'cmip6']:
+        pass
+    elif not experiment and source == 'obs':
+        pass
+    else:
+        return True
+
+    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']:
+        return True
+
+    if not data_exists:
+        return True
+    
+
+
 
 institutes_cmip5 = {
     'IPSL-CM5A-MR':'IPSL',
