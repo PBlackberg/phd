@@ -28,19 +28,19 @@ models_cmip5 = [
 
 models_cmip6 = [
     'TaiESM1',        # 1
-    'BCC-CSM2-MR',    # 2
-    'FGOALS-g3',      # 3
-    'CNRM-CM6-1',     # 4
-    'MIROC6',         # 5
-    'MPI-ESM1-2-HR',  # 6
-    'NorESM2-MM',     # 7
-    'GFDL-CM4',       # 8
-    'CanESM5',        # 9
-    'CMCC-ESM2',      # 10
-    'UKESM1-0-LL',    # 11
-    'MRI-ESM2-0',     # 12
-    # 'CESM2',          # 13 # get this again (currently original res)
-    'NESM3'           # 14
+    # 'BCC-CSM2-MR',    # 2
+    # 'FGOALS-g3',      # 3
+    # 'CNRM-CM6-1',     # 4
+    # 'MIROC6',         # 5
+    # 'MPI-ESM1-2-HR',  # 6
+    # 'NorESM2-MM',     # 7
+    # 'GFDL-CM4',       # 8
+    # 'CanESM5',        # 9
+    # 'CMCC-ESM2',      # 10
+    # 'UKESM1-0-LL',    # 11
+    # 'MRI-ESM2-0',     # 12
+    # 'CESM2',          # 13
+    # 'NESM3'           # 14
     ]
 
 observations = [
@@ -50,9 +50,9 @@ observations = [
 datasets = models_cmip5 + models_cmip6 + observations
 
 experiments = [
-    # 'historical',
+    'historical',
     # 'rcp85',
-    'ssp585',
+    # 'ssp585',
     # ''
     ]
 
@@ -136,8 +136,6 @@ def save_metric_figure(figure, folder_save, metric, source, name, resolution='re
     save_figure(figure, folder, filename)
     return None
 
-
-
 def load_sample_data(folder_save, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
     ''' Load saved sample data'''
     data_sources = ['cmip5', 'cmip6', 'obs']
@@ -172,7 +170,6 @@ def load_metric(folder_save, variable_type, metric, dataset, experiment='histori
 
 
 # ---------------------------------------------------------------------------------------- Other variables / functions ----------------------------------------------------------------------------------------------------- #
-
 
 def find_source(dataset, models_cmip5, models_cmip6, observations):
     '''Determining source of dataset '''
@@ -209,10 +206,12 @@ def find_ifWithObs(datasets, observations):
             return '_withObs'
     return ''
 
-# def print_experiment(source, experiment, data_exists):
-#     if experiment and source in ['cmip5', 'cmip6']:
-#         print(f'\t {experiment}') if data_exists else print(f'\t no {experiment} data')
-#     print( '\t obserational dataset') if not experiment and source == 'obs' else None
+def data_exist(model, experiment):
+    ''' Check if model/project has data
+    (for precipitation a model is not included if it does not have daily precipitation data)
+    '''
+    data_exist = 'True'
+    return data_exist
 
 
 def no_data(source, experiment, data_exists):

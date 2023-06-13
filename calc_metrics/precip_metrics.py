@@ -11,7 +11,7 @@ sys.path.insert(0, f'{folder_code}/functions')
 import myFuncs as mF # imports common operators
 import myVars as mV # imports common variables
 import constructed_fields as cF # imports fields for testing
-import get_data.pr_data as pD # imports functions to get data from gadi
+import get_data as gD # imports functions to get data from gadi
 
 
 # ------------------------------------------------------------------------------------- Calculating metric from data array ----------------------------------------------------------------------------------------------------- #
@@ -91,7 +91,7 @@ def calc_o_pr(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, folder_save, source, dataset, experiment):
+def calc_metrics(switch, da, source, dataset, experiment, folder_save):
     if switch['rxday']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
         rx5day_tMean, rx5day_sMean = calc_rx5day(da)
@@ -138,26 +138,26 @@ def calc_metrics(switch, da, folder_save, source, dataset, experiment):
 
 # -------------------------------------------------------------------------------- Get the data from the dataset / experiment and run ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, dataset, experiment, folder_save, timescale, resolution):
+def load_data(switch, dataset, experiment, timescale, resolution, folder_save):
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
         return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['precip']
     else:
-        return pD.get_pr('pr', dataset, experiment, timescale, resolution)['pr']
+        return gD.get_data({'pr':True}, dataset, experiment, timescale, resolution)
 
 
-def run_experiment(switch, source, dataset, experiments, folder_save, timescale, resolution):
+def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
-            print(f'\t {experiment}') if pD.prData_exist(dataset, experiment) else print(f'\t no {experiment} data')
+            print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
         print( '\t obserational dataset') if not experiment and source == 'obs' else None
 
-        if mV.no_data(source, experiment, pD.prData_exist(dataset, experiment)):
+        if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_data(switch, dataset, experiment, folder_save, timescale, resolution)
-        calc_metrics(switch, da, folder_save, source, dataset, experiment)
+        da = load_data(switch, dataset, experiment, timescale, resolution, folder_save)
+        calc_metrics(switch, da, source, dataset, experiment, folder_save)
 
 
 def run_precip_metrics(switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = f'{mV.folder_save}/pr'):
@@ -168,7 +168,7 @@ def run_precip_metrics(switch, datasets, experiments, timescale = 'daily', resol
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, folder_save, timescale, resolution)
+        run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
 
 
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         'F_pr10': False,
         'o_pr': False,
         
-        'save': True
+        'save': False
         }
 
     # choose which datasets and experiments to run, and where to save the metric
