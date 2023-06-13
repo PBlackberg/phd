@@ -8,17 +8,17 @@
 #PBS -l wd
 #PBS -m abe
 #PBS -M <philip.blackberg@monash.edu> 
-
+#PBS -j oe
 
 module use /g/data/hh5/public/modules
-module load conda/analysis3-22.10-unstable
-python /g/data/k10/cb4968/phd/clVars.py $PBS_NCPUS 
+module load conda/analysis3-unstable
+python .py $PBS_NCPUS 
 
 
 
 
 # submitting job: 
-# qsub /g/data/k10/cb4968/phd/bash/interactive_job.sh 
+# qsub /g/data/k10/cb4968/phd/job.sh 
 
 # in ipython, run scripts from: 
 # cd /g/data/k10/cb4968/phd/metrics/funcs/vars
@@ -32,3 +32,9 @@ python /g/data/k10/cb4968/phd/clVars.py $PBS_NCPUS
 
 # remove job from queue: 
 # qdel jobID  
+
+
+# interactive job
+# qsub -I -normal  -Pk10 -lwalltime=01:00:00,ncpus=1,mem=15GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/k10+gdata/hh5,wd
+
+

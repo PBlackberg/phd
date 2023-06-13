@@ -26,17 +26,17 @@ def get_pr(source, dataset, experiment, timescale, resolution):
     if source == 'cmip5':
         ds = cfiles.get_cmip5_data('pr', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['pr']*60*60*24 # convert to mm/day
-        da.attrs['units']= 'mm day' + mF.super('-1')
+        da.attrs['units']= 'mm day' + mF.get_super('-1')
 
     if source == 'cmip6':
         ds = cfiles.get_cmip6_data('pr', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['pr']*60*60*24 # convert to mm/day
-        da.attrs['units']= 'mm day' + mF.super('-1')
+        da.attrs['units']= 'mm day' + mF.get_super('-1')
 
     if dataset == 'GPCP':
         ds = cfiles.get_gpcp(resolution)
         da = ds['pr']*60*60*24 # already units of mm/day
-        da.attrs['units']= 'mm day' + mF.super('-1')
+        da.attrs['units']= 'mm day' + mF.get_super('-1')
     return da
 
 
@@ -48,12 +48,12 @@ def get_wap(source, dataset, experiment, timescale, resolution):
     if source == 'cmip5':
         ds = cfiles.get_cmip5_data('wap', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['wap']*60*60*24/100 # convert to hPa/day   
-        da.attrs['units']= 'hPa day' + mF.super('-1')
+        da.attrs['units']= 'hPa day' + mF.get_super('-1')
 
     if source == 'cmip6':
         ds = cfiles.get_cmip6_data('wap', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['wap']*60*60*24/100 # convert to hPa/day   
-        da.attrs['units']= 'hPa day' + mF.super('-1')
+        da.attrs['units']= 'hPa day' + mF.get_super('-1')
     return da
 
 
@@ -87,6 +87,7 @@ def get_cl(source, dataset, experiment, timescale, resolution):
     if source == 'cmip6':
         ds, _ = cfiles.get_cmip6_cl('cl', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['cl'] # units in % on sigma pressure coordinates
+        da.attrs['units']= '%'
     return da
 
 
@@ -157,6 +158,8 @@ def get_rlut(source, dataset, experiment, timescale, resolution):
 
 def get_var_data(switch, source, dataset, experiment, timescale, resolution, folder_save):
 
+    da = None
+
     if switch['pr']:
         da = get_pr(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'pr': da}), folder_save, source, dataset, 'pr', timescale, experiment, resolution) if switch['save'] else None
@@ -204,8 +207,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
-
-        da = get_var_data(switch, source, dataset, experiment, timescale, resolution)
+        da = get_var_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
     return da
 
 
@@ -217,8 +219,8 @@ def run_get_data(switch, datasets, experiments, timescale = 'daily', resolution=
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, folder_save, timescale, resolution)
-
+        da = run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+    return da
 
 
 
@@ -226,7 +228,7 @@ if __name__ == '__main__':
 
     start = timeit.default_timer()
     switch = {
-        'pr'  :          False,
+        'pr'  :          True,
         'wap' :          False,
         'tas' :          False,
         'cl'  :          False,
@@ -234,7 +236,7 @@ if __name__ == '__main__':
         'hus' :          False,
         'hur' :          False,
         'rlut':          False,
-        'save':          False
+        'save':          True
         }
 
     # get and save sample data if needed
@@ -246,11 +248,6 @@ if __name__ == '__main__':
     
     stop = timeit.default_timer()
     print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
-
-
-
-
-
 
 
 

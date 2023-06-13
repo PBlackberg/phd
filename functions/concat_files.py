@@ -11,19 +11,18 @@ def latestVersion(path):
     version = max(versions, key=lambda x: int(x[1:])) if len(versions)>1 else versions[0]
     return version
 
-def concat_files(path_gen, variable, model, experiment):
+def concat_files(path_folder, experiment):
     ''' Concatenates files of monthly or daily data between specified years
     (takes out a little bit wider range to not exclude data when interpolating grid) 
     '''
-    path_folder =  os.path.join(path_gen, grid_folder(model), latestVersion(os.path.join(path_gen, grid_folder(model, experiment, variable))))
     files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
     
     year1, year2 = (1970, 1999) if experiment == 'historical' else (2070, 2099) # range of years to concatenate files for
     fileYear1_charStart, fileYear1_charEnd = (13, 9) if 'Amon' in path_folder else (17, 13) # indicates between which characters in the filename the first fileyear is described (count starting from the end)
     fileYear2_charStart, fileYear2_charEnd = (6, 2) if 'Amon' in path_folder else (8, 4) # where the last fileyear is described
 
-    files = sorted(files, key=lambda x: x[x.index(".nc")-fileYear1_charStart,:x.index(".nc")-fileYear1_charEnd])
-    files = [f for f in files if f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd] <= year2 and int(f[f.index(".nc")-fileYear2_charStart : f.index(".nc")-fileYear2_charEnd]) >= int(year1)]
+    files = sorted(files, key=lambda x: x[x.index(".nc")-fileYear1_charStart:x.index(".nc")-fileYear1_charEnd])
+    files = [f for f in files if int(f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]) <= int(year2) and int(f[f.index(".nc")-fileYear2_charStart : f.index(".nc")-fileYear2_charEnd]) >= int(year1)]
 
     # for f in files:  # one model from warming scenario from cmip5 have a file that needs to be removed (creates duplicate data otherwise)
     #     files.remove(f) if f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]=='19790101' and f[f.index(".nc")-fileYear2_charStart : f.index(".nc")]=='20051231' else None
@@ -42,8 +41,8 @@ def choose_cmip5_ensemble(model, experiment):
     and some experiments don't have the same ensemble as the historical simulation'''
     ensemble = 'r6i1p1' if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
 
-    ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else 'r1i1p1'
-    ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else 'r1i1p1'
+    ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
+    ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
     return ensemble
 
 def get_cmip5_data(variable, institute, model, experiment, timescale, resolution, data_exists=True):
@@ -80,6 +79,7 @@ def get_cmip5_cl(variable, institute, model, experiment, timescale, resolution, 
     timeInterval = ('day', 'day') if timescale == 'daily' else ('mon', 'Amon')
     path_gen = f'/g/data/al33/replicas/CMIP5/combined/{institute}/{model}/{experiment}/{timeInterval[0]}/atmos/{timeInterval[1]}/{ensemble}'
     version = latestVersion(path_gen)
+       
     path_folder = f'{path_gen}/{version}/{variable}'
 
     ds = concat_files(path_folder, variable, model, experiment)
@@ -112,18 +112,19 @@ def get_cmip5_cl(variable, institute, model, experiment, timescale, resolution, 
 
 # ---------------------------------------------------------------------------------------- for cmip6 data ----------------------------------------------------------------------------------------------------------#
 
-def choose_cmip6_ensemble(model):
+def choose_cmip6_ensemble(model, experiment):
     ''' Some models don't have the ensemble most common amongst other models 
     and some experiments don't have the same ensemble as the historical simulation
     '''
     ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL'] else 'r1i1p1f1'
+    ensemble = 'r11i1p1f1' if model == 'CESM2' and not experiment == 'historical' else ensemble
     return ensemble
 
 def grid_folder(model):
     ''' Some models have a different grid folder in the path to the files'''
     folder = 'gn'
-    folder = 'gr' if model == 'CNRM-CM6-1' else None
-    folder = 'gr1' if model == 'GFDL-CM4' else None           
+    folder = 'gr' if model == 'CNRM-CM6-1' else folder
+    folder = 'gr1' if model == 'GFDL-CM4' else folder           
     return folder
 
 def get_cmip6_data(variable, institute, model, experiment, timescale, resolution, data_exists = True):
@@ -136,8 +137,11 @@ def get_cmip6_data(variable, institute, model, experiment, timescale, resolution
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
     timeInterval = 'day' if timescale == 'daily' else 'Amon'
     path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{institute}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+    folder_grid = grid_folder(model)
+    version = latestVersion(os.path.join(path_gen, folder_grid))
+    path_folder =  f'{path_gen}/{folder_grid}/{version}'
 
-    ds = concat_files(path_gen, variable, model, experiment) # picks out lat: [-35, 35]
+    ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     da = ds[variable]
 
     if resolution == 'regridded': # conservatively interpolate
@@ -158,8 +162,11 @@ def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, 
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
     timeInterval = 'day' if timescale == 'daily' else 'Amon'
     path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{institute}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
-
-    ds = concat_files(path_gen, variable, model, experiment) # picks out lat: [-35, 35]
+    folder_grid = grid_folder(model)
+    version = latestVersion(os.path.join(path_gen, folder_grid))
+    path_folder =  f'{path_gen}/{folder_grid}/{version}'
+    
+    ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
         
     if model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4']: # different models have different conversions from height coordinate to pressure coordinate.
         p_hybridsigma = ds.ap + ds.b*ds.ps

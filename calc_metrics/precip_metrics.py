@@ -138,13 +138,14 @@ def calc_metrics(switch, da, source, dataset, experiment, folder_save):
 
 # -------------------------------------------------------------------------------- Get the data from the dataset / experiment and run ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, dataset, experiment, timescale, resolution, folder_save):
+def load_data(switch, source, dataset, experiment, timescale, resolution, folder_save):
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
         return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['precip']
     else:
-        return gD.get_data({'pr':True}, dataset, experiment, timescale, resolution)
+        return gD.get_pr(source, dataset, experiment, timescale, resolution)
+                                    # (switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = ''):
 
 
 def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
@@ -156,7 +157,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_data(switch, dataset, experiment, timescale, resolution, folder_save)
+        da = load_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
         calc_metrics(switch, da, source, dataset, experiment, folder_save)
 
 
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data': True,
+        'sample_data': False,
 
         'rxday': True, 
         'percentiles': False, 
@@ -188,14 +189,14 @@ if __name__ == '__main__':
         'F_pr10': False,
         'o_pr': False,
         
-        'save': False
+        'save': True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
     ds_metric = run_precip_metrics(switch=switch,
                                    datasets = mV.datasets, 
                                    experiments = mV.experiments,
-                                #    folder_save = f'{mV.folder_save_gadi}/pr'
+                                   folder_save = f'{mV.folder_save_gadi}/pr'
                                    )
     
 
