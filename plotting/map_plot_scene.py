@@ -105,22 +105,22 @@ def plot_axScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
 
 # -------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
 
-def get_scene(switch, variable, metric, metric_option, dataset):
+def get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save):
     if switch['climatology']:
-        scene = mF.load_metric(variable, metric, dataset)[metric_option]
+        scene = mV.load_metric(folder_save, variable_type, metric, dataset, resolution=resolution)[metric_option]
 
     if switch['change with warming']:
-        scene_historical = mF.load_metric(variable, metric, dataset, experiment=mV.experiments[0])[metric_option]
-        scene_warm = mF.load_metric(variable, metric, dataset, experiment=mV.experiments[1])[metric_option]
+        scene_historical = mV.load_metric(folder_save, variable_type, metric, dataset, experiment=mV.experiments[0], resolution=resolution)[metric_option]
+        scene_warm = mV.load_metric(folder_save, variable_type, metric, dataset, experiment=mV.experiments[1], resolution=resolution)[metric_option]
         scene = scene_warm - scene_historical 
     return scene
 
 
 
-def find_limits(switch, variable, metric, metric_option, quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high = 1, datasets = mV.datasets):    
+def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high = 1, datasets = mV.datasets, resolution = '', folder_save=''):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
-        scene = get_scene(switch, variable, metric, metric_option, dataset)
+        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
         vmin_list = np.append(vmin_list, np.quantile(scene, quantileWithin_low))
         vmax_list = np.append(vmax_list, np.quantile(scene, quantileWithin_high))
 
@@ -132,20 +132,22 @@ def find_limits(switch, variable, metric, metric_option, quantileWithin_low = 0,
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
 
-def plot_one_scene(switch, variable, metric, metric_option, cmap, title, cbar_label, dataset):
+def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cbar_label, dataset, resolution, folder_save):
     # create figure
     fig_size = (12,4)
     projection = ccrs.PlateCarree(central_longitude=180)
     fig, ax = plt.subplots(1, 1, figsize=(fig_size), subplot_kw=dict(projection=projection))
 
     # find limits
-    vmin, vmax = find_limits(switch, variable, metric, metric_option, datasets = [dataset], 
+    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets = [dataset], 
         quantileWithin_low = 0, 
         quantileWithin_high = 0.95, # remove extreme values from colorbar range
+        resolution = resolution,
+        folder_save = folder_save
         )
     
     # get scene
-    scene = get_scene(switch, variable, metric, metric_option, dataset)
+    scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
 
     # plot
     pcm = plot_axScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
@@ -168,7 +170,7 @@ def plot_one_scene(switch, variable, metric, metric_option, cmap, title, cbar_la
     return fig
 
 
-def plot_multiple_scenes(switch, variable, metric, metric_option, cmap, title, cbar_label, datasets):
+def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save):
     # create figure
     nrows = 4
     ncols = 4
@@ -180,15 +182,17 @@ def plot_multiple_scenes(switch, variable, metric, metric_option, cmap, title, c
     for i, dataset in enumerate(datasets):
 
         # find limits
-        vmin, vmax = find_limits(switch, variable, metric, metric_option, 
+        vmin, vmax = find_limits(switch, variable_type, metric, metric_option, 
             quantileWithin_low = 0, 
             quantileWithin_high = 0.90, # remove extreme values from colorbar range
             quantileBetween_low = 0, 
-            quantileBetween_high = 1 # remove extreme models' range for colorbar range
+            quantileBetween_high = 1, # remove extreme models' range for colorbar range
+            resolution = resolution,
+            folder_save = folder_save
             )
         
         # get scene
-        scene = get_scene(switch, variable, metric, metric_option, dataset)
+        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
 
         # determine the row and column indices
         row = i // ncols
@@ -244,13 +248,13 @@ def plot_multiple_scenes(switch, variable, metric, metric_option, cmap, title, c
 #    Run script
 # ------------------
 
-def run_map_plot(switch, datasets = mV.datasets, folder_save = f'{home}/Documents/data/pr'):
+def run_map_plot(switch, datasets = mV.datasets, folder_save = mV.folder_save, resolution = 'regridded'):
     if  switch['rx1day'] or switch['rx5day']:
-        variable = 'pr'
+        variable_type = 'pr'
         cmap = 'Blues'
         cbar_label = 'pr [mm day{}]'.format(mF.get_super('-1'))
 
-        metric = 'rxday_tMean' if switch['rx1day'] or switch['rx5day'] else None
+        metric = 'rxday_pr_tMean' if switch['rx1day'] or switch['rx5day'] else None
         metric_option = 'rx1day' if switch['rx1day'] else 'rx5day'
 
 
@@ -259,16 +263,16 @@ def run_map_plot(switch, datasets = mV.datasets, folder_save = f'{home}/Document
     else:
         title = f'{metric_option}, change with warming'
         cbar_label = cbar_label[:-1] + ' K' + mF.get_super('-1') + cbar_label[-1:] 
-        cmap = 'RdBu'
+        cmap = 'RdBu_r'
 
 
     if switch['one scene']:
         dataset = datasets[0]
-        fig = plot_one_scene(switch, variable, metric, metric_option, cmap, title, cbar_label, dataset)
+        fig = plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cbar_label, dataset, resolution, folder_save)
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         filename = f'{dataset}_{metric_option}' if switch['climatology'] else f'{dataset}_{metric_option}_difference' 
     else:
-        fig = plot_multiple_scenes(switch, variable, metric, metric_option, cmap, title, cbar_label, datasets)
+        fig = plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save)
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         with_obs = mV.find_ifWithObs(datasets, mV.observations)
         filename = f'{source}_{metric_option}{with_obs}' if switch['climatology'] else f'{source}_{metric_option}_difference' 
@@ -294,13 +298,13 @@ if __name__ == '__main__':
 
         'one scene': False,
         'show': True,
-        'save': True,
+        'save': False,
         }
     
 
     # plot and save figure
     run_map_plot(switch,
-                 folder_save = f'{home}/Documents/data/pr')
+                 folder_save = mV.folder_save)
 
     stop = timeit.default_timer()
     print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')

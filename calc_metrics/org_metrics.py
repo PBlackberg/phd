@@ -11,7 +11,7 @@ sys.path.insert(0, f'{folder_code}/functions')
 import myFuncs as mF # imports common operators
 import myVars as mV # imports common variables
 import constructed_fields as cF # imports fields for testing
-import get_data.pr_data as pD # imports functions to get data from gadi
+import get_data as gD # imports functions to get data from gadi
 
 
 
@@ -192,7 +192,7 @@ def calc_o_area(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, folder_save, source, dataset, experiment, conv_threshold):
+def calc_metrics(switch, da, source, dataset, experiment, conv_threshold, folder_save):
     ''' Calls metric calculation on input data and saves metric to dataset
     '''
     if switch['o_scene']:
@@ -226,7 +226,7 @@ def calc_metrics(switch, da, folder_save, source, dataset, experiment, conv_thre
         mV.save_metric(ds_numberIndex, folder_save, 'ni', source, dataset, experiment) if switch['save'] else None
 
     if switch['o_area']:
-        o_area = calc_oArea(da, conv_threshold)
+        o_area = calc_o_area(da, conv_threshold)
         ds_o_area = xr.DataArray(data = o_area, dims = 'object',
                                 attrs = {'units':'km' + mF.get_super('2')})
                 
@@ -235,28 +235,28 @@ def calc_metrics(switch, da, folder_save, source, dataset, experiment, conv_thre
 
 # -------------------------------------------------------------------------------- Get the data from the model / experiment and run ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, dataset, experiment, folder_save, timescale, resolution):
+def load_data(switch, source, dataset, experiment, timescale, resolution):
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(f'{mV.folder_save}/pr', dataset, 'pr', timescale, experiment, resolution)['precip']
+        return mV.load_sample_data(f'{mV.folder_save}/pr', dataset, 'pr', timescale, experiment, resolution)['pr']
     else:
-        return pD.get_pr('pr', dataset, experiment, timescale, resolution)['pr']
+        return gD.get_pr(source, dataset, experiment, timescale, resolution)
 
 
-def run_experiment(switch, source, dataset, experiments, folder_save, timescale, resolution):
+def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
-            print(f'\t {experiment}') if pD.prData_exist(dataset, experiment) else print(f'\t no {experiment} data')
+            print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
         print( '\t obserational dataset') if not experiment and source == 'obs' else None
 
-        if mV.no_data(source, experiment, pD.prData_exist(dataset, experiment)):
+        if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_data(switch, dataset, experiment, folder_save, timescale, resolution)
+        da = load_data(switch, source, dataset, experiment, timescale, resolution)
         conv_percentile = 0.97
         conv_threshold = da.quantile(conv_percentile, dim=('lat', 'lon'), keep_attrs=True).mean(dim='time')
-        calc_metrics(switch, da, folder_save, source, dataset, experiment, conv_threshold)
+        calc_metrics(switch, da, source, dataset, experiment, conv_threshold, folder_save)
 
 
 def run_org_metrics(switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = f'{mV.folder_save}/org'):
@@ -267,7 +267,7 @@ def run_org_metrics(switch, datasets, experiments, timescale = 'daily', resoluti
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, folder_save, timescale, resolution)
+        run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
 
 
 
@@ -280,15 +280,15 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data': True,
+        'sample_data':        True,
 
-        'o_scene':False,
-        'rome': False, 
-        'rome_n': False, 
-        'ni': True, 
-        'o_area': False,
+        'o_scene':            False,
+        'rome':               True, 
+        'rome_n':             False, 
+        'ni':                 False, 
+        'o_area':             False,
         
-        'save': True
+        'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric

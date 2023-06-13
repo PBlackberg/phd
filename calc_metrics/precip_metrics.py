@@ -142,11 +142,10 @@ def load_data(switch, source, dataset, experiment, timescale, resolution, folder
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['precip']
+        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['pr']
     else:
         return gD.get_pr(source, dataset, experiment, timescale, resolution)
-                                    # (switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = ''):
-
+    
 
 def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
     for experiment in experiments:
@@ -181,7 +180,7 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data': False,
+        'sample_data': True,
 
         'rxday': True, 
         'percentiles': False, 
@@ -196,7 +195,7 @@ if __name__ == '__main__':
     ds_metric = run_precip_metrics(switch=switch,
                                    datasets = mV.datasets, 
                                    experiments = mV.experiments,
-                                   folder_save = f'{mV.folder_save_gadi}/pr'
+                                #    folder_save = f'{mV.folder_save_gadi}/pr'
                                    )
     
 

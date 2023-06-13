@@ -28,19 +28,19 @@ models_cmip5 = [
 
 models_cmip6 = [
     'TaiESM1',        # 1
-    # 'BCC-CSM2-MR',    # 2
-    # 'FGOALS-g3',      # 3
-    # 'CNRM-CM6-1',     # 4
-    # 'MIROC6',         # 5
-    # 'MPI-ESM1-2-HR',  # 6
-    # 'NorESM2-MM',     # 7
-    # 'GFDL-CM4',       # 8
+    'BCC-CSM2-MR',    # 2
+    'FGOALS-g3',      # 3
+    'CNRM-CM6-1',     # 4
+    'MIROC6',         # 5
+    'MPI-ESM1-2-HR',  # 6
+    'NorESM2-MM',     # 7
+    'GFDL-CM4',       # 8
     # 'CanESM5',        # 9
-    # 'CMCC-ESM2',      # 10
-    # 'UKESM1-0-LL',    # 11
-    # 'MRI-ESM2-0',     # 12
-    # 'CESM2',          # 13
-    # 'NESM3'           # 14
+    'CMCC-ESM2',      # 10
+    'UKESM1-0-LL',    # 11
+    'MRI-ESM2-0',     # 12
+    'CESM2',          # 13
+    'NESM3'           # 14
     ]
 
 observations = [
@@ -52,7 +52,7 @@ datasets = models_cmip5 + models_cmip6 + observations
 experiments = [
     'historical',
     # 'rcp85',
-    # 'ssp585',
+    'ssp585',
     # ''
     ]
 
