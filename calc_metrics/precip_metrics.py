@@ -142,7 +142,7 @@ def load_data(switch, source, dataset, experiment, timescale, resolution, folder
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['pr']
+        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['precip']
     else:
         return gD.get_pr(source, dataset, experiment, timescale, resolution)
     

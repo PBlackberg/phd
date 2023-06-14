@@ -293,8 +293,8 @@ if __name__ == '__main__':
         'rx5day': False,
 
         'snapshot':False,
-        'climatology': False,
-        'change with warming': True,
+        'climatology': True,
+        'change with warming': False,
 
         'one scene': False,
         'show': True,
