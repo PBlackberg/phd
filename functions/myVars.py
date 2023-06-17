@@ -32,15 +32,15 @@ models_cmip6 = [
     # 'FGOALS-g3',      # 3
     # 'CNRM-CM6-1',     # 4
     # 'MIROC6',         # 5
-    # 'MPI-ESM1-2-HR',  # 6
-    # 'NorESM2-MM',     # 7
-    # 'GFDL-CM4',       # 8
-    'CanESM5',        # 9
-    # 'CMCC-ESM2',      # 10
-    # 'UKESM1-0-LL',    # 11
-    # 'MRI-ESM2-0',     # 12
-    # 'CESM2',          # 13
-    # 'NESM3'           # 14
+    'MPI-ESM1-2-LR',  # 6
+    'NorESM2-MM',     # 7
+    'GFDL-CM4',       # 8
+    # 'CanESM5',        # 9
+    'CMCC-ESM2',      # 10
+    'UKESM1-0-LL',    # 11
+    'MRI-ESM2-0',     # 12
+    'CESM2',          # 13
+    'NESM3'           # 14
     ]
 
 observations = [
@@ -260,7 +260,7 @@ institutes_cmip6 = {
     'FGOALS-g3':'CAS',
     'CNRM-CM6-1':'CNRM-CERFACS',
     'MIROC6':'MIROC',
-    'MPI-ESM1-2-HR':'MPI-M',
+    'MPI-ESM1-2-LR':'MPI-M',
     'GISS-E2-1-H':'NASA-GISS',
     'NorESM2-MM':'NCC',
     'GFDL-CM4':'NOAA-GFDL',
