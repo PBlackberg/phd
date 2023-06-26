@@ -183,6 +183,7 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
+        'raw_snapshot':       True,
         'rxday_pr':           False, 
         'percentiles':        False, 
         'meanInPercentiles':  False, 

@@ -28,19 +28,19 @@ models_cmip5 = [
 
 models_cmip6 = [
     'TaiESM1',        # 1
-    'BCC-CSM2-MR',    # 2
-    'FGOALS-g3',      # 3
-    'CNRM-CM6-1',     # 4
-    'MIROC6',         # 5
-    'MPI-ESM1-2-LR',  # 6
-    'NorESM2-MM',     # 7
-    'GFDL-CM4',       # 8
-    'CanESM5',        # 9
-    'CMCC-ESM2',      # 10
-    'UKESM1-0-LL',    # 11
-    'MRI-ESM2-0',     # 12
-    'CESM2',          # 13
-    'NESM3'           # 14
+    # 'BCC-CSM2-MR',    # 2
+    # 'FGOALS-g3',      # 3
+    # 'CNRM-CM6-1',     # 4
+    # 'MIROC6',         # 5
+    # 'MPI-ESM1-2-LR',  # 6
+    # 'NorESM2-MM',     # 7
+    # 'GFDL-CM4',       # 8
+    # 'CanESM5',        # 9
+    # 'CMCC-ESM2',      # 10
+    # 'UKESM1-0-LL',    # 11
+    # 'MRI-ESM2-0',     # 12
+    # 'CESM2',          # 13
+    # 'NESM3'           # 14
     ]
 
 observations = [
@@ -52,7 +52,7 @@ datasets = models_cmip5 + models_cmip6 + observations
 experiments = [
     'historical',
     # 'rcp85',
-    'ssp585',
+    # 'ssp585',
     # ''
     ]
 
@@ -136,11 +136,11 @@ def save_metric_figure(figure, folder_save, metric, source, name, resolution='re
     save_figure(figure, folder, filename)
     return None
 
-def load_sample_data(folder_save, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+def load_sample_data(folder_load, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
     ''' Load saved sample data'''
     data_sources = ['cmip5', 'cmip6', 'obs']
     for source in data_sources:
-        folder = f'{folder_save}/sample_data/{source}'
+        folder = f'{folder_load}/sample_data/{source}'
         filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
         file_path = os.path.join(folder, filename)
         try:
@@ -151,11 +151,11 @@ def load_sample_data(folder_save, dataset, name, timescale='monthly', experiment
     print(f'Error: no file at ex: {file_path}')
     return None
 
-def load_metric(folder_save, variable_type, metric, dataset, experiment='historical', resolution='regridded'):
+def load_metric(folder_load, variable_type, metric, dataset, experiment='historical', resolution='regridded'):
     ''' Load metric data '''
     data_sources = ['cmip5', 'cmip6', 'obs']
     for source in data_sources:
-        folder = f'{folder_save}/{variable_type}/metrics/{metric}/{source}'
+        folder = f'{folder_load}/{variable_type}/metrics/{metric}/{source}'
         filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
         file_path = os.path.join(folder, filename)
         try:

@@ -102,7 +102,7 @@ def get_p_hybridsigma(source, dataset, experiment, timescale, resolution):
 
     if source == 'cmip6':
         _, ds = cfiles.get_cmip6_cl('cl', mV.institutes[dataset], dataset, experiment, timescale, resolution)
-        da = ds['p_hybrid_sigma'] # units in hPa/day
+        da = ds['p_hybridsigma'] # units in hPa/day
     return da
 
 
