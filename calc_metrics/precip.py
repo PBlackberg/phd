@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 import timeit
 import skimage.measure as skm
+import cartopy
 
 import os
 import sys
@@ -142,7 +143,7 @@ def load_data(switch, source, dataset, experiment, timescale, resolution, folder
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['precip']
+        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['pr']
     else:
         return gD.get_pr(source, dataset, experiment, timescale, resolution)
     
@@ -172,6 +173,7 @@ def run_precip_metrics(switch, datasets, experiments, timescale = 'daily', resol
 
 
 
+# -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
 if __name__ == '__main__':
 
@@ -180,15 +182,15 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data': True,
+        'sample_data':        True,
 
-        'rxday': True, 
-        'percentiles': False, 
-        'meanInPercentiles': False, 
-        'F_pr10': False,
-        'o_pr': False,
+        'rxday':              True, 
+        'percentiles':        False, 
+        'meanInPercentiles':  False, 
+        'F_pr10':             False,
+        'o_pr':               False,
         
-        'save': True
+        'save':               False
         }
 
     # choose which datasets and experiments to run, and where to save the metric

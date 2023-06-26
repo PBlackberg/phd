@@ -1,16 +1,4 @@
-import xarray
+# import xarray as xr
 
 
-print('hello')
-
-
-
-
-
-
-
-
-
-
-
-
+print('finished')

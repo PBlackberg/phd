@@ -20,7 +20,6 @@ import myVars as mV # imports common variables
 import constructed_fields as cF # imports fields for testing
 
 
-
 # -------------------------------------------------------------------------------------- Formatting axes ----------------------------------------------------------------------------------------------------- #
 
 def move_col(ax, moveby):
@@ -101,6 +100,9 @@ def plot_axScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
     pcm = ax.pcolormesh(lonm,latm, scene, transform=ccrs.PlateCarree(),zorder=zorder, cmap=cmap, vmin=vmin, vmax=vmax)
     return pcm
 
+def create_map_figure(width, height, nrows = 1, ncols = 1, projection = ccrs.PlateCarree(central_longitude=180)):
+    fig, axes = plt.subplots(nrows, ncols, figsize=(width,height), subplot_kw=dict(projection=projection))
+    return fig, axes
 
 
 # -------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
@@ -114,7 +116,6 @@ def get_scene(switch, variable_type, metric, metric_option, dataset, resolution,
         scene_warm = mV.load_metric(folder_save, variable_type, metric, dataset, experiment=mV.experiments[1], resolution=resolution)[metric_option]
         scene = scene_warm - scene_historical 
     return scene
-
 
 
 def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high = 1, datasets = mV.datasets, resolution = '', folder_save=''):    
@@ -134,9 +135,7 @@ def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low
 
 def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cbar_label, dataset, resolution, folder_save):
     # create figure
-    fig_size = (12,4)
-    projection = ccrs.PlateCarree(central_longitude=180)
-    fig, ax = plt.subplots(1, 1, figsize=(fig_size), subplot_kw=dict(projection=projection))
+    fig, ax = create_map_figure(width = 12, height = 4)
 
     # find limits
     vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets = [dataset], 
@@ -174,11 +173,9 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
     # create figure
     nrows = 4
     ncols = 4
-    fig_size = (14,5)
+    fig, axes = create_map_figure(width = 14, height = 5, nrows=nrows, ncols=ncols)
+    
     num_subplots = len(datasets)
-    projection = ccrs.PlateCarree(central_longitude=180)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(fig_size), subplot_kw=dict(projection=projection))
-
     for i, dataset in enumerate(datasets):
 
         # find limits
@@ -249,6 +246,7 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
 # ------------------
 
 def run_map_plot(switch, datasets = mV.datasets, folder_save = mV.folder_save, resolution = 'regridded'):
+
     if  switch['rx1day'] or switch['rx5day']:
         variable_type = 'pr'
         cmap = 'Blues'
