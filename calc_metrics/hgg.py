@@ -101,7 +101,7 @@ def run_hgg_visualization(switch, ws, year_start=1983, year_finish=2017):
     years = np.arange(year_start, year_finish)
     ws_weighted_freq = []
     for year in years:
-        ds = xr.open_dataset(f'/Users/cbla0002/Documents/data/hgg/global/{str(year)}.nc')
+        ds = xr.open_dataset(f'{str(year)}.nc') #/Users/cbla0002/Documents/data/hgg/global/
         ws_weighted_freq = np.append(ws_weighted_freq, run_weather_state(switch, ds, ws, year))
 
     return ws_weighted_freq
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         }
     
     # Choose weather state (ws) (number between 1-11), and years to plot [1983, 2017]
-    run_hgg_visualization(switch, ws=7, year_start=1996, year_finish=1997) 
+    run_hgg_visualization(switch, ws=7, year_start=1985, year_finish=1986) 
 
     stop = timeit.default_timer()
     print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
