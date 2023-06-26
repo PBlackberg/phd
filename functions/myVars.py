@@ -27,7 +27,7 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    # 'TaiESM1',        # 1
+    'TaiESM1',        # 1
     # 'BCC-CSM2-MR',    # 2
     # 'FGOALS-g3',      # 3
     # 'CNRM-CM6-1',     # 4
@@ -45,16 +45,16 @@ models_cmip6 = [
 
 observations = [
     # 'GPCP',           # precipitation
-    'ISCCP'             # clouds (weather states)
+    # 'ISCCP'             # clouds (weather states)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
 
 experiments = [
-    # 'historical',
+    'historical',
     # 'rcp85',          # warm scenario cmip5
     # 'ssp585',         # warm scenario for cmip6
-    ''                  # observations
+    # ''                  # observations
     ]
 
 timescales = [
