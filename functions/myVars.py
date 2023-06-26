@@ -27,7 +27,7 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    'TaiESM1',        # 1
+    # 'TaiESM1',        # 1
     # 'BCC-CSM2-MR',    # 2
     # 'FGOALS-g3',      # 3
     # 'CNRM-CM6-1',     # 4
@@ -44,16 +44,17 @@ models_cmip6 = [
     ]
 
 observations = [
-    # 'GPCP'
+    # 'GPCP',           # precipitation
+    'ISCCP'             # clouds (weather states)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
 
 experiments = [
-    'historical',
-    # 'rcp85',
-    # 'ssp585',
-    # ''
+    # 'historical',
+    # 'rcp85',          # warm scenario cmip5
+    # 'ssp585',         # warm scenario for cmip6
+    ''                  # observations
     ]
 
 timescales = [
@@ -69,9 +70,6 @@ resolutions = [
 
 
 
-
-
-
 # -------------------------------------------------------------------------------------- Determining folder to save to ----------------------------------------------------------------------------------------------------- #
 
 folder_save = f'{os.path.expanduser("~")}/Documents/data'
@@ -82,11 +80,6 @@ folder_save_gadi = '/g/data/k10/cb4968/data'
 # for metric: folder_save/variable_type/metrics/metric/source/dataset_filename ex: pr/metrics/rxday/cmip6/FGOALS-g3_rxday_historical_regridded.nc
 # for figure: folder_save/variable_type/figures/plot_metric/source/source_filename ex: pr/figures/rxday_tMean/cmip6/cmip6_rx1day_regridded.pdf 
 # --------------------
-
-
-
-
-
 
 
 
@@ -124,7 +117,7 @@ def save_metric(data, folder_save, metric, source, dataset, experiment='historic
     ''' Save calculated metric to file '''
     folder = f'{folder_save}/metrics/{metric}/{source}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
+    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc' if experiment else f'{dataset}_{metric}_{resolution}.nc'
     save_file(data, folder, filename)
     return
 
@@ -228,8 +221,6 @@ def no_data(source, experiment, data_exists):
     if not data_exists:
         return True
     
-
-
 
 institutes_cmip5 = {
     'IPSL-CM5A-MR':'IPSL',

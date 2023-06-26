@@ -2,7 +2,6 @@ import numpy as np
 import xarray as xr
 import timeit
 import skimage.measure as skm
-
 import os
 import sys
 home = os.path.expanduser("~")
@@ -95,8 +94,8 @@ def calc_metrics(switch, da, source, dataset, experiment, folder_save):
     if switch['rxday_pr']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
         rx5day_tMean, rx5day_sMean = calc_rx5day(da)
-        ds_rxday_tMean = xr.Dataset({'rx1day':rx1day_tMean , 'rx5day': rx5day_tMean})
-        ds_rxday = xr.Dataset({'rx1day': rx1day_sMean , 'rx5day': rx5day_sMean}) 
+        ds_rxday_tMean = xr.Dataset({'rx1day_pr':rx1day_tMean , 'rx5day_pr': rx5day_tMean})
+        ds_rxday = xr.Dataset({'rx1day_pr': rx1day_sMean , 'rx5day_pr': rx5day_sMean}) 
         mV.save_metric(ds_rxday_tMean, folder_save, 'rxday_pr_tMean', source, dataset, experiment) if switch['save'] else None
         mV.save_metric(ds_rxday,       folder_save, 'rxday_pr',       source, dataset, experiment) if switch['save'] else None
 
@@ -183,8 +182,8 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
-        'raw_snapshot':       True,
-        'rxday_pr':           False, 
+        'raw_snapshot':       False,
+        'rxday_pr':           True, 
         'percentiles':        False, 
         'meanInPercentiles':  False, 
         'F_pr10':             True,

@@ -287,16 +287,16 @@ if __name__ == '__main__':
 
     # choose which metrics to plot
     switch = {
-        'rx1day_pr': True, 
-        'rx5day_pr': False,
+        'rx1day_pr':           True, 
+        'rx5day_pr':           False,
 
-        'snapshot':False,
-        'climatology': True,
+        'snapshot':            False,
+        'climatology':         True,
         'change with warming': False,
 
-        'one scene': False,
-        'show': True,
-        'save': False,
+        'one scene':           True,
+        'show':                True,
+        'save':                False,
         }
     
 
