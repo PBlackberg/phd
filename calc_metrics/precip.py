@@ -2,7 +2,6 @@ import numpy as np
 import xarray as xr
 import timeit
 import skimage.measure as skm
-import cartopy
 
 import os
 import sys
@@ -93,7 +92,7 @@ def calc_o_pr(da, conv_threshold):
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
 def calc_metrics(switch, da, source, dataset, experiment, folder_save):
-    if switch['rxday']:
+    if switch['rxday_pr']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
         rx5day_tMean, rx5day_sMean = calc_rx5day(da)
         ds_rxday_tMean = xr.Dataset({'rx1day':rx1day_tMean , 'rx5day': rx5day_tMean})
@@ -184,17 +183,17 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
-        'rxday':              True, 
+        'rxday_pr':           False, 
         'percentiles':        False, 
         'meanInPercentiles':  False, 
-        'F_pr10':             False,
+        'F_pr10':             True,
         'o_pr':               False,
         
         'save':               False
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_precip_metrics(switch=switch,
+    ds_metric = run_precip_metrics(switch = switch,
                                    datasets = mV.datasets, 
                                    experiments = mV.experiments,
                                 #    folder_save = f'{mV.folder_save_gadi}/pr'

@@ -247,13 +247,13 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
 
 def run_map_plot(switch, datasets = mV.datasets, folder_save = mV.folder_save, resolution = 'regridded'):
 
-    if  switch['rx1day'] or switch['rx5day']:
+    if  switch['rx1day_pr'] or switch['rx5day_pr']:
         variable_type = 'pr'
         cmap = 'Blues'
         cbar_label = 'pr [mm day{}]'.format(mF.get_super('-1'))
 
-        metric = 'rxday_pr_tMean' if switch['rx1day'] or switch['rx5day'] else None
-        metric_option = 'rx1day' if switch['rx1day'] else 'rx5day'
+        metric = 'rxday_pr_tMean' if switch['rx1day_pr'] or switch['rx5day_pr'] else None
+        metric_option = 'rx1day_pr' if switch['rx1day_pr'] else 'rx5day_pr'
 
 
     if switch['climatology']:
@@ -287,8 +287,8 @@ if __name__ == '__main__':
 
     # choose which metrics to plot
     switch = {
-        'rx1day': True, 
-        'rx5day': False,
+        'rx1day_pr': True, 
+        'rx5day_pr': False,
 
         'snapshot':False,
         'climatology': True,

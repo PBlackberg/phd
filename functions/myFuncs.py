@@ -67,21 +67,21 @@ def haversine_dist(lat1, lon1, lat2, lon2):
     h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
     return 2 * R * np.arcsin(np.sqrt(h))
 
-def pick_region(da, dataset, experiment = 'historical', region = 'total', timeMean_option='monthly'):
-    ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
-    wap500 = get_wap(dataset, experiment)['wap'].sel(plev = 500e2)
-    if 'time' in da.dims:
-        wap500 = resample_timeMean(wap500, timeMean_option)
-        wap500 = wap500.assign_coords(time=da.time)
-    else: 
-        wap500 = wap500.mean(dim='time') # when looking at variables in regions of mean descent
-    if region == 'total':
-        pass
-    elif region == 'descent':
-        da = da.where(wap500>0)
-    elif region == 'ascent':
-        da = da.where(wap500<0)
-    return da
+# def pick_region(da, dataset, experiment = 'historical', region = 'total', timeMean_option='monthly'):
+#     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
+#     wap500 = get_wap(dataset, experiment)['wap'].sel(plev = 500e2)
+#     if 'time' in da.dims:
+#         wap500 = resample_timeMean(wap500, timeMean_option)
+#         wap500 = wap500.assign_coords(time=da.time)
+#     else: 
+#         wap500 = wap500.mean(dim='time') # when looking at variables in regions of mean descent
+#     if region == 'total':
+#         pass
+#     elif region == 'descent':
+#         da = da.where(wap500>0)
+#     elif region == 'ascent':
+#         da = da.where(wap500<0)
+#     return da
 
 # def pick_region(data, dataset, experiment = 'historical', region = 'descent'):
 #     ''' Picks out total region, region of descent, or region of ascent based on vertical pressure velocity at 500 hPa'''
