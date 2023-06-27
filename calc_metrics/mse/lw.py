@@ -42,19 +42,28 @@ def pick_wap_region(switch, da, source, dataset, experiment, timescale, resoluti
 
 def calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save):
     if switch['snapshot']:
-        ds_snapshot = xr.Dataset({f'wap{region}_snapshot' : mF.get_scene(da)})
-        mV.save_metric(ds_snapshot, folder_save, f'wap{region}_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
+        ds_snapshot = xr.Dataset({f'rlut{region}_snapshot' : mF.get_scene(da)})
+        mV.save_metric(ds_snapshot, folder_save, f'rlut{region}_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['sMean']:
-        ds_sMean = xr.Dataset({f'wap{region}_sMean' : mF.calc_sMean(da)})
-        mV.save_metric(ds_sMean, folder_save, f'wap{region}_sMean', source, dataset, experiment, resolution) if switch['save'] else None
+        ds_sMean = xr.Dataset({f'rlut{region}_sMean' : mF.calc_sMean(da)})
+        mV.save_metric(ds_sMean, folder_save, f'rlut{region}_sMean', source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['tMean']:
-        ds_tMean = xr.Dataset({f'wap{region}_tMean' : mF.calc_tMean(da)})
-        mV.save_metric(ds_tMean, folder_save, f'wap{region}_tMean', source, dataset, experiment, resolution) if switch['save'] else None
+        ds_tMean = xr.Dataset({f'rlut{region}_tMean' : mF.calc_tMean(da)})
+        mV.save_metric(ds_tMean, folder_save, f'rlut{region}_tMean', source, dataset, experiment, resolution) if switch['save'] else None
 
 
 # ---------------------------------------------------------------------------------- Get the data, pick regions, and run ----------------------------------------------------------------------------------------------------- #
+
+def load_rlut_data(switch, source, dataset, experiment, timescale, resolution, folder_load):
+    if  switch['constructed_fields']:
+        return cF.var3D, cF.var3D
+    elif switch['sample_data']:
+        return mV.load_sample_data(folder_load, source, dataset, 'rlut', timescale, experiment, resolution)['rlut']
+    else:
+        return gD.get_rlut(source, dataset, experiment, timescale, resolution)
+    
 
 def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
     for experiment in experiments:
@@ -65,14 +74,13 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_wap_data(switch, source, dataset, experiment, timescale, resolution, folder_load = folder_save)
-        da = da.sel(plev = 500e2)
+        da = load_rlut_data(switch, source, dataset, experiment, timescale, resolution, folder_load = folder_save)
         da, region = pick_wap_region(switch, da, source, dataset, experiment, timescale, resolution, folder_load = f'{mV.folder_save}/wap')
         calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
 
 
-def run_wap_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/wap'):
-    print(f'Running wap metrics with {resolution} {timescale} data')
+def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/lw'):
+    print(f'Running lw metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     for dataset in datasets:
@@ -80,6 +88,7 @@ def run_wap_metrics(switch, datasets, experiments, timescale, resolution, folder
         print(f'{dataset} ({source})')
 
         run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+
 
 
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
@@ -96,7 +105,7 @@ if __name__ == '__main__':
         'ascent':             False,
         'descent':            False,
 
-        'snapshot':           False, 
+        'snapshot':           True, 
         'sMean':              False, 
         'tMean':              False, 
         
@@ -104,7 +113,7 @@ if __name__ == '__main__':
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_wap_metrics(switch = switch,
+    ds_metric = run_tas_metrics(switch = switch,
                                datasets =    mV.datasets, 
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],
@@ -121,5 +130,153 @@ if __name__ == '__main__':
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import xarray as xr
+# import numpy as np
+
+# from vars.lw_vars import *
+
+
+# def netlw_anomMean(netlw):
+
+#     #netlw_tMean = netlw.mean(dim = 'time', keep_attrs=True)
+
+#     aWeights = np.cos(np.deg2rad(netlw.lat))
+#     netlw_sMean = netlw.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
+#     netlw_anom = netlw - netlw_sMean
+#     netlw_anomalyMean = netlw_anom.mean(dim = 'time', keep_attrs=True)
+
+#     return netlw_anomalyMean
+
+
+
+
+
+# if __name__ == '__main__':
+
+#     model='MPI-ESM1-2-HR'
+#     experiment_id='historical'
+
+#     haveData = False
+#     if haveData:
+#         folder = '/Users/cbla0002/Documents/data/cmip6/ds'
+#         fileName = model + '_netlw_' + experiment_id + '.nc'
+#         path = folder + '/' + fileName
+#         ds = xr.open_dataset(path)
+#         netlw = ds.netlw
+#     else:
+#         netlw = get_netlw(model, experiment_id, period, member_id, saveit)
+
+
+
+
+#     netlw_tMean = netlw.mean(dim = 'time', keep_attrs=True)
+
+
+
+
+
+#     aWeights = np.cos(np.deg2rad(netlw.lat))
+#     netlw_sMean = netlw.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
+
+
+
+
+
+#     netlw_anom = netlw - netlw_sMean
+#     netlw_anomalyMean = netlw_anom.mean(dim = 'time', keep_attrs=True)
+
+#     saveit = False
+#     if saveit:
+#         folder = '/g/data/k10/cb4968/data/cmip6/' + model
+#         fileName = model + '_netlw_anomMean_' + experiment_id + '.nc'
+#         dataset = xr.Dataset({'netlw_anomMean': netlw_anomalyMean})
+#         myFuncs.save_file(dataset, folder, fileName)
 
 

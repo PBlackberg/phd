@@ -94,10 +94,10 @@ def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_sav
     if switch['rxday_pr']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
         rx5day_tMean, rx5day_sMean = calc_rx5day(da)
-        ds_rxday_tMean = xr.Dataset({'rx1day_pr':rx1day_tMean , 'rx5day_pr': rx5day_tMean})
-        ds_rxday = xr.Dataset({'rx1day_pr': rx1day_sMean , 'rx5day_pr': rx5day_sMean}) 
+        ds_rxday_tMean = xr.Dataset({'rx1day_pr_tMean': rx1day_tMean , 'rx5day_pr_tMean': rx5day_tMean})
         mV.save_metric(ds_rxday_tMean, folder_save, 'rxday_pr_tMean', source, dataset, experiment, resolution) if switch['save'] else None
-        mV.save_metric(ds_rxday,       folder_save, 'rxday_pr',       source, dataset, experiment, resolution) if switch['save'] else None
+        ds_rxday = xr.Dataset({'rx1day_pr': rx1day_sMean , 'rx5day_pr': rx5day_sMean}) 
+        mV.save_metric(ds_rxday, folder_save, 'rxday_pr', source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['percentiles']:
         percentiles = [0.95, 0.97, 0.99]
@@ -112,8 +112,8 @@ def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_sav
         ds_meanInPercentiles = xr.Dataset()
         for percentile in percentiles:
             percentile_snapshot, meanInPercentile = calc_meanInPercentile(da, percentile)
-            ds_percentile_snapshot[f'pr{int(percentile*100)}'] = percentile_snapshot
-            ds_meanInPercentiles[f'pr{int(percentile*100)}'] = meanInPercentile
+            ds_percentile_snapshot[f'pr{int(percentile*100)}_snapshot'] = percentile_snapshot
+            ds_meanInPercentiles[f'pr{int(percentile*100)}_snapshot'] = meanInPercentile
         mV.save_metric(ds_percentile_snapshot, folder_save, 'percentiles_pr_snapshot', source, dataset, experiment, resolution) if switch['save'] else None    
         mV.save_metric(ds_meanInPercentiles,   folder_save, 'meanInPercentiles_pr',    source, dataset, experiment, resolution) if switch['save'] else None
 
@@ -131,7 +131,7 @@ def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_sav
                                 attrs = {'units':'mm day' + mF.get_super('-1'),
                                          'descrption': 'area weighted mean precipitation in contiguous convective region (object)'})
         ds_o_pr = xr.Dataset({'o_pr': o_pr})
-        mV.save_metric(ds_o_pr, folder_save, 'o_pr', source, dataset, experiment) if switch['save'] else None
+        mV.save_metric(ds_o_pr, folder_save, 'o_pr', source, dataset, experiment, resolution) if switch['save'] else None
 
 
 
@@ -184,12 +184,12 @@ if __name__ == '__main__':
 
         'snapshot':           False,
         'rxday_pr':           False, 
-        'percentiles':        False, 
-        'meanInPercentiles':  False, 
+        'percentiles':        True, 
+        'meanInPercentiles':  True, 
         'F_pr10':             False,
         'o_pr':               False,
         
-        'save':               False
+        'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric

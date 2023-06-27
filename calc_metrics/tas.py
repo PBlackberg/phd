@@ -79,8 +79,8 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
 
 
-def run_cl_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/cl'):
-    print(f'Running cl metrics with {resolution} {timescale} data')
+def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/tas'):
+    print(f'Running tas metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     for dataset in datasets:
@@ -109,11 +109,11 @@ if __name__ == '__main__':
         'sMean':              False, 
         'tMean':              False, 
         
-        'save':               False
+        'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_cl_metrics(switch = switch,
+    ds_metric = run_tas_metrics(switch = switch,
                                datasets =    mV.datasets, 
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],
