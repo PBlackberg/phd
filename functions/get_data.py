@@ -150,7 +150,6 @@ def get_rlut(source, dataset, experiment, timescale, resolution):
     return da
 
 
-
 # ----------------------------------
 # Calling function based on variable
 # ----------------------------------
@@ -191,7 +190,6 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
     return
         
 
-
 # ---------------
 # Check variable
 # ---------------
@@ -223,13 +221,13 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     switch = {
         'pr'  :          False,
-        'wap' :          True,
+        'wap' :          False,
         'tas' :          False,
         'cl'  :          False,
         'p_hybridsigma': False,
         'hus' :          False,
         'hur' :          False,
-        'rlut':          False,
+        'rlut':          True,
 
         'save':          True
         }
