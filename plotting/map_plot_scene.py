@@ -107,42 +107,46 @@ def create_map_figure(width, height, nrows = 1, ncols = 1, projection = ccrs.Pla
 
 # -------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
 
-def get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save):
-    if switch['climatology']:
-        scene = mV.load_metric(folder_save, variable_type, metric, dataset, resolution=resolution)[metric_option]
+def get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_load):
+    if switch['climatology'] or switch['snapshot']:
+        scene = mV.load_metric(folder_load, variable_type, metric, dataset, resolution=resolution)[metric_option]
 
     if switch['change with warming']:
-        scene_historical = mV.load_metric(folder_save, variable_type, metric, dataset, experiment=mV.experiments[0], resolution=resolution)[metric_option]
-        scene_warm = mV.load_metric(folder_save, variable_type, metric, dataset, experiment=mV.experiments[1], resolution=resolution)[metric_option]
+        scene_historical = mV.load_metric(folder_load, variable_type, metric, dataset, experiment=mV.experiments[0], resolution=resolution)[metric_option]
+        scene_warm = mV.load_metric(folder_load, variable_type, metric, dataset, experiment=mV.experiments[1], resolution=resolution)[metric_option]
         scene = scene_warm - scene_historical 
     return scene
 
 
-def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high = 1, datasets = mV.datasets, resolution = '', folder_save=''):    
+def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low, quantileWithin_high, quantileBetween_low, quantileBetween_high, datasets, resolution, folder_load):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
-        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
+        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_load)
         vmin_list = np.append(vmin_list, np.quantile(scene, quantileWithin_low))
         vmax_list = np.append(vmax_list, np.quantile(scene, quantileWithin_high))
 
     vmin = np.quantile(vmin_list, quantileBetween_low)
     vmax = np.quantile(vmax_list, quantileBetween_high)
 
-    return (vmin, vmax) if switch['climatology'] else (-vmax, vmax)
+    return (vmin, vmax) if switch['climatology'] or switch['snapshot'] else (-vmax, vmax)
 
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
 
 def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cbar_label, dataset, resolution, folder_save):
+    # create vector to move rows and cols + set position of colorbar
+    
     # create figure
     fig, ax = create_map_figure(width = 12, height = 4)
 
     # find limits
     vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets = [dataset], 
         quantileWithin_low = 0, 
-        quantileWithin_high = 0.95, # remove extreme values from colorbar range
+        quantileWithin_high = 0.95, # remove extreme values from model from colorbar range
+        quantileBetween_low = 0, 
+        quantileBetween_high = 1,   # remove extreme models' range for colorbar range
         resolution = resolution,
-        folder_save = folder_save
+        folder_load = folder_save
         )
     
     # get scene
@@ -170,6 +174,8 @@ def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cb
 
 
 def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save):
+    # create vector to move rows and cols + set position of colorbar
+    
     # create figure
     nrows = 4
     ncols = 4
@@ -181,11 +187,11 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
         # find limits
         vmin, vmax = find_limits(switch, variable_type, metric, metric_option, 
             quantileWithin_low = 0, 
-            quantileWithin_high = 0.90, # remove extreme values from colorbar range
+            quantileWithin_high = 0.90, # remove extreme values from model from colorbar range
             quantileBetween_low = 0, 
-            quantileBetween_high = 1, # remove extreme models' range for colorbar range
+            quantileBetween_high = 1,   # remove extreme models' range for colorbar range
             resolution = resolution,
-            folder_save = folder_save
+            folder_load = folder_save
             )
         
         # get scene
@@ -245,21 +251,38 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
 #    Run script
 # ------------------
 
-def run_map_plot(switch, datasets = mV.datasets, folder_save = mV.folder_save, resolution = 'regridded'):
+def run_map_plot(switch, datasets, folder_save, resolution):
 
     if  switch['rx1day_pr'] or switch['rx5day_pr']:
         variable_type = 'pr'
         cmap = 'Blues'
         cbar_label = 'pr [mm day{}]'.format(mF.get_super('-1'))
-
-        metric = 'rxday_pr_tMean' if switch['rx1day_pr'] or switch['rx5day_pr'] else None
+        metric = 'rxday_pr' if switch['rx1day_pr'] or switch['rx5day_pr'] else None
         metric_option = 'rx1day_pr' if switch['rx1day_pr'] else 'rx5day_pr'
 
 
-    if switch['climatology']:
+    if switch['lcf'] or switch['hcf']:
+        variable_type = 'cl'
+        cmap = 'Blues'
+        cbar_label = 'cloud fraction [%]'
+        metric = 'lcf' if switch['lcf'] else 'hcf'
+        metric_option = 'lcf'
+
+
+    if switch['snapshot']:
+        title = f'{metric_option} snapshot'
+        metric = f'{metric}_snapshot'
+        metric_option = f'{metric_option}_snapshot'
+
+    elif switch['climatology']:
         title = f'{metric_option} time mean'
-    else:
+        metric = f'{metric}_tMean'
+        metric_option = f'{metric_option}_tMean'
+
+    elif switch['change with warming']:
         title = f'{metric_option}, change with warming'
+        metric = f'{metric}_tMean'
+        metric_option = f'{metric_option}_tMean'
         cbar_label = cbar_label[:-1] + ' K' + mF.get_super('-1') + cbar_label[-1:] 
         cmap = 'RdBu_r'
 
@@ -275,7 +298,7 @@ def run_map_plot(switch, datasets = mV.datasets, folder_save = mV.folder_save, r
         with_obs = mV.find_ifWithObs(datasets, mV.observations)
         filename = f'{source}_{metric_option}{with_obs}' if switch['climatology'] else f'{source}_{metric_option}_difference' 
         
-    mF.save_metric_figure(name=filename, metric=metric, figure = fig, folder_save=folder_save, source = source) if switch['save'] else None
+    mF.save_metric_figure(name = filename, metric = metric, figure = fig, folder_save = folder_save, source = source) if switch['save'] else None
     plt.show() if switch['show'] else None
     plt.close()
 
@@ -287,22 +310,31 @@ if __name__ == '__main__':
 
     # choose which metrics to plot
     switch = {
-        'rx1day_pr':           True, 
+        'rx1day_pr':           False, 
         'rx5day_pr':           False,
 
-        'snapshot':            False,
-        'climatology':         True,
-        'change with warming': False,
+        'lcf':                 True,
+        'hcf':                 False,
 
-        'one scene':           True,
+        'descent':             True,
+        'ascent':              False,  # some variables have plots for ascent and descent
+
+        'snapshot':            True,
+        'climatology':         False,
+        'change with warming': False,
+        'one scene':           True,   # plots all chosen models if False
+
         'show':                True,
         'save':                False,
         }
     
 
     # plot and save figure
-    run_map_plot(switch,
-                 folder_save = mV.folder_save)
+    run_map_plot(switch, 
+                 datasets = mV.datasets, 
+                 folder_save = mV.folder_save, 
+                 resolution = 'regridded'
+                 )
 
     stop = timeit.default_timer()
     print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')

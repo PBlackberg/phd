@@ -30,7 +30,7 @@ def calc_sMean(da):
 
 def calc_metrics(switch, da, cloud_type, region, source, dataset, experiment, folder_save):
     if switch['var_snapshot']:
-        ds_snapshot = xr.Dataset({'var_snapshot' : get_scene(da)})
+        ds_snapshot = xr.Dataset({f'{cloud_type}_snapshot' : get_scene(da)})
         mV.save_metric(ds_snapshot, folder_save, f'{cloud_type}_snapshot{region}', source, dataset, experiment) if switch['save'] else None
 
     if switch['sMean']:
@@ -44,9 +44,13 @@ def load_cl_data(switch, source, dataset, experiment, timescale, resolution, fol
     if  switch['constructed_fields']:
         return cF.var3D, cF.var3D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_load, dataset, 'cl', timescale, experiment, resolution)['cl'], mV.load_sample_data(folder_load, dataset, 'p_hybridsigma', timescale, experiment, resolution)['p_hybridsigma']
+        cl = mV.load_sample_data(folder_load, dataset, 'cl', timescale, experiment, resolution)['cl']
+        p_hybridsigma = mV.load_sample_data(folder_load, dataset, 'p_hybridsigma', timescale, experiment, resolution)['p_hybridsigma']
+        return cl, p_hybridsigma 
     else:
-        return gD.get_cl(source, dataset, experiment, timescale, resolution), gD.get_p_hybridsigma(source, dataset, experiment, timescale, resolution)
+        cl = gD.get_cl(source, dataset, experiment, timescale, resolution)
+        p_hybridsigma = gD.get_p_hybridsigma(source, dataset, experiment, timescale, resolution)
+        return cl, p_hybridsigma
     
 
 def pick_cloud_type(switch, da, p_hybridsigma):
@@ -70,7 +74,7 @@ def load_wap_data(switch, source, dataset, experiment, timescale, resolution, fo
         return gD.get_wap(source, dataset, experiment, timescale, resolution)
     
 
-def pick_wap_region(switch, da, source, dataset, experiment, folder_save, timescale = 'monthly', resolution = 'regridded'):
+def pick_wap_region(switch, da, source, dataset, experiment, folder_save, timescale, resolution):
     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
     if not switch['ascent'] or not switch['descent']:
         region = ''
@@ -97,12 +101,12 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
 
         da, p_hybridsigma = load_cl_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
         da, cloud_type = pick_cloud_type(switch, da, p_hybridsigma)
-        da, region = pick_wap_region(switch, da, source, dataset, experiment, folder_save)
+        da, region = pick_wap_region(switch, da, source, dataset, experiment, folder_save, timescale, resolution)
         calc_metrics(switch, da, cloud_type, region, source, dataset, experiment, folder_save)
 
 
-def run_cl_metrics(switch, datasets, experiments, timescale = 'monthly', resolution= 'regridded', folder_save = f'{mV.folder_save}/wap'):
-    print(f'Running precip metrics with {resolution} {timescale} data')
+def run_cl_metrics(switch, datasets, experiments, timescale = 'monthly', resolution= 'regridded', folder_save = f'{mV.folder_save}/cl'):
+    print(f'Running cl metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     for dataset in datasets:
@@ -122,12 +126,12 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data':        False,
+        'sample_data':        True,
 
         'low_clouds':         True,
         'high_clouds':        False,
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         'var_snapshot':       True, 
         'sMean':              False, 
@@ -139,7 +143,7 @@ if __name__ == '__main__':
     ds_metric = run_cl_metrics(switch = switch,
                                 datasets = mV.datasets, 
                                 experiments = mV.experiments,
-                                folder_save = f'{mV.folder_save_gadi}/pr'
+                                # folder_save = f'{mV.folder_save_gadi}/cl'
                                 )
     
 
