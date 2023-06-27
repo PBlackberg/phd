@@ -15,11 +15,6 @@ import get_data as gD # imports functions to get data from gadi
 
 # ------------------------------------------------------------------------------------- Calculating metric from data array ----------------------------------------------------------------------------------------------------- #
 
-def get_scene(da):
-    ''' Snapshot to visualize the calculation by the precipitation metrics.
-    '''
-    return da.isel(time=0)
-
 def calc_rx1day(da):
     ''' Most extreme daily gridpoint value locally over time (1 year here)
     '''
@@ -90,21 +85,26 @@ def calc_o_pr(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, source, dataset, experiment, folder_save):
+def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_save):
+
+    if switch['snapshot']:
+        ds_snapshot = xr.Dataset({f'pr_snapshot' : mF.get_scene(da)})
+        mV.save_metric(ds_snapshot, folder_save, f'pr_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
+
     if switch['rxday_pr']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
         rx5day_tMean, rx5day_sMean = calc_rx5day(da)
         ds_rxday_tMean = xr.Dataset({'rx1day_pr':rx1day_tMean , 'rx5day_pr': rx5day_tMean})
         ds_rxday = xr.Dataset({'rx1day_pr': rx1day_sMean , 'rx5day_pr': rx5day_sMean}) 
-        mV.save_metric(ds_rxday_tMean, folder_save, 'rxday_pr_tMean', source, dataset, experiment) if switch['save'] else None
-        mV.save_metric(ds_rxday,       folder_save, 'rxday_pr',       source, dataset, experiment) if switch['save'] else None
+        mV.save_metric(ds_rxday_tMean, folder_save, 'rxday_pr_tMean', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_rxday,       folder_save, 'rxday_pr',       source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['percentiles']:
         percentiles = [0.95, 0.97, 0.99]
         ds_percentile_value = xr.Dataset()
         for percentile in percentiles:
             ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
-        mV.save_metric(ds_percentile_value, folder_save, 'percentiles_pr', source, dataset, experiment) if switch['save'] else None
+        mV.save_metric(ds_percentile_value, folder_save, 'percentiles_pr', source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['meanInPercentiles']:
         percentiles = [0.95, 0.97, 0.99]
@@ -114,15 +114,15 @@ def calc_metrics(switch, da, source, dataset, experiment, folder_save):
             percentile_snapshot, meanInPercentile = calc_meanInPercentile(da, percentile)
             ds_percentile_snapshot[f'pr{int(percentile*100)}'] = percentile_snapshot
             ds_meanInPercentiles[f'pr{int(percentile*100)}'] = meanInPercentile
-        mV.save_metric(ds_percentile_snapshot, folder_save, 'percentiles_pr_snapshot', source, dataset, experiment) if switch['save'] else None    
-        mV.save_metric(ds_meanInPercentiles,   folder_save, 'meanInPercentiles_pr',    source, dataset, experiment) if switch['save'] else None
+        mV.save_metric(ds_percentile_snapshot, folder_save, 'percentiles_pr_snapshot', source, dataset, experiment, resolution) if switch['save'] else None    
+        mV.save_metric(ds_meanInPercentiles,   folder_save, 'meanInPercentiles_pr',    source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['F_pr10']:
         F_pr10_snapshot, F_pr10 = calc_F_pr10(da)
         ds_F_pr10_snapshot = xr.Dataset({'F_pr10': F_pr10_snapshot})
         ds_F_pr10 = xr.Dataset({'F_pr10': F_pr10})
-        mV.save_metric(ds_F_pr10_snapshot, folder_save, 'F_pr10_snapshot', source, dataset, experiment) if switch['save'] else None
-        mV.save_metric(ds_F_pr10,          folder_save, 'F_pr10',          source, dataset, experiment) if switch['save'] else None
+        mV.save_metric(ds_F_pr10_snapshot, folder_save, 'F_pr10_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_F_pr10,          folder_save, 'F_pr10',          source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['o_pr']:
         conv_percentile = 0.97
@@ -141,7 +141,7 @@ def load_data(switch, source, dataset, experiment, timescale, resolution, folder
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_save, dataset, 'pr', timescale, experiment, resolution)['pr']
+        return mV.load_sample_data(folder_save, source, dataset, 'pr', timescale, experiment, resolution)['pr']
     else:
         return gD.get_pr(source, dataset, experiment, timescale, resolution)
     
@@ -156,7 +156,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
             continue
 
         da = load_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
-        calc_metrics(switch, da, source, dataset, experiment, folder_save)
+        calc_metrics(switch, da, source, dataset, experiment, resolution, folder_save)
 
 
 def run_precip_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/pr'):
@@ -182,11 +182,11 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
-        'raw_snapshot':       False,
-        'rxday_pr':           True, 
+        'snapshot':           False,
+        'rxday_pr':           False, 
         'percentiles':        False, 
         'meanInPercentiles':  False, 
-        'F_pr10':             True,
+        'F_pr10':             False,
         'o_pr':               False,
         
         'save':               False

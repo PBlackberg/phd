@@ -3,22 +3,22 @@ import numpy as np
 
 # ---------------------------------------------------------------------------- functions for common operations --------------------------------------------------------------------------------------------------- #
 
-def snapshot(da):
+def get_scene(da):
     ''' Take a snapshot from a timestep of the dataset '''
     return da.isel(time=0)
 
-def tMean(da):
+def calc_tMean(da):
     ''' Calculate time-mean '''
     return da.mean(dim='time', keep_attrs=True)
 
-def sMean(da):
+def calc_sMean(da):
     ''' Calculate area-weighted spatial mean '''
     aWeights = np.cos(np.deg2rad(da.lat))
     return da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
-def mean(da):
+def calc_mean(da):
     ''' Calculate spatial mean, then time-mean '''
-    return tMean(sMean(da))
+    return calc_tMean(calc_sMean(da))
 
 def get_super(x):
     ''' For adding superscripts in strings (input is string) '''
@@ -27,12 +27,6 @@ def get_super(x):
     res = x.maketrans(''.join(normal), ''.join(super_s))
     return x.translate(res)
 
-
-
-
-
-
-# -------------------------------------------------------------------------------------- functions for scenes --------------------------------------------------------------------------------------------------- #
 
 def connect_boundary(da):
     ''' Connect objects across boundary 
@@ -67,11 +61,6 @@ def haversine_dist(lat1, lon1, lat2, lon2):
     h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
     return 2 * R * np.arcsin(np.sqrt(h))
 
-
-
-
-
-# ------------------------------------------------------------------------------------- functions for time series --------------------------------------------------------------------------------------------------- #
 
 def monthly_clim(da):
     ''' Creates a data array with the climatology of each month  '''

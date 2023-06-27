@@ -90,9 +90,8 @@ folder_save_gadi = '/g/data/k10/cb4968/data'
 def save_file(data, folder, filename):
     ''' Saves file to specified folder and filename '''
     os.makedirs(folder, exist_ok=True)
-    path = folder + '/' + filename
-    if os.path.exists(path):
-        os.remove(path)    
+    path = os.path.join(folder, filename)
+    os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path)
     return
 
@@ -100,28 +99,27 @@ def save_figure(figure, folder, filename):
     ''' Save figure to specified folder and filename '''
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, filename)
-    if os.path.exists(path):
-        os.remove(path)    
+    os.remove(path) if os.path.exists(path) else None
     figure.savefig(path)
     return
 
-def save_sample_data(data, folder_save, source, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+def save_sample_data(data, folder_save, source, dataset, name, timescale, experiment, resolution):
     ''' Save sample data (gadi) '''
     folder = f'{folder_save}/sample_data/{source}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
+    filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{name}_{timescale}_{resolution}.nc'
     save_file(data, folder, filename)
     return
 
-def save_metric(data, folder_save, metric, source, dataset, experiment='historical', resolution='regridded'):
+def save_metric(data, folder_save, metric, source, dataset, experiment, resolution):
     ''' Save calculated metric to file '''
     folder = f'{folder_save}/metrics/{metric}/{source}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc' if experiment else f'{dataset}_{metric}_{resolution}.nc'
+    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{metric}_{resolution}.nc'
     save_file(data, folder, filename)
     return
 
-def save_metric_figure(figure, folder_save, metric, source, name, resolution='regridded'):
+def save_metric_figure(figure, folder_save, metric, source, name, resolution):
     ''' Save plot of metric calculation to file '''
     folder = f'{folder_save}/figures/{metric}/{source}'
     os.makedirs(folder, exist_ok=True)
@@ -129,36 +127,21 @@ def save_metric_figure(figure, folder_save, metric, source, name, resolution='re
     save_figure(figure, folder, filename)
     return None
 
-def load_sample_data(folder_load, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+def load_sample_data(folder_load, source, dataset, name, timescale, experiment, resolution):
     ''' Load saved sample data'''
-    data_sources = ['cmip5', 'cmip6', 'obs']
-    for source in data_sources:
-        folder = f'{folder_load}/sample_data/{source}'
-        filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
-        file_path = os.path.join(folder, filename)
-        try:
-            ds = xr.open_dataset(file_path)
-            return ds
-        except FileNotFoundError:
-            continue
-    print(f'Error: no file at ex: {file_path}')
-    return None
+    folder = f'{folder_load}/sample_data/{source}'
+    filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
+    file_path = os.path.join(folder, filename)
+    ds = xr.open_dataset(file_path)
+    return ds
 
-def load_metric(folder_load, variable_type, metric, dataset, experiment='historical', resolution='regridded'):
+def load_metric(folder_load, variable_type, metric, source, dataset, experiment, resolution):
     ''' Load metric data '''
-    data_sources = ['cmip5', 'cmip6', 'obs']
-    for source in data_sources:
-        folder = f'{folder_load}/{variable_type}/metrics/{metric}/{source}'
-        filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
-        file_path = os.path.join(folder, filename)
-        try:
-            ds = xr.open_dataset(file_path)
-            return ds
-        except FileNotFoundError:
-            continue
-    print(f"Error: no file found for {dataset} - {metric}, example: {file_path}")
-    return None
-
+    folder = f'{folder_load}/{variable_type}/metrics/{metric}/{source}'
+    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
+    file_path = os.path.join(folder, filename)
+    ds = xr.open_dataset(file_path)
+    return ds
 
 
 
@@ -291,3 +274,17 @@ institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
 
+# def load_sample_data(folder_load, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
+#     ''' Load saved sample data'''
+#     data_sources = ['cmip5', 'cmip6', 'obs']
+#     for source in data_sources:
+#         folder = f'{folder_load}/sample_data/{source}'
+#         filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
+#         file_path = os.path.join(folder, filename)
+#         try:
+#             ds = xr.open_dataset(file_path)
+#             return ds
+#         except FileNotFoundError:
+#             continue
+#     print(f'Error: no file at ex: {file_path}')
+#     return None
