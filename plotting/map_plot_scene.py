@@ -20,26 +20,7 @@ import myVars as mV # imports common variables
 import constructed_fields as cF # imports fields for testing
 
 
-# -------------------------------------------------------------------------------------- Formatting axes ----------------------------------------------------------------------------------------------------- #
-
-def move_col(ax, moveby):
-    ax_position = ax.get_position()
-    _, bottom, width, height = ax_position.bounds
-    new_left = _ + moveby
-    ax.set_position([new_left, bottom, width, height])
-
-def move_row(ax, moveby):
-    ax_position = ax.get_position()
-    left, _, width, height = ax_position.bounds
-    new_bottom = _ + moveby
-    ax.set_position([left, new_bottom, width, height])
-
-def scale_ax(ax, scaleby):
-    ax_position = ax.get_position()
-    left, bottom, _1, _2 = ax_position.bounds
-    new_width = _1 * scaleby
-    new_height = _2 * scaleby
-    ax.set_position([left, bottom, new_width, new_height])
+# ----------------------------------------------------------------------------------- Formatting axes for map plot ----------------------------------------------------------------------------------------------------- #
 
 def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1):
     # colorbar position
@@ -56,24 +37,6 @@ def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label =
     ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = 12, transform=fig.transFigure)
     return cbar
 
-def plot_xlabel(fig, ax, xlabel, pad, fontsize):
-    ax_position = ax.get_position()
-    lon_text_x =  ax_position.x0 + (ax_position.x1 - ax_position.x0) / 2
-    lon_text_y =  ax_position.y0 - pad
-    ax.text(lon_text_x, lon_text_y, xlabel, ha = 'center', fontsize = fontsize, transform=fig.transFigure)
-
-def plot_ylabel(fig, ax, ylabel, pad, fontsize):
-    ax_position = ax.get_position()
-    lat_text_x = ax_position.x0 - pad
-    lat_text_y = ax_position.y0 + (ax_position.y1 - ax_position.y0) / 2
-    ax.text(lat_text_x, lat_text_y, ylabel, va = 'center', rotation='vertical', fontsize = fontsize, transform=fig.transFigure)
-
-def plot_axtitle(fig, ax, title, xpad, ypad, fontsize):
-    ax_position = ax.get_position()
-    title_text_x = ax_position.x0 + xpad 
-    title_text_y = ax_position.y1 + ypad
-    ax.text(title_text_x, title_text_y, title, fontsize = fontsize, transform=fig.transFigure)
-
 def format_ticks(ax, i = 0, num_subplots = 1, nrows = 1, col = 0, labelsize = 8, xticks = [30, 90, 150, 210, 270, 330], yticks = [-20, 0, 20]):
     ax.set_xticks(xticks, crs=ccrs.PlateCarree())
     ax.set_xticklabels('')
@@ -86,10 +49,6 @@ def format_ticks(ax, i = 0, num_subplots = 1, nrows = 1, col = 0, labelsize = 8,
         ax.yaxis.set_major_formatter(LatitudeFormatter())
         ax.yaxis.set_tick_params(labelsize=labelsize)
         ax.yaxis.set_ticks_position('both')
-
-def delete_remaining_axes(fig, axes, num_subplots, nrows, ncols):
-    for i in range(num_subplots, nrows * ncols):
-        fig.delaxes(axes.flatten()[i])
 
 def plot_axScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
     lat = scene.lat
@@ -119,7 +78,7 @@ def get_scene(switch, variable_type, metric, metric_option, dataset, resolution,
     return scene
 
 
-def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low, quantileWithin_high, quantileBetween_low, quantileBetween_high, datasets, resolution, folder_load):    
+def find_limits(switch, variable_type, metric, metric_option, datasets, resolution, folder_load, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
         scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_load)
@@ -135,116 +94,218 @@ def find_limits(switch, variable_type, metric, metric_option, quantileWithin_low
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
 
 def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cbar_label, dataset, resolution, folder_save):
-    # create vector to move rows and cols + set position of colorbar
-    
-    # create figure
-    fig, ax = create_map_figure(width = 12, height = 4)
+    # Adjust position and scale of axes
+    move_col_by = -0.055
+    move_row_by = 0.075
+    scale_ax_by = 1.15     
 
-    # find limits
-    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets = [dataset], 
-        quantileWithin_low = 0, 
-        quantileWithin_high = 1, # remove extreme values from model from colorbar range
-        quantileBetween_low = 0, 
-        quantileBetween_high = 1,   # remove extreme models' range for colorbar range
-        resolution = resolution,
-        folder_load = folder_save
+    # Adjust position of colorbar
+    cbar_height = 0.05
+    pad = 0.15
+    numbersize = 12
+    text_pad = 0.125 
+
+    # Set/adjust position and size of text
+    xlabel = 'Lon'
+    xlabel_pad = 0.1
+    ylabel='Lat'
+    ylabel_pad = 0.055
+    xylabel_fontsize = 12
+
+    title = f'{dataset}: {title}'
+    title_xpad = 0.005
+    title_ypad = 0.025
+    title_fontsize = 15
+
+    ticklabel_size = 11
+
+    # adjust colorbar limits
+    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets = [dataset], resolution = resolution, folder_load = folder_save,
+        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         )
-    
-    # get scene
+
+
+    fig, ax = create_map_figure(width = 12, height = 4)
     scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-
-    # plot
     pcm = plot_axScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
-
-    # adjust axis position
-    move_col(ax, moveby = -0.055)
-    move_row(ax, moveby = 0.075)
-    scale_ax(ax, scaleby = 1.15)
-
-    # create colorbar
-    cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = cbar_label, text_pad = 0.125)
-
-    # plot text
-    plot_xlabel(fig, ax, xlabel='Lon', pad = 0.1, fontsize = 12)
-    plot_ylabel(fig, ax, ylabel='Lat', pad = 0.055, fontsize = 12)
-    plot_axtitle(fig, ax, f'{dataset}: {title}', xpad = 0.005, ypad = 0.025, fontsize=15)
-
-    # format ticks
-    format_ticks(ax, labelsize = 10)
+    mF.move_row(ax, moveby = move_row_by)
+    mF.move_col(ax, moveby = move_col_by)
+    mF.scale_ax(ax, scaleby = scale_ax_by)
+    cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize, cbar_label, text_pad)
+    mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize)
+    mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize)
+    mF.plot_axtitle(fig, ax, title, title_xpad, title_ypad, title_fontsize)
+    format_ticks(ax, labelsize = ticklabel_size)
     return fig
 
 
 def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save):
-    # create vector to move rows and cols + set position of colorbar
-    
-    # create figure
     nrows = 4
     ncols = 4
-    fig, axes = create_map_figure(width = 14, height = 5, nrows=nrows, ncols=ncols)
     
+    # Adjust position of cols
+    move_col0_by, move_col1_by, move_col2_by, move_col3_by = -0.0825 + 0.0025, -0.0435 + 0.0025, -0.005 + 0.0025, 0.0325 + 0.0025
+
+    # Adjust position of rows
+    move_row0_by = 0.025+0.005
+    move_row1_by = 0.04+0.005
+    move_row2_by = 0.045+0.01
+    move_row3_by = 0.05+0.01
+    move_row4_by = 0.0325 + 0.0025
+
+    # Adjust scale of ax
+    scale_ax_by = 1.3                                                             
+
+    # Set position of colorbar [left, bottom, width, height]
+    cbar_position = [0.225, 0.0875, 0.60, 0.02]
+
+    # Set/adjust position and size of text
+    xlabel = 'Lon'
+    xlabel_pad = 0.0725
+    ylabel='Lat'
+    ylabel_pad = 0.0375
+    xylabel_fontsize = 8
+
+    axtitle_xpad = 0.002
+    axtitle_ypad = 0.0095
+    axtitle_fontsize = 9
+
+    title_x = 0.5
+    title_y = 0.95
+    title_fontsize = 15
+
+    cbar_text_x = cbar_position[0] + cbar_position[2] / 2   # In th middle of colorbar
+    cbar_text_y = cbar_position[1]-0.07                     # essentially pad
+    cbar_text_fontsize = 9
+    ticklabel_size = 9
+
+    # Find common limits
+    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets, resolution, folder_load = folder_save,
+        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
+        quantileBetween_low = 0,   # remove extreme low models' from colorbar range
+        quantileBetween_high = 1   # remove extreme high models' from colorbar range
+        )
+    
+    fig, axes = create_map_figure(width = 14, height = 5, nrows=nrows, ncols=ncols)
     num_subplots = len(datasets)
     for i, dataset in enumerate(datasets):
-
-        # find limits
-        vmin, vmax = find_limits(switch, variable_type, metric, metric_option, 
-            quantileWithin_low = 0, 
-            quantileWithin_high = 0.90, # remove extreme values from model from colorbar range
-            quantileBetween_low = 0, 
-            quantileBetween_high = 1,   # remove extreme models' range for colorbar range
-            resolution = resolution,
-            folder_load = folder_save
-            )
-        
-        # get scene
-        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-
-        # determine the row and column indices
-        row = i // ncols
-        col = i % ncols
-
-        # plot
+        row = i // ncols  # determine row index
+        col = i % ncols   # determine col index
         ax = axes.flatten()[i]
+        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
         pcm = plot_axScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
 
-        # adjust axis position and size (columns and rows at a time, then adjust scale to fill figure)
-        scale_ax(ax, scaleby=1.3)
+        mF.move_col(ax, move_col0_by) if col == 0 else None
+        mF.move_col(ax, move_col1_by) if col == 1 else None
+        mF.move_col(ax, move_col2_by) if col == 2 else None
+        mF.move_col(ax, move_col3_by) if col == 3 else None
 
-        move_col(ax, moveby = -0.0825 + 0.0025) if col == 0 else None
-        move_col(ax, moveby = -0.0435 + 0.0025) if col == 1 else None
-        move_col(ax, moveby = - 0.005 + 0.0025) if col == 2 else None
-        move_col(ax, moveby = 0.0325 + 0.0025)  if col == 3 else None
-            
-        move_row(ax, moveby = 0.025+0.005) if row == 0 else None
-        move_row(ax, moveby = 0.04+0.005)  if row == 1 else None
-        move_row(ax, moveby = 0.045+0.01)  if row == 2 else None
-        move_row(ax, moveby = 0.05+0.01)   if row == 3 else None
+        mF.move_row(ax, move_row0_by) if row == 0 else None
+        mF.move_row(ax, move_row1_by) if row == 1 else None
+        mF.move_row(ax, move_row2_by) if row == 2 else None
+        mF.move_row(ax, move_row3_by) if row == 3 else None
+        mF.move_row(ax, move_row4_by) if col == 4 else None
 
-        # Plot text
-        plot_axtitle(fig, ax, dataset, xpad = 0.002, ypad = 0.0095, fontsize = 9)
-        plot_xlabel(fig, ax, xlabel='Lon', pad = 0.0725, fontsize = 8) if i >= num_subplots-nrows else None
-        plot_ylabel(fig, ax, ylabel='Lat', pad = 0.0375, fontsize = 8) if col == 0 else None
+        mF.scale_ax(ax, scale_ax_by)
 
-        # format ticks
-        format_ticks(ax, i, num_subplots, nrows, col, labelsize=9)
+        mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) if i >= num_subplots-nrows else None
+        mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize) if col == 0 else None
+        mF.plot_axtitle(fig, ax, dataset, axtitle_xpad, axtitle_ypad, axtitle_fontsize)
+        format_ticks(ax, i, num_subplots, nrows, col, ticklabel_size )
 
-    # fig title
-    title_text_x = 0.5
-    title_text_y = 0.95
-    ax.text(title_text_x, title_text_y, title, ha = 'center', fontsize = 15, transform=fig.transFigure)
-
-    # create colorbar
-    cbar_position = [0.225, 0.0875, 0.60, 0.02] # [left, bottom, width, height]
+    ax.text(title_x, title_y, title, ha = 'center', fontsize = title_fontsize, transform=fig.transFigure)
     cbar_ax = fig.add_axes(cbar_position)
     cbar = fig.colorbar(pcm, cax=cbar_ax, orientation='horizontal')
-    # colobar label
-    cbar_text_x = cbar_position[0] + cbar_position[2] / 2
-    cbar_text_y = cbar_position[1]-0.07
-    ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = 9, transform=fig.transFigure)
-
-    delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
+    ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = cbar_text_fontsize , transform=fig.transFigure)
+    mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
 
+
+# ---------------------------------------------------------------------------------- Find the metric and units ----------------------------------------------------------------------------------------------------- #
+
+def name_region(switch):
+    if switch['descent']:
+        region = '_d' 
+    elif switch['ascent']:
+        region = '_a' 
+    else:
+        region = ''
+    return region
+
+def find_general_metric_and_specify_cbar(switch):
+    if switch['pr'] or switch['percentiles_pr'] or switch['rx1day_pr'] or switch['rx5day_pr']:
+        variable_type = 'pr'
+        cmap = 'Blues'
+        cbar_label = 'pr [mm day{}]'.format(mF.get_super('-1'))
+    if switch['pr']:
+        metric = 'pr' 
+        metric_option = metric
+    if switch['percentiles_pr']:
+        metric = 'percentiles_pr' 
+        metric_option = 'pr97' # there is also pr95, pr99
+    if  switch['rx1day_pr'] or switch['rx5day_pr']:
+        metric = 'rxday_pr'
+        metric_option = 'rx1day_pr' if switch['rx1day_pr'] else 'rx5day_pr'
+
+    if switch['wap']:
+        variable_type = 'wap'
+        cmap = 'RdBu_r' if not switch['ascent'] and not switch['descent'] else 'Reds'
+        cbar_label = 'wap [hPa day' + mF.get_super('-1') + ']'
+        region = name_region(switch)
+        metric = f'wap{region}'
+        metric_option = metric
+
+    if switch['tas']:
+        variable_type = 'tas'
+        cmap = 'RdBu_r'
+        cbar_label = 'Temperature [\u00B0C]'
+        region = name_region(switch)
+        metric = f'tas{region}'
+        metric_option = metric
+
+    if switch['hur']:
+        variable_type = 'hur'
+        cmap = 'Greens'
+        cbar_label = 'Relative humidity [%]'
+        region = name_region(switch)
+        metric = f'hur{region}'
+        metric_option = metric
+
+    if switch['lcf'] or switch['hcf']:
+        variable_type = 'cl'
+        cmap = 'Blues'
+        cbar_label = 'cloud fraction [%]'
+        region = name_region(switch)
+        metric = f'lcf{region}' if switch['lcf'] else f'hcf{region}'
+        metric_option = metric
+
+    if switch['hus']:
+        variable_type = 'hus'
+        cmap = 'Greens'
+        cbar_label = 'Specific humidity [mm]'
+        region = name_region(switch)
+        metric = f'hus{region}'
+        metric_option = metric
+
+    if switch['change with warming']:
+        cmap = 'RdBu_r'
+        cbar_label = '{}{} K{}'.format(cbar_label[:-1], mF.get_super('-1'), cbar_label[-1:])
+    return variable_type, metric, metric_option, cmap, cbar_label
+
+def specify_metric_and_title(switch, metric, metric_option):
+    if switch['snapshot']:
+        title = f'{metric_option} snapshot'
+        metric = f'{metric}_snapshot'
+        metric_option = f'{metric_option}_snapshot'
+
+    if switch['climatology'] or switch['change with warming']:
+        metric = f'{metric}_tMean'
+        metric_option = f'{metric_option}_tMean'
+        title = f'{metric_option} time mean' if switch['climatology'] else f'{metric_option}, change with warming'
+    return metric, metric_option, title
 
 
 # ------------------
@@ -255,44 +316,8 @@ def run_map_plot(switch, datasets, resolution, folder_save = mV.folder_save):
     print(f'Plotting map_plot with {resolution} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
-    if  switch['rx1day_pr'] or switch['rx5day_pr']:
-        variable_type = 'pr'
-        cmap = 'Blues'
-        cbar_label = 'pr [mm day{}]'.format(mF.get_super('-1'))
-        metric = 'rxday_pr'
-        metric_option = 'rx1day_pr' if switch['rx1day_pr'] else 'rx5day_pr'
-
-    if switch['lcf'] or switch['hcf']:
-        variable_type = 'cl'
-        cmap = 'Blues'
-        cbar_label = 'cloud fraction [%]'
-
-        if switch['descent']:
-            region = '_d' 
-        elif switch['ascent']:
-            region = '_a' 
-        else:
-            region = ''
-
-        metric = f'lcf{region}' if switch['lcf'] else f'hcf{region}'
-        metric_option = metric
-
-    if switch['snapshot']:
-        title = f'{metric_option} snapshot'
-        metric = f'{metric}_snapshot'
-        metric_option = f'{metric_option}_snapshot'
-
-    elif switch['climatology']:
-        title = f'{metric_option} time mean'
-        metric = f'{metric}_tMean'
-        metric_option = f'{metric_option}_tMean'
-
-    elif switch['change with warming']:
-        title = f'{metric_option}, change with warming'
-        metric = f'{metric}_tMean'
-        metric_option = f'{metric_option}_tMean'
-        cbar_label = cbar_label[:-1] + ' K' + mF.get_super('-1') + cbar_label[-1:] 
-        cmap = 'RdBu_r'
+    variable_type, metric, metric_option, cmap, cbar_label = find_general_metric_and_specify_cbar(switch)
+    metric, metric_option, title  = specify_metric_and_title(switch, metric, metric_option)
 
     if switch['one scene']:
         dataset = datasets[0]
@@ -307,8 +332,6 @@ def run_map_plot(switch, datasets, resolution, folder_save = mV.folder_save):
         
     mF.save_metric_figure(name = filename, metric = metric, figure = fig, folder_save = folder_save, source = source) if switch['save'] else None
     plt.show() if switch['show'] else None
-    plt.close()
-
 
 
 if __name__ == '__main__':
@@ -317,22 +340,32 @@ if __name__ == '__main__':
 
     # choose which metrics to plot
     switch = {
-        'rx1day_pr':           False, 
-        'rx5day_pr':           False,
+        'pr':                  False,       # 1
+        'percentiles_pr':      False,       # 2
+        'rx1day_pr':           False,       # 3
+        'rx5day_pr':           False,       # 4
 
-        'lcf':                 True,
-        'hcf':                 False,
+        'obj_scene':           False,       # 5
+
+        'wap':                 False,       # 6
+        'tas':                 False,       # 7
+        'hur':                 False,       # 8
+
+        'lcf':                 False,       # 9
+        'hcf':                 False,       # 10
 
         'descent':             False,
-        'ascent':              False,  # some variables have plots for ascent and descent
+        'ascent':              False,
 
-        'snapshot':            False,
-        'climatology':         True,
+        'hus':                 False,       # 11
+
+        'snapshot':            True,
+        'climatology':         False,
         'change with warming': False,
 
         'per_kelvin':          False,
         
-        'one scene':           True,   # plots all chosen models if False
+        'one scene':           True,   # plots all chosen datasets if False (20 datasets max)hur
         'show':                True,
         'save':                False,
         }

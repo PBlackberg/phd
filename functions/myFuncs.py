@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # ---------------------------------------------------------------------------- functions for common operations --------------------------------------------------------------------------------------------------- #
 
 def get_scene(da):
@@ -26,7 +25,6 @@ def get_super(x):
     super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
     res = x.maketrans(''.join(normal), ''.join(super_s))
     return x.translate(res)
-
 
 def connect_boundary(da):
     ''' Connect objects across boundary 
@@ -61,7 +59,6 @@ def haversine_dist(lat1, lon1, lat2, lon2):
     h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
     return 2 * R * np.arcsin(np.sqrt(h))
 
-
 def monthly_clim(da):
     ''' Creates a data array with the climatology of each month  '''
     year = da.time.dt.year
@@ -89,7 +86,48 @@ def resample_timeMean(da, timeMean_option=''):
     return da
 
 
-    
+# ---------------------------------------------------------------------------- functions for general plotting --------------------------------------------------------------------------------------------------- #
+
+def move_col(ax, moveby):
+    ax_position = ax.get_position()
+    _, bottom, width, height = ax_position.bounds
+    new_left = _ + moveby
+    ax.set_position([new_left, bottom, width, height])
+
+def move_row(ax, moveby):
+    ax_position = ax.get_position()
+    left, _, width, height = ax_position.bounds
+    new_bottom = _ + moveby
+    ax.set_position([left, new_bottom, width, height])
+
+def scale_ax(ax, scaleby):
+    ax_position = ax.get_position()
+    left, bottom, _1, _2 = ax_position.bounds
+    new_width = _1 * scaleby
+    new_height = _2 * scaleby
+    ax.set_position([left, bottom, new_width, new_height])
+
+def plot_xlabel(fig, ax, xlabel, pad, fontsize):
+    ax_position = ax.get_position()
+    lon_text_x =  ax_position.x0 + (ax_position.x1 - ax_position.x0) / 2
+    lon_text_y =  ax_position.y0 - pad
+    ax.text(lon_text_x, lon_text_y, xlabel, ha = 'center', fontsize = fontsize, transform=fig.transFigure)
+
+def plot_ylabel(fig, ax, ylabel, pad, fontsize):
+    ax_position = ax.get_position()
+    lat_text_x = ax_position.x0 - pad
+    lat_text_y = ax_position.y0 + (ax_position.y1 - ax_position.y0) / 2
+    ax.text(lat_text_x, lat_text_y, ylabel, va = 'center', rotation='vertical', fontsize = fontsize, transform=fig.transFigure)
+
+def plot_axtitle(fig, ax, title, xpad, ypad, fontsize):
+    ax_position = ax.get_position()
+    title_text_x = ax_position.x0 + xpad 
+    title_text_y = ax_position.y1 + ypad
+    ax.text(title_text_x, title_text_y, title, fontsize = fontsize, transform=fig.transFigure)
+
+def delete_remaining_axes(fig, axes, num_subplots, nrows, ncols):
+    for i in range(num_subplots, nrows * ncols):
+        fig.delaxes(axes.flatten()[i])
 
 
 
@@ -98,116 +136,5 @@ def resample_timeMean(da, timeMean_option=''):
 
 
 
-
-# --------------------------------------------------------------------------   saved for the moment   ---------------------------------------------------------------------------------- #
-
-
-# def get_dsvariable(variable, dataset, experiment = 'historical', home = os.path.expanduser("~") + '/Documents', resolution='regridded', timescale = 'monthly'):
-#     ''' Load saved variable '''
-#     folder = '{}/data/CMIP5/ds_cmip5_{}/{}'.format(home, resolution, dataset)
-#     filename = dataset + '_' + variable + '_' + timescale +'_' + experiment + '_' + resolution + '.nc'
-#     path_cmip5 = os.path.join(folder, filename)
-#     try:
-#         ds = xr.open_dataset(path_cmip5)
-#     except FileNotFoundError:
-
-#         try:
-#             folder = '{}/data/CMIP6/ds_cmip6_{}/{}'.format(home, resolution, dataset)
-#             filename = dataset + '_' + variable + '_' + timescale +'_' + experiment + '_' + resolution + '.nc'
-#             path_cmip6 = os.path.join(folder, filename)
-#             ds = xr.open_dataset(path_cmip6)
-#         except FileNotFoundError:
-
-#             try:
-#                 folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
-#                 filename = dataset + '_' + variable + '_' + timescale +'_' + resolution + '.nc'
-#                 path_obs = os.path.join(folder, filename)
-#                 ds = xr.open_dataset(path_obs)
-#             except FileNotFoundError:
-#                 print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
-#     return ds
-
-
-
-
-
-# def get_metric(metric, dataset, experiment='historical', home=os.path.expanduser("~") + '/Documents', resolution='regridded'):
-#     ''' load   '''
-
-#     folder = '{}/data/CMIP5/metrics_cmip5_{}/{}'.format(home, resolution, dataset)
-#     filename = dataset + '_' + metric + '_' + experiment + '_' + resolution + '.nc'
-#     path_cmip5 = os.path.join(folder, filename)
-
-#     folder = '{}/data/CMIP6/metrics_cmip6_{}/{}'.format(home, resolution, dataset)
-#     filename = dataset + '_' + metric + '_' + experiment + '_' + resolution + '.nc'
-#     path_cmip6 = os.path.join(folder, filename)
-
-#     folder = '{}/data/obs/ds_obs_{}/{}'.format(home, resolution, dataset)
-#     filename = dataset + '_' + metric + '_' + resolution + '.nc'
-#     path_obs = os.path.join(folder, filename)
-
-#     try:
-#         ds = xr.open_dataset(path_cmip5)
-#     except FileNotFoundError:
-#         try:
-#             ds = xr.open_dataset(path_cmip6)
-#         except FileNotFoundError:
-#             try:
-#                 ds = xr.open_dataset(path_obs)
-#             except FileNotFoundError:
-#                 print(f"Error: no file at {path_cmip5}, {path_cmip6}, or {path_obs}")
-#     return ds
-
-
-
-
-
-
-# for experiment in experiments:
-#     if experiment and source in ['cmip5', 'cmip6']:
-#         print(f'\t {experiment}') if pD.prData_exist(dataset, experiment) else print(f'\t no {experiment} data')
-#     print( '\t obserational dataset') if not experiment and source == 'obs' else None
-
-#     if mV.no_data(source, experiment, pD.prData_exist(dataset, experiment)):
-#         continue
-
-#     da = load_data(switch, dataset, experiment, folder_save, timescale, resolution)
-#     calc_metrics(switch, da, folder_save, source, dataset, experiment)
-
-
-
-
-
-# def pick_region(da, dataset, experiment = 'historical', region = 'total', timeMean_option='monthly'):
-#     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
-#     wap500 = get_wap(dataset, experiment)['wap'].sel(plev = 500e2)
-#     if 'time' in da.dims:
-#         wap500 = resample_timeMean(wap500, timeMean_option)
-#         wap500 = wap500.assign_coords(time=da.time)
-#     else: 
-#         wap500 = wap500.mean(dim='time') # when looking at variables in regions of mean descent
-#     if region == 'total':
-#         pass
-#     elif region == 'descent':
-#         da = da.where(wap500>0)
-#     elif region == 'ascent':
-#         da = da.where(wap500<0)
-#     return da
-
-# def pick_region(data, dataset, experiment = 'historical', region = 'descent'):
-#     ''' Picks out total region, region of descent, or region of ascent based on vertical pressure velocity at 500 hPa'''
-#     wap = get_dsvariable('wap500', dataset, experiment)['wap500']
-#     if 'time' in data.dims:
-#         wap = wap.assign_coords(time=data.time)
-#     else:
-#         wap = wap.mean(dim='time')
-
-#     if region == 'total':
-#         pass
-#     elif region == 'descent':
-#         data = data.where(wap>0)
-#     elif region == 'ascent':
-#         data = data.where(wap<0)
-#     return data
 
 
