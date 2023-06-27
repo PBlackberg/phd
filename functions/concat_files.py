@@ -149,7 +149,7 @@ def get_cmip6_data(variable, institute, model, experiment, timescale, resolution
         regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
         da = regridder(da) # conservatively interpolate data onto grid from other model
 
-    ds_n = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
+    ds_n = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
     return ds_n
     
 def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, data_exists=True):

@@ -160,12 +160,11 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
 
     if switch['pr']:
         da = get_pr(source, dataset, experiment, timescale, resolution)
-        mV.save_sample_data(xr.Dataset({'pr': da}), f'{folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution) if switch['save'] else None
+        mV.save_sample_data(xr.Dataset({'pr': da}), f'{folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution='daily') if switch['save'] else None
 
     if switch['wap']:
-        da = get_pr(source, dataset, experiment, timescale, resolution)
+        da = get_wap(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'wap': da}), f'{folder_save}/wap', source, dataset, 'wap', timescale, experiment, resolution) if switch['save'] else None
-
     if switch['tas']:
         da = get_tas(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'tas': da}), f'{folder_save}/tas', source, dataset, 'tas', timescale, experiment, resolution) if switch['save'] else None
@@ -179,15 +178,15 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
         mV.save_sample_data(xr.Dataset({'p_hybridsigma': da}), f'{folder_save}/cl', source, dataset, 'p_hybridsigma', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['hur']:
-        da = get_p_hybridsigma(source, dataset, experiment, timescale, resolution)
+        da = get_hur(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'hur': da}), f'{folder_save}/hur', source, dataset, 'hur', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['hus']:
-        da = get_p_hybridsigma(source, dataset, experiment, timescale, resolution)
+        da = get_hus(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'hus': da}), f'{folder_save}/hus', source, dataset, 'hus', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['rlut']:
-        da = get_p_hybridsigma(source, dataset, experiment, timescale, resolution)
+        da = get_rlut(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'rlut': da}), f'{folder_save}/rlut', source, dataset, 'rlut', timescale, experiment, resolution) if switch['save'] else None
     return
         
@@ -208,7 +207,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
     return get_var_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
 
 
-def run_get_data(switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = ''):
+def run_get_data(switch, datasets, experiments, timescale, resolution, folder_save):
     print(f'Getting variable from {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -224,22 +223,24 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     switch = {
         'pr'  :          False,
-        'wap' :          False,
+        'wap' :          True,
         'tas' :          False,
         'cl'  :          False,
         'p_hybridsigma': False,
         'hus' :          False,
         'hur' :          False,
         'rlut':          False,
-        'save':          False
+
+        'save':          True
         }
 
     # get and save sample data if needed
-    run_get_data(switch=switch,
-                 datasets = mV.datasets, 
+    run_get_data(switch = switch,
+                 datasets =    mV.datasets, 
                  experiments = mV.experiments,
-                 folder_save = mV.folder_save_gadi,
-                 timescale = 'monthly'
+                 timescale =   mV.timescales[0],
+                 resolution =  mV.resolutions[0],
+                 folder_save = mV.folder_save_gadi
                  )
     
     stop = timeit.default_timer()

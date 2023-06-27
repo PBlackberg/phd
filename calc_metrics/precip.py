@@ -159,7 +159,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         calc_metrics(switch, da, source, dataset, experiment, folder_save)
 
 
-def run_precip_metrics(switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = f'{mV.folder_save}/pr'):
+def run_precip_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/pr'):
     print(f'Running precip metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -194,9 +194,11 @@ if __name__ == '__main__':
 
     # choose which datasets and experiments to run, and where to save the metric
     ds_metric = run_precip_metrics(switch = switch,
-                                   datasets = mV.datasets, 
-                                   experiments = mV.experiments,
-                                #    folder_save = f'{mV.folder_save_gadi}/pr'
+                                    datasets =    mV.datasets, 
+                                    experiments = mV.experiments,
+                                    timescale =   'daily',
+                                    resolution =  mV.resolutions[0],
+                                    # folder_save = f'{mV.folder_save_gadi}/pr'
                                    )
     
 

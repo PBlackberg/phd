@@ -29,7 +29,7 @@ def calc_sMean(da):
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
 def calc_metrics(switch, da, cloud_type, region, source, dataset, experiment, folder_save):
-    if switch['var_snapshot']:
+    if switch['snapshot']:
         ds_snapshot = xr.Dataset({f'{cloud_type}_snapshot' : get_scene(da)})
         mV.save_metric(ds_snapshot, folder_save, f'{cloud_type}_snapshot{region}', source, dataset, experiment) if switch['save'] else None
 
@@ -105,7 +105,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         calc_metrics(switch, da, cloud_type, region, source, dataset, experiment, folder_save)
 
 
-def run_cl_metrics(switch, datasets, experiments, timescale = 'monthly', resolution= 'regridded', folder_save = f'{mV.folder_save}/cl'):
+def run_cl_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/cl'):
     print(f'Running cl metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         'ascent':             False,
         'descent':            True,
 
-        'var_snapshot':       True, 
+        'snapshot':           True, 
         'sMean':              False, 
         
         'save':               True
@@ -141,8 +141,10 @@ if __name__ == '__main__':
 
     # choose which datasets and experiments to run, and where to save the metric
     ds_metric = run_cl_metrics(switch = switch,
-                                datasets = mV.datasets, 
-                                experiments = mV.experiments,
+                               datasets =    mV.datasets, 
+                               experiments = mV.experiments,
+                               timescale =   mV.timescales[0],
+                               resolution =  mV.resolutions[0],
                                 # folder_save = f'{mV.folder_save_gadi}/cl'
                                 )
     

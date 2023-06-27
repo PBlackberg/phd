@@ -45,7 +45,7 @@ models_cmip6 = [
 
 observations = [
     # 'GPCP',           # precipitation
-    # 'ISCCP'             # clouds (weather states)
+    # 'ISCCP'           # clouds (weather states)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
@@ -54,7 +54,7 @@ experiments = [
     'historical',
     # 'rcp85',          # warm scenario cmip5
     # 'ssp585',         # warm scenario for cmip6
-    # ''                  # observations
+    # ''                # observations
     ]
 
 timescales = [
