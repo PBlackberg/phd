@@ -34,7 +34,7 @@ def get_pr(source, dataset, experiment, timescale, resolution):
 
     if dataset == 'GPCP':
         ds = cfiles.get_gpcp(resolution)
-        da = ds['pr']*60*60*24 # already units of mm/day
+        da = ds['pr'] # already units of mm/day
         da.attrs['units']= 'mm day' + mF.get_super('-1')
     return da
 
@@ -159,7 +159,7 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
 
     if switch['pr']:
         da = get_pr(source, dataset, experiment, timescale, resolution)
-        mV.save_sample_data(xr.Dataset({'pr': da}), f'{folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution='daily') if switch['save'] else None
+        mV.save_sample_data(xr.Dataset({'pr': da}), f'{folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['wap']:
         da = get_wap(source, dataset, experiment, timescale, resolution)
@@ -198,7 +198,7 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
-        print( '\t obserational dataset') if not experiment and source == 'obs' else None
+        print( '\t observational dataset') if not experiment and source == 'obs' else None
 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
@@ -227,9 +227,9 @@ if __name__ == '__main__':
         'p_hybridsigma': False,
         'hus' :          False,
         'hur' :          False,
-        'rlut':          True,
+        'rlut':          False,
 
-        'save':          True
+        'save':          False
         }
 
     # get and save sample data if needed
@@ -241,6 +241,7 @@ if __name__ == '__main__':
                  folder_save = mV.folder_save_gadi
                  )
     
+
     stop = timeit.default_timer()
     print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
 

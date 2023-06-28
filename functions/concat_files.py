@@ -1,6 +1,5 @@
 import xarray as xr
 import numpy as np
-from scipy.interpolate import griddata
 import os
 
 
@@ -65,9 +64,8 @@ def get_cmip5_data(variable, institute, model, experiment, timescale, resolution
         regridder = regrid.regrid_conserv_xesmf(ds)
         da = regridder(da)
 
-    da.attrs['units']= 'mm day' + mF.super('-1')
-    ds_n = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
-    return ds_n
+    ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
+    return ds
 
 def get_cmip5_cl(variable, institute, model, experiment, timescale, resolution, data_exists=True):
     ''' Cloud pressure on hybrid-sigma vertical levels '''
@@ -149,8 +147,8 @@ def get_cmip6_data(variable, institute, model, experiment, timescale, resolution
         regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
         da = regridder(da) # conservatively interpolate data onto grid from other model
 
-    ds_n = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
-    return ds_n
+    ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
+    return ds
     
 def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, data_exists=True):
     ''' Cloud pressure on hybrid-sigma vertical levels '''
@@ -199,7 +197,7 @@ def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, 
 def get_gpcp(resolution):
     ''' Observations from the Global Precipitation Climatology Project (GPCP) '''
     path_gen = '/g/data/ia39/aus-ref-clim-data-nci/gpcp/data/day/v1-3'
-    years = range(1996,2023)
+    years = range(2010,2022)
     folders = [f for f in os.listdir(path_gen) if (f.isdigit() and int(f) in years)]
     folders = sorted(folders, key=int)
 
@@ -208,38 +206,23 @@ def get_gpcp(resolution):
         path_folder = os.path.join(path_gen, folder)
         files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
         files = sorted(files, key=lambda x: x[x.index("y_d")+1:x.index("_c")])
-
         for file in files:
             path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
 
     ds = xr.open_mfdataset(path_fileList, combine='by_coords')
     ds = ds.rename({'latitude': 'lat', 'longitude': 'lon'})
-    da = ds.precip.sel(lat=slice(-35,35), time=slice('1998','2021'))
-
-    # Linearly interpolate where there is missing data or outliers (I have set valied range to [0, 250] mm/day)
-    valid_range = [0, 250] 
+    da = ds.precip.sel(lat=slice(-35,35))
+    valid_range = [0, 10000] # There are some e+33 values in the dataset
     da = da.where((da >= valid_range[0]) & (da <= valid_range[1]), np.nan)
-    da = da.where(da.sum(dim =('lat','lon')) != 0, np.nan)
-    threshold = 0.5
-    da = da.where(da.isnull().sum(dim=('lat','lon'))/(da.shape[1]*da.shape[2]) < threshold, other=np.nan)
-    da = da.dropna('time', how='all')
-    nb_nan = da.isnull().sum(dim=('lat', 'lon'))
-    nan_days =np.nonzero(nb_nan.data)[0]
-    for day in nan_days:
-        time_slice = da.isel(time=day)
-        nan_indices = np.argwhere(np.isnan(time_slice.values))
-        nonnan_indices = np.argwhere(~np.isnan(time_slice.values))
-        interpolated_values = griddata(nonnan_indices, time_slice.values[~np.isnan(time_slice.values)], nan_indices, method='linear')
-        time_slice.values[nan_indices[:, 0], nan_indices[:, 1]] = interpolated_values
+    da = da.dropna('time', how='all') # drop days where all values are NaN (one day)
 
     if resolution == 'regridded':
         import xesmf_regrid as regrid
         regridder = regrid.regrid_conserv_xesmf(ds)
         da = regridder(da)
     
-    da.attrs['units']= 'mm day' + mF.super('-1')
-    ds_n = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
-    return ds_n
+    ds = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
+    return ds
 
 
 
