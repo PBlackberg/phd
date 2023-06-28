@@ -292,7 +292,7 @@ def find_general_metric_and_specify_cbar(switch):
 
     if switch['change with warming']:
         cmap = 'RdBu_r'
-        cbar_label = '{}{} K{}'.format(cbar_label[:-1], mF.get_super('-1'), cbar_label[-1:])
+        cbar_label = '{}{} K{}'.format(cbar_label[:-1], mF.get_super('-1'), cbar_label[-1:]) if switch['per_kelvin'] else cbar_label
     return variable_type, metric, metric_option, cmap, cbar_label
 
 def specify_metric_and_title(switch, metric, metric_option):
@@ -354,18 +354,17 @@ if __name__ == '__main__':
         'lcf':                 False,       # 9
         'hcf':                 False,       # 10
 
+        'hus':                 False,       # 11
+
         'descent':             False,
         'ascent':              False,
-
-        'hus':                 False,       # 11
+        'per_kelvin':          False,
 
         'snapshot':            True,
         'climatology':         False,
         'change with warming': False,
-
-        'per_kelvin':          False,
         
-        'one scene':           True,   # plots all chosen datasets if False (20 datasets max)hur
+        'one scene':           True,   # plots all chosen datasets if False (20 datasets max)
         'show':                True,
         'save':                False,
         }
