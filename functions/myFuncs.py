@@ -107,6 +107,20 @@ def scale_ax(ax, scaleby):
     new_height = _2 * scaleby
     ax.set_position([left, bottom, new_width, new_height])
 
+def scale_ax_x(ax, scaleby):
+    ax_position = ax.get_position()
+    left, bottom, _1, _2 = ax_position.bounds
+    new_width = _1 * scaleby
+    new_height = _2
+    ax.set_position([left, bottom, new_width, new_height])
+
+def scale_ax_y(ax, scaleby):
+    ax_position = ax.get_position()
+    left, bottom, _1, _2 = ax_position.bounds
+    new_width = _1 
+    new_height = _2 * scaleby
+    ax.set_position([left, bottom, new_width, new_height])
+
 def plot_xlabel(fig, ax, xlabel, pad, fontsize):
     ax_position = ax.get_position()
     lon_text_x =  ax_position.x0 + (ax_position.x1 - ax_position.x0) / 2

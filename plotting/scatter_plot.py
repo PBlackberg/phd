@@ -15,14 +15,17 @@ import myVars as mV # imports common variables
 
 # ------------------------------------------------------------------------------ Formatting axes for scatter plot ----------------------------------------------------------------------------------------------------- #
 
-def plot_ax_scatter(ax,x,y, color='k', xmin=None, ymin=None):
-    ax.scatter(x,y,facecolors='none', edgecolor=color)
+def plot_correlation(ax, x,y):
+    x_text = 0.725
+    y_text = 0.075
     res= stats.pearsonr(x,y)
     if res[1]<=0.05:
-        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction') # xy=(0.2, 0.1), xytext=(0.05, 0.875)
-    # plt.xlim()
-    # plt.ylim()
+        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(x_text, y_text), textcoords='axes fraction', fontsize = 8, color = 'r')
 
+
+def plot_ax_scatter(ax,x,y, color='k', xmin=None, ymin=None):
+    ax.scatter(x,y,facecolors='none', edgecolor=color)
+    plot_correlation(ax, x,y)
 
 def plot_ax_bins(ax,x,y, color='k'):    
     bin_width = (x.max() - x.min())/100
@@ -33,10 +36,8 @@ def plot_ax_bins(ax,x,y, color='k'):
     for i in np.arange(0,len(bins)-1):
         y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
     ax.plot(bins[:-1], y_bins, color)
+    plot_correlation(ax, x,y)
 
-    res= stats.pearsonr(x,y)
-    if res[1]<=0.05:
-        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(0.8, 0.875), textcoords='axes fraction')
 
 
 def create_figure(width, height, nrows = 1, ncols = 1):
@@ -104,20 +105,21 @@ def find_metric_and_units(plot_var):
     return variable_type, metric, metric_option, axis_label
 
 
-def calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_load):
+def calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load):
     source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
     if switch['anomalies']:
         print('')
     else:
-        var = mV.load_metric(folder_load, variable_type, metric, source, dataset, experiment = mV.experiments[0], resolution=resolution)[metric_option]
+        var = mV.load_metric(folder_load, variable_type, metric, source, dataset, timescale, experiment = mV.experiments[0], resolution=resolution)
+        var = var[metric_option]
     return var
 
 
-def find_limits(switch, plot_var, datasets, resolution, folder_load, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
+def find_limits(switch, plot_var, datasets, timescale, resolution, folder_load, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
         variable_type, metric, metric_option, xlabel = find_metric_and_units(plot_var)
-        var = calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_load)
+        var = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load)
         vmin_list = np.append(vmin_list, np.nanquantile(var, quantileWithin_low))
         vmax_list = np.append(vmax_list, np.nanquantile(var, quantileWithin_high))
 
@@ -129,7 +131,7 @@ def find_limits(switch, plot_var, datasets, resolution, folder_load, quantileWit
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
 
-def plot_one_scatter(switch, var0, var1, title, dataset, resolution, folder_save):
+def plot_one_scatter(switch, var0, var1, title, dataset, timescale, resolution, folder_save):
     # adjust figure size
     width = 9
     height = 6
@@ -151,14 +153,14 @@ def plot_one_scatter(switch, var0, var1, title, dataset, resolution, folder_save
 
     # find variables and variable limits
     variable_type, metric, metric_option, xlabel = find_metric_and_units(var0)
-    x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-    xmin, xmax = find_limits(switch, var0, datasets = [dataset], resolution = resolution, folder_load = folder_save,
+    x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
+    xmin, xmax = find_limits(switch, var0, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         )
     variable_type, metric, metric_option, ylabel = find_metric_and_units(var1)
-    y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-    ymin, ymax = find_limits(switch, var0, datasets = [dataset], resolution = resolution, folder_load = folder_save,
+    y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
+    ymin, ymax = find_limits(switch, var0, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         )
@@ -166,73 +168,66 @@ def plot_one_scatter(switch, var0, var1, title, dataset, resolution, folder_save
     fig, ax = create_figure(width = width, height = height)
     sp = plot_ax_scatter(ax, x, y) if switch['xy'] else plot_ax_scatter(ax, y, x)
 
-    xlabel = xlabel if switch['xy'] else ylabel
-    ylabel = ylabel if switch['xy'] else xlabel
-
     mF.move_col(ax, moveby = move_col_by)
     mF.move_row(ax, moveby = move_row_by)
     mF.scale_ax(ax, scaleby = scale_ax_by)
-    mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize)
-    mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize)
+    mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) if switch['xy'] else mF.plot_ylabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) 
+    mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize) if switch['xy'] else mF.plot_xlabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize)
     mF.plot_axtitle(fig, ax, title, title_xpad, title_ypad, title_fontsize)
     return fig
 
 
-def plot_multiple_scatter(switch, var0, var1, title, datasets, resolution, folder_save):
+def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolution, folder_save):
+    # adjust figure size
+    width = 11
+    height = 7.75
+    
     nrows = 4
     ncols = 4
     
     # Adjust position of cols
-    move_col0_by, move_col1_by, move_col2_by, move_col3_by = -0.0825 + 0.0025, -0.0435 + 0.0025, -0.005 + 0.0025, 0.0325 + 0.0025
+    move_col0_by, move_col1_by, move_col2_by, move_col3_by = -0.055, -0.02, 0.015, 0.05
 
     # Adjust position of rows
-    move_row0_by = 0.025+0.005
-    move_row1_by = 0.04+0.005
-    move_row2_by = 0.045+0.01
-    move_row3_by = 0.05+0.01
-    move_row4_by = 0.0325 + 0.0025
+    move_row0_by = 0.05 -0.002 
+    move_row1_by = 0.035 -0.006
+    move_row2_by = 0.015 -0.008
+    move_row3_by = -0.0025 -0.01
+    move_row4_by = 0
 
     # Adjust scale of ax
-    scale_ax_by = 1.3                                                             
+    scale_ax_x_by = 1.1          
+    scale_ax_y_by = 0.9                                                  
 
-    # Set position of colorbar [left, bottom, width, height]
-    cbar_position = [0.225, 0.0875, 0.60, 0.02]
+    # Set position of text
+    xylabel_fontsize = 10
+    title_fontsize = 15
+    axtitle_fontsize = 10
 
-    # Set/adjust position and size of text
-    xlabel = 'Lon'
-    xlabel_pad = 0.0725
-    ylabel='Lat'
-    ylabel_pad = 0.0375
-    xylabel_fontsize = 8
+    title_x = 0.5
+    title_y = 0.9625
+
+    xlabel_pad = 0.055
+    ylabel_pad = 0.0725
 
     axtitle_xpad = 0.002
     axtitle_ypad = 0.0095
-    axtitle_fontsize = 9
-
-    title_x = 0.5
-    title_y = 0.95
-    title_fontsize = 15
-
-    cbar_text_x = cbar_position[0] + cbar_position[2] / 2   # In th middle of colorbar
-    cbar_text_y = cbar_position[1]-0.07                     # essentially pad
-    cbar_text_fontsize = 9
-    ticklabel_size = 9
 
     # Find common limits
-    xmin, xmax = find_limits(switch, var1, datasets, resolution, folder_load = folder_save,
+    xmin, xmax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         quantileBetween_low = 0,   # remove extreme low models' from colorbar range
         quantileBetween_high = 1   # remove extreme high models' from colorbar range
         )
-    ymin, ymax = find_limits(switch, var1, datasets, resolution, folder_load = folder_save,
+    ymin, ymax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         quantileBetween_low = 0,   # remove extreme low models' from colorbar range
         quantileBetween_high = 1   # remove extreme high models' from colorbar range
         )
 
-    fig, axes = create_figure(width = 14, height = 5, nrows=nrows, ncols=ncols)
+    fig, axes = create_figure(width = width, height = height, nrows=nrows, ncols=ncols)
     num_subplots = len(datasets)
     for i, dataset in enumerate(datasets):
         row = i // ncols  # determine row index
@@ -240,10 +235,12 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, resolution, folde
         ax = axes.flatten()[i]
 
         variable_type, metric, metric_option, xlabel = find_metric_and_units(var0)
-        x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-        variable_type, metric, metric_option, xlabel = find_metric_and_units(var1)
-        y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
-        sp = plot_ax_scatter(ax, x, y)
+        x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
+        variable_type, metric, metric_option, ylabel = find_metric_and_units(var1)
+        y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
+        # sp = plot_ax_scatter(ax, x, y) if switch['xy'] else plot_ax_scatter(ax, y, x)
+        ax.hist2d(x,y,[20,20], cmap ='Greys') if switch['xy'] else ax.hist2d(y,x,[20,20], cmap ='Greys')
+        sp = plot_ax_bins(ax, x, y) if switch['xy'] else plot_ax_bins(ax, y, x)
 
         mF.move_col(ax, move_col0_by) if col == 0 else None
         mF.move_col(ax, move_col1_by) if col == 1 else None
@@ -256,14 +253,19 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, resolution, folde
         mF.move_row(ax, move_row3_by) if row == 3 else None
         mF.move_row(ax, move_row4_by) if col == 4 else None
 
-        mF.scale_ax(ax, scale_ax_by)
+        mF.scale_ax_x(ax, scale_ax_x_by)
+        mF.scale_ax_y(ax, scale_ax_y_by)
 
-        mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) if i >= num_subplots-nrows else None
-        mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize) if col == 0 else None
+        if i >= num_subplots-nrows:
+            mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) if switch['xy'] else mF.plot_xlabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize)
+
+        if col == 0:
+            mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize) if switch['xy'] else mF.plot_ylabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) 
+        
         mF.plot_axtitle(fig, ax, dataset, axtitle_xpad, axtitle_ypad, axtitle_fontsize)
 
     ax.text(title_x, title_y, title, ha = 'center', fontsize = title_fontsize, transform=fig.transFigure)
-    mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
+    # mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
 
@@ -283,7 +285,7 @@ def name_region(switch):
 #    Run script
 # ------------------
 
-def run_map_plot(switch, datasets, resolution, folder_save = mV.folder_save):
+def run_scatter_plot(switch, datasets, timescale, resolution, folder_save = mV.folder_save):
     print(f'Plotting scatter_plot with {resolution} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -291,20 +293,20 @@ def run_map_plot(switch, datasets, resolution, folder_save = mV.folder_save):
     var0, var1 = switch.copy(), switch.copy() 
     var0[keys[1]] = False # sets second variable to False
     var1[keys[0]] = False # sets first variable to False
-    title  = f'{keys[0]}{name_region(var0)} and {keys[1]}{name_region(var1)}'
+    title  = f'{keys[0]}{name_region(var0)}_and_{keys[1]}{name_region(var1)}'
 
     if switch['one dataset']:
         dataset = datasets[0]
-        fig = plot_one_scatter(switch, var0, var1, title, dataset, resolution, folder_save)
+        fig = plot_one_scatter(switch, var0, var1, title, dataset, timescale, resolution, folder_save)
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         filename = f'{dataset}_{title}'
     else:
-        fig = plot_multiple_scatter(switch, var0, var1, title, datasets, resolution, folder_save)
+        fig = plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolution, folder_save)
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         with_obs = mV.find_ifWithObs(datasets, mV.observations)
         filename = f'{source}_{title}{with_obs}'
         
-    mF.save_metric_figure(name = filename, metric = title, figure = fig, folder_save = f'{folder_save}/corr', source = source) if switch['save'] else None
+    mV.save_figure(fig, f'{folder_save}/corr/{source}', f'{filename}.pdf') if switch['save'] else None
     plt.show() if switch['show'] else None
 
 
@@ -337,15 +339,16 @@ if __name__ == '__main__':
         'per_kelvin':          False,
         
         'xy':                  False,   # if False, reverse explanatory and response variable
-        'one dataset':         True,   # if False, plots all chosen datasets (20 datasets max)
+        'one dataset':         False,    # if False, plots all chosen datasets (20 datasets max)
         'show':                True,
-        'save':                False,
+        'save':                True,
         }
     
 
     # plot and save figure
-    run_map_plot(switch, 
+    run_scatter_plot(switch, 
                  datasets =    mV.datasets, 
+                 timescale =   mV.timescales[0],
                  resolution =  mV.resolutions[0],
                 #  folder_save = f'{mV.folder_save_gadi}'
                  )

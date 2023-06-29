@@ -28,19 +28,23 @@ models_cmip5 = [
 
 models_cmip6 = [
     'TaiESM1',        # 1
-    # 'BCC-CSM2-MR',    # 2
-    # 'FGOALS-g3',      # 3
-    # 'CNRM-CM6-1',     # 4
-    # 'MIROC6',         # 5
+    'BCC-CSM2-MR',    # 2
+    'FGOALS-g3',      # 3
+    'CNRM-CM6-1',     # 4
+    'MIROC6',         # 5
     # 'MPI-ESM1-2-LR',  # 6
-    # 'NorESM2-MM',     # 7
-    # 'GFDL-CM4',       # 8
-    # 'CanESM5',        # 9
-    # 'CMCC-ESM2',      # 10
-    # 'UKESM1-0-LL',    # 11
-    # 'MRI-ESM2-0',     # 12
+    'NorESM2-MM',     # 7
+    'GFDL-CM4',       # 8
+    'CanESM5',        # 9
+    'CMCC-ESM2',      # 10
+    'UKESM1-0-LL',    # 11
+    'MRI-ESM2-0',     # 12
     # 'CESM2',          # 13
-    # 'NESM3'           # 14
+    'NESM3',           # 14
+    'TaiESM1',        # 1
+    'BCC-CSM2-MR',    # 2
+    'FGOALS-g3',      # 3
+    'CNRM-CM6-1',     # 4
     ]
 
 observations = [
@@ -58,8 +62,8 @@ experiments = [
     ]
 
 timescales = [
-    # 'daily',
-    'monthly'
+    'daily',
+    # 'monthly'
     ]
 
 resolutions = [
@@ -111,21 +115,20 @@ def save_sample_data(data, folder_save, source, dataset, name, timescale, experi
     save_file(data, folder, filename)
     return
 
-def save_metric(data, folder_save, metric, source, dataset, experiment, resolution):
+def save_metric(data, folder_save, metric, source, dataset, timescale, experiment, resolution):
     ''' Save calculated metric to file '''
     folder = f'{folder_save}/metrics/{metric}/{source}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{metric}_{resolution}.nc'
+    filename = f'{dataset}_{metric}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{metric}_{resolution}.nc'
     save_file(data, folder, filename)
     return
 
-def save_metric_figure(figure, folder_save, metric, source, name, resolution):
+def save_figure_from_metric(figure, folder_save, metric, source, filename):
     ''' Save plot of metric calculation to file '''
     folder = f'{folder_save}/figures/{metric}/{source}'
-    os.makedirs(folder, exist_ok=True)
-    filename = f'{name}_{resolution}.pdf'
     save_figure(figure, folder, filename)
     return None
+
 
 def load_sample_data(folder_load, source, dataset, name, timescale, experiment, resolution):
     ''' Load saved sample data'''
@@ -135,10 +138,10 @@ def load_sample_data(folder_load, source, dataset, name, timescale, experiment, 
     ds = xr.open_dataset(file_path)
     return ds
 
-def load_metric(folder_load, variable_type, metric, source, dataset, experiment, resolution):
+def load_metric(folder_load, variable_type, metric, source, dataset, timescale, experiment, resolution):
     ''' Load metric data '''
     folder = f'{folder_load}/{variable_type}/metrics/{metric}/{source}'
-    filename = f'{dataset}_{metric}_{experiment}_{resolution}.nc'
+    filename = f'{dataset}_{metric}_{timescale}_{experiment}_{resolution}.nc'
     file_path = os.path.join(folder, filename)
     ds = xr.open_dataset(file_path)
     return ds
@@ -274,17 +277,3 @@ institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
 
-# def load_sample_data(folder_load, dataset, name, timescale='monthly', experiment='historical', resolution='regridded'):
-#     ''' Load saved sample data'''
-#     data_sources = ['cmip5', 'cmip6', 'obs']
-#     for source in data_sources:
-#         folder = f'{folder_load}/sample_data/{source}'
-#         filename = f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc'
-#         file_path = os.path.join(folder, filename)
-#         try:
-#             ds = xr.open_dataset(file_path)
-#             return ds
-#         except FileNotFoundError:
-#             continue
-#     print(f'Error: no file at ex: {file_path}')
-#     return None

@@ -274,6 +274,14 @@ def find_general_metric_and_specify_cbar(switch):
         metric = f'hur{region}'
         metric_option = metric
 
+    if switch['rlut']:
+        variable_type = 'lw'
+        cmap = 'Purples'
+        cbar_label = 'OLR [W m' + mF.get_super('-2') +']'
+        region = name_region(switch)
+        metric = f'rlut{region}'
+        metric_option = metric
+
     if switch['lcf'] or switch['hcf']:
         variable_type = 'cl'
         cmap = 'Blues'
@@ -349,12 +357,14 @@ if __name__ == '__main__':
 
         'wap':                 False,       # 6
         'tas':                 False,       # 7
+
         'hur':                 False,       # 8
+        'rlut':                False,       # 9
 
-        'lcf':                 False,       # 9
-        'hcf':                 False,       # 10
+        'lcf':                 True,       # 10
+        'hcf':                 False,       # 11
 
-        'hus':                 False,       # 11
+        'hus':                 False,       # 12
 
         'descent':             False,
         'ascent':              False,
