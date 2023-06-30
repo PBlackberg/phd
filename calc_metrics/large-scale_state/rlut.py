@@ -15,20 +15,20 @@ import get_data as gD # imports functions to get data from gadi
 
 # --------------------------------------------------------------------------------- Find subsidence/ascent regions ----------------------------------------------------------------------------------------------------- #
 
-def load_wap_data(switch, source, dataset, experiment, timescale, resolution, folder_load):
+def load_wap_data(switch, source, dataset, timescale, experiment, resolution, folder_load):
     if  switch['constructed_fields']:
         return cF.var3D
     elif switch['sample_data']:
         return mV.load_sample_data(folder_load, source, dataset, 'wap', timescale, experiment, resolution)['wap']
     else:
-        return gD.get_wap(source, dataset, experiment, timescale, resolution)
+        return gD.get_wap(source, dataset, timescale, experiment, resolution)
 
-def pick_wap_region(switch, da, source, dataset, experiment, timescale, resolution, folder_load):
+def pick_wap_region(switch, da, source, dataset, timescale, experiment, resolution, folder_load):
     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
     if not switch['ascent'] and not switch['descent']:
         region = ''
         return da, region
-    wap = load_wap_data(switch, source, dataset, experiment, timescale, resolution, folder_load)
+    wap = load_wap_data(switch, source, dataset, timescale, experiment, resolution, folder_load)
     wap500 = wap.sel(plev = 500e2)
     if switch['descent']:
         region = '_d'
@@ -40,32 +40,32 @@ def pick_wap_region(switch, da, source, dataset, experiment, timescale, resoluti
 
 # ------------------------------------------------------------------------------------ Calculate metrics and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save):
+def calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save):
     if switch['snapshot']:
         ds_snapshot = xr.Dataset({f'rlut{region}_snapshot' : mF.get_scene(da)})
-        mV.save_metric(ds_snapshot, folder_save, f'rlut{region}_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_snapshot, folder_save, f'rlut{region}_snapshot', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['sMean']:
         ds_sMean = xr.Dataset({f'rlut{region}_sMean' : mF.calc_sMean(da)})
-        mV.save_metric(ds_sMean, folder_save, f'rlut{region}_sMean', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_sMean, folder_save, f'rlut{region}_sMean', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['tMean']:
         ds_tMean = xr.Dataset({f'rlut{region}_tMean' : mF.calc_tMean(da)})
-        mV.save_metric(ds_tMean, folder_save, f'rlut{region}_tMean', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_tMean, folder_save, f'rlut{region}_tMean', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
 
 # ---------------------------------------------------------------------------------- Get the data, pick regions, and run ----------------------------------------------------------------------------------------------------- #
 
-def load_rlut_data(switch, source, dataset, experiment, timescale, resolution, folder_load):
+def load_rlut_data(switch, source, dataset, timescale, experiment, resolution, folder_load):
     if  switch['constructed_fields']:
         return cF.var3D, cF.var3D
     elif switch['sample_data']:
         return mV.load_sample_data(folder_load, source, dataset, 'rlut', timescale, experiment, resolution)['rlut']
     else:
-        return gD.get_rlut(source, dataset, experiment, timescale, resolution)
+        return gD.get_rlut(source, dataset, timescale, experiment, resolution)
     
 
-def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
+def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
@@ -74,12 +74,12 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_rlut_data(switch, source, dataset, experiment, timescale, resolution, folder_load = folder_save)
-        da, region = pick_wap_region(switch, da, source, dataset, experiment, timescale, resolution, folder_load = f'{mV.folder_save}/wap')
-        calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
+        da = load_rlut_data(switch, source, dataset, timescale, experiment, resolution, folder_load = folder_save)
+        da, region = pick_wap_region(switch, da, source, dataset, timescale, experiment, resolution, folder_load = f'{mV.folder_save}/wap')
+        calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/lw'):
+def run_rlut_metrics(switch, datasets, timescale, experiments, resolution, folder_save = f'{mV.folder_save}/lw'):
     print(f'Running lw metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -87,7 +87,7 @@ def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+        run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save)
 
 
 
@@ -105,15 +105,15 @@ if __name__ == '__main__':
         'ascent':             False,
         'descent':            False,
 
-        'snapshot':           True, 
-        'sMean':              False, 
+        'snapshot':           False, 
+        'sMean':              True, 
         'tMean':              False, 
         
         'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_tas_metrics(switch = switch,
+    ds_metric = run_rlut_metrics(switch = switch,
                                datasets =    mV.datasets, 
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],

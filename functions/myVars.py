@@ -27,7 +27,20 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    # 'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
+    'TaiESM1',        # 1
     # 'BCC-CSM2-MR',    # 2
     # 'FGOALS-g3',      # 3
     # 'CNRM-CM6-1',     # 4
@@ -48,7 +61,7 @@ models_cmip6 = [
     ]
 
 observations = [
-    'GPCP',           # precipitation
+    # 'GPCP',           # precipitation
     # 'ISCCP'           # clouds (weather states)
     ]
 
@@ -62,8 +75,8 @@ experiments = [
     ]
 
 timescales = [
-    'daily',
-    # 'monthly'
+    # 'daily',
+    'monthly'
     ]
 
 resolutions = [

@@ -17,10 +17,11 @@ import myVars as mV # imports common variables
 
 def plot_correlation(ax, x,y):
     x_text = 0.725
-    y_text = 0.85
+    y_text = 0.075
     res= stats.pearsonr(x,y)
     if res[1]<=0.05:
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(x_text, y_text), textcoords='axes fraction', fontsize = 8, color = 'r')
+
 
 def plot_ax_scatter(ax,x,y, color='k', xmin=None, ymin=None):
     ax.scatter(x,y,facecolors='none', edgecolor=color)
@@ -217,13 +218,13 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
     title_y = 0.9625
 
     xlabel_pad = 0.0725
-    ylabel_pad = 0.055 
+    ylabel_pad = 0.055
 
-    axtitle_xpad = 0.03
+    axtitle_xpad = 0.002
     axtitle_ypad = 0.0095
 
     # Find common limits
-    xmin, xmax = find_limits(switch, var0, datasets, timescale, resolution, folder_load = folder_save,
+    xmin, xmax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         quantileBetween_low = 0,   # remove extreme low models' from colorbar range
@@ -247,10 +248,11 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
         x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
         variable_type, metric, metric_option, ylabel = find_metric_and_units(var1)
         y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
-
         # sp = plot_ax_scatter(ax, x, y) if switch['xy'] else plot_ax_scatter(ax, y, x)
-        # ax.hist2d(x,y,[20,20], cmap ='Greys') if switch['xy'] else ax.hist2d(y,x,[20,20], cmap ='Greys')
-        # sp = plot_ax_bins(ax, x, y) if switch['xy'] else plot_ax_bins(ax, y, x)
+        color = 'Blues'
+        ax.hist2d(x,y,[20,20], cmap = color) if switch['xy'] else ax.hist2d(y,x,[20,20], cmap = color)
+        color = 'Blue'
+        sp = plot_ax_bins(ax, x, y, color) if switch['xy'] else plot_ax_bins(ax, y, x, color)
 
         mF.move_col(ax, move_col0_by) if col == 0 else None
         mF.move_col(ax, move_col1_by) if col == 1 else None
@@ -321,13 +323,13 @@ if __name__ == '__main__':
         'rome':                True,       # First metric
 
         'pr':                  False,      
-        'percentiles_pr':      False,       
+        'percentiles_pr':      True,       
         'rx1day_pr':           False,       
         'rx5day_pr':           False,       
 
         'wap':                 False,       
         'tas':                 False,       
-        'hur':                 True,       
+        'hur':                 False,       
 
         'lcf':                 False,       
         'hcf':                 False,       

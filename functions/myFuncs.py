@@ -71,6 +71,7 @@ def resample_timeMean(da, timeMean_option=''):
     if timeMean_option == 'annual' and len(da) >= 100:
         da = da.resample(time='Y').mean(dim='time', keep_attrs=True)
 
+
     elif timeMean_option == 'seasonal' and len(da) >= 100:
         da = da.resample(time='QS-DEC').mean(dim="time")
         da = monthly_clim(da)

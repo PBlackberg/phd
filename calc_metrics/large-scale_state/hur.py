@@ -45,14 +45,14 @@ def calc_vertical_mean(da):
 
 # ------------------------------------------------------------------------------------ Calculate metrics and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save):
+def calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save):
     if switch['snapshot']:
         ds_snapshot = xr.Dataset({f'hur{region}_snapshot' : mF.get_scene(da)})
         mV.save_metric(ds_snapshot, folder_save, f'hur{region}_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
 
     if switch['sMean']:
         ds_sMean = xr.Dataset({f'hur{region}_sMean' : mF.calc_sMean(da)})
-        mV.save_metric(ds_sMean, folder_save, f'hur{region}_sMean', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_sMean, folder_save, f'hur{region}_sMean', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['tMean']:
         ds_tMean = xr.Dataset({f'hur{region}_tMean' : mF.calc_tMean(da)})
@@ -81,9 +81,9 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         da = load_hur_data(switch, source, dataset, experiment, timescale, resolution, folder_load = folder_save)
         da = calc_vertical_mean(da)
         da, region = pick_wap_region(switch, da, source, dataset, experiment, timescale, resolution, folder_load = f'{mV.folder_save}/wap')
-        calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
+        calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save)
 
-def run_hus_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/hur'):
+def run_hur_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/hur'):
     print(f'Running hur metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -108,15 +108,15 @@ if __name__ == '__main__':
         'ascent':             False,
         'descent':            False,
 
-        'snapshot':           True, 
-        'sMean':              False, 
+        'snapshot':           False, 
+        'sMean':              True, 
         'tMean':              False, 
         
         'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_hus_metrics(switch = switch,
+    ds_metric = run_hur_metrics(switch = switch,
                                datasets =    mV.datasets, 
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],
