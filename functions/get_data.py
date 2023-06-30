@@ -220,7 +220,7 @@ if __name__ == '__main__':
 
     start = timeit.default_timer()
     switch = {
-        'pr'  :          False,
+        'pr'  :          True,
         'wap' :          False,
         'tas' :          False,
         'cl'  :          False,
@@ -229,7 +229,7 @@ if __name__ == '__main__':
         'hur' :          False,
         'rlut':          False,
 
-        'save':          False
+        'save':          True
         }
 
     # get and save sample data if needed

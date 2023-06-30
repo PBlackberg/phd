@@ -27,28 +27,28 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    'TaiESM1',        # 1
-    'BCC-CSM2-MR',    # 2
-    'FGOALS-g3',      # 3
-    'CNRM-CM6-1',     # 4
-    'MIROC6',         # 5
+    # 'TaiESM1',        # 1
+    # 'BCC-CSM2-MR',    # 2
+    # 'FGOALS-g3',      # 3
+    # 'CNRM-CM6-1',     # 4
+    # 'MIROC6',         # 5
     # 'MPI-ESM1-2-LR',  # 6
-    'NorESM2-MM',     # 7
-    'GFDL-CM4',       # 8
-    'CanESM5',        # 9
-    'CMCC-ESM2',      # 10
-    'UKESM1-0-LL',    # 11
-    'MRI-ESM2-0',     # 12
+    # 'NorESM2-MM',     # 7
+    # 'GFDL-CM4',       # 8
+    # 'CanESM5',        # 9
+    # 'CMCC-ESM2',      # 10
+    # 'UKESM1-0-LL',    # 11
+    # 'MRI-ESM2-0',     # 12
     # 'CESM2',          # 13
-    'NESM3',           # 14
-    'TaiESM1',        # 1
-    'BCC-CSM2-MR',    # 2
-    'FGOALS-g3',      # 3
-    'CNRM-CM6-1',     # 4
+    # 'NESM3',           # 14
+    # 'TaiESM1',        # 1
+    # 'BCC-CSM2-MR',    # 2
+    # 'FGOALS-g3',      # 3
+    # 'CNRM-CM6-1',     # 4
     ]
 
 observations = [
-    # 'GPCP',           # precipitation
+    'GPCP',           # precipitation
     # 'ISCCP'           # clouds (weather states)
     ]
 

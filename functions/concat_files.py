@@ -197,7 +197,7 @@ def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, 
 def get_gpcp(resolution):
     ''' Observations from the Global Precipitation Climatology Project (GPCP) '''
     path_gen = '/g/data/ia39/aus-ref-clim-data-nci/gpcp/data/day/v1-3'
-    years = range(2010,2022)
+    years = range(1997,2022) # there is a constant shift in high percentile precipitation rate trend from around (2009-01-2009-06) forward
     folders = [f for f in os.listdir(path_gen) if (f.isdigit() and int(f) in years)]
     folders = sorted(folders, key=int)
 
