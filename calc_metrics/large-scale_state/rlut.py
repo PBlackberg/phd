@@ -60,7 +60,9 @@ def load_rlut_data(switch, source, dataset, timescale, experiment, resolution, f
     if  switch['constructed_fields']:
         return cF.var3D, cF.var3D
     elif switch['sample_data']:
-        return mV.load_sample_data(folder_load, source, dataset, 'rlut', timescale, experiment, resolution)['rlut']
+        var = 'rlut' if not dataset == 'CERES' else 'toa_lw_all_mon'
+        da = mV.load_sample_data(folder_load, source, dataset, 'rlut', timescale, experiment, resolution)[var]
+        return da
     else:
         return gD.get_rlut(source, dataset, timescale, experiment, resolution)
     
@@ -100,13 +102,13 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         'ascent':             False,
         'descent':            False,
 
-        'snapshot':           False, 
-        'sMean':              True, 
+        'snapshot':           True, 
+        'sMean':              False, 
         'tMean':              False, 
         
         'save':               True
@@ -118,7 +120,7 @@ if __name__ == '__main__':
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],
                                resolution =  mV.resolutions[0],
-                                # folder_save = f'{mV.folder_save_gadi}/cl'
+                               folder_save = f'{mV.folder_save_gadi}/lw'
                                 )
 
 

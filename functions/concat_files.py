@@ -121,11 +121,11 @@ def choose_cmip6_ensemble(model, experiment):
 def grid_folder(model):
     ''' Some models have a different grid folder in the path to the files'''
     folder = 'gn'
-    folder = 'gr' if model == 'CNRM-CM6-1' else folder
-    folder = 'gr1' if model == 'GFDL-CM4' else folder           
+    folder = 'gr' if model in ['CNRM-CM6-1', 'EC-Earth3', 'IPSL-CM6A-LR'] else folder
+    folder = 'gr1' if model in ['GFDL-CM4', 'INM-CM5-0', 'KIOST-ESM'] else folder           
     return folder
 
-def get_cmip6_data(variable, institute, model, experiment, timescale, resolution, data_exists = True):
+def get_cmip6_data(variable, institute, model, timescale, experiment, resolution, data_exists = True):
     ''' concatenates file data and interpolates grid to common grid if needed
     '''
     if not data_exists:
@@ -150,7 +150,7 @@ def get_cmip6_data(variable, institute, model, experiment, timescale, resolution
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
     return ds
     
-def get_cmip6_cl(variable, institute, model, experiment, timescale, resolution, data_exists=True):
+def get_cmip6_cl(variable, institute, model, timescale, experiment, resolution, data_exists=True):
     ''' Cloud pressure on hybrid-sigma vertical levels '''
     if not data_exists:
         print(f'there is no {variable} data for experiment: {experiment} for model: {model}')

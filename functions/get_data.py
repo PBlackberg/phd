@@ -19,16 +19,16 @@ import concat_files as cfiles
 
 # ------------------------------------------------------------------------------------ Surface precipitation ----------------------------------------------------------------------------------------------------- #
 
-def get_pr(source, dataset, experiment, timescale, resolution):
+def get_pr(source, dataset, timescale, experiment, resolution):
     ''' Surface precipitation
     '''
     if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('pr', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip5_data('pr', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['pr']*60*60*24 # convert to mm/day
         da.attrs['units']= 'mm day' + mF.get_super('-1')
 
     if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('pr', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip6_data('pr', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['pr']*60*60*24 # convert to mm/day
         da.attrs['units']= 'mm day' + mF.get_super('-1')
 
@@ -137,15 +137,15 @@ def get_hus(source, dataset, experiment, timescale, resolution):
 
 # --------------------------------------------------------------------------------------- Outgoing longwave radiation ----------------------------------------------------------------------------------------------------- #
 
-def get_rlut(source, dataset, experiment, timescale, resolution):
+def get_rlut(source, dataset, timescale, experiment, resolution):
     ''' Outgoing longwave radiation
     '''
     if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('rlut', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip5_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['rlut'] # W/m^2
 
     if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('rlut', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip6_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, timescale, resolution)
         da = ds['rlut'] # W/m^2
     return da
 
@@ -154,11 +154,11 @@ def get_rlut(source, dataset, experiment, timescale, resolution):
 # Calling function based on variable
 # ----------------------------------
 
-def get_var_data(switch, source, dataset, experiment, timescale, resolution, folder_save):
+def get_var_data(switch, source, dataset, timescale, experiment, resolution, folder_save):
     da = None
 
     if switch['pr']:
-        da = get_pr(source, dataset, experiment, timescale, resolution)
+        da = get_pr(source, dataset, timescale, experiment, resolution)
         mV.save_sample_data(xr.Dataset({'pr': da}), f'{folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['wap']:
@@ -185,7 +185,7 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
         mV.save_sample_data(xr.Dataset({'hus': da}), f'{folder_save}/hus', source, dataset, 'hus', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['rlut']:
-        da = get_rlut(source, dataset, experiment, timescale, resolution)
+        da = get_rlut(source, dataset, timescale, experiment, resolution)
         mV.save_sample_data(xr.Dataset({'rlut': da}), f'{folder_save}/rlut', source, dataset, 'rlut', timescale, experiment, resolution) if switch['save'] else None
     return
         
@@ -194,7 +194,7 @@ def get_var_data(switch, source, dataset, experiment, timescale, resolution, fol
 # Check variable
 # ---------------
 
-def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
+def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
@@ -202,17 +202,17 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
-    return get_var_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
+        get_var_data(switch, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_get_data(switch, datasets, experiments, timescale, resolution, folder_save):
+def run_get_data(switch, datasets, timescale, experiments, resolution, folder_save):
     print(f'Getting variable from {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     for dataset in datasets:
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
-    return run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+        run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save)
 
 
 

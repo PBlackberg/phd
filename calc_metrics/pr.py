@@ -85,11 +85,11 @@ def calc_o_pr(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_save):
+def calc_metrics(switch, da, source, dataset, timescale, experiment, resolution, folder_save):
 
     if switch['snapshot']:
         ds_snapshot = xr.Dataset({f'pr_snapshot' : mF.get_scene(da)})
-        mV.save_metric(ds_snapshot, folder_save, f'pr_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_snapshot, folder_save, f'pr_snapshot', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['rxday_pr']:
         rx1day_tMean, rx1day_sMean = calc_rx1day(da)
@@ -97,14 +97,14 @@ def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_sav
         ds_rxday_tMean = xr.Dataset({'rx1day_pr_tMean': rx1day_tMean , 'rx5day_pr_tMean': rx5day_tMean})
         mV.save_metric(ds_rxday_tMean, folder_save, 'rxday_pr_tMean', source, dataset, experiment, resolution) if switch['save'] else None
         ds_rxday = xr.Dataset({'rx1day_pr': rx1day_sMean , 'rx5day_pr': rx5day_sMean}) 
-        mV.save_metric(ds_rxday, folder_save, 'rxday_pr', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_rxday, folder_save, 'rxday_pr', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['percentiles']:
         percentiles = [0.95, 0.97, 0.99]
         ds_percentile_value = xr.Dataset()
         for percentile in percentiles:
             ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
-        mV.save_metric(ds_percentile_value, folder_save, 'percentiles_pr', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_percentile_value, folder_save, 'percentiles_pr', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['meanInPercentiles']:
         percentiles = [0.95, 0.97, 0.99]
@@ -114,15 +114,15 @@ def calc_metrics(switch, da, source, dataset, experiment, resolution, folder_sav
             percentile_snapshot, meanInPercentile = calc_meanInPercentile(da, percentile)
             ds_percentile_snapshot[f'pr{int(percentile*100)}_snapshot'] = percentile_snapshot
             ds_meanInPercentiles[f'pr{int(percentile*100)}_snapshot'] = meanInPercentile
-        mV.save_metric(ds_percentile_snapshot, folder_save, 'percentiles_pr_snapshot', source, dataset, experiment, resolution) if switch['save'] else None    
-        mV.save_metric(ds_meanInPercentiles,   folder_save, 'meanInPercentiles_pr',    source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_percentile_snapshot, folder_save, 'percentiles_pr_snapshot', source, dataset, timescale, experiment, resolution) if switch['save'] else None    
+        mV.save_metric(ds_meanInPercentiles,   folder_save, 'meanInPercentiles_pr',    source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['F_pr10']:
         F_pr10_snapshot, F_pr10 = calc_F_pr10(da)
         ds_F_pr10_snapshot = xr.Dataset({'F_pr10': F_pr10_snapshot})
         ds_F_pr10 = xr.Dataset({'F_pr10': F_pr10})
-        mV.save_metric(ds_F_pr10_snapshot, folder_save, 'F_pr10_snapshot', source, dataset, experiment, resolution) if switch['save'] else None
-        mV.save_metric(ds_F_pr10,          folder_save, 'F_pr10',          source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_F_pr10_snapshot, folder_save, 'F_pr10_snapshot', source, dataset, timescale, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_F_pr10,          folder_save, 'F_pr10',          source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['o_pr']:
         conv_percentile = 0.97
@@ -146,7 +146,7 @@ def load_data(switch, source, dataset, experiment, timescale, resolution, folder
         return gD.get_pr(source, dataset, experiment, timescale, resolution)
     
 
-def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
+def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
@@ -156,10 +156,10 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
             continue
 
         da = load_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
-        calc_metrics(switch, da, source, dataset, experiment, resolution, folder_save)
+        calc_metrics(switch, da, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_precip_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/pr'):
+def run_precip_metrics(switch, datasets, timescale, experiments, resolution, folder_save = f'{mV.folder_save}/pr'):
     print(f'Running precip metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -167,7 +167,7 @@ def run_precip_metrics(switch, datasets, experiments, timescale, resolution, fol
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+        run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save)
 
 
 
@@ -180,16 +180,16 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         'snapshot':           False,
         'rxday_pr':           False, 
         'percentiles':        False, 
-        'meanInPercentiles':  True, 
+        'meanInPercentiles':  False, 
         'F_pr10':             False,
         'o_pr':               False,
         
-        'save':               True
+        'save':               False
         }
 
     # choose which datasets and experiments to run, and where to save the metric
