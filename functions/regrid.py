@@ -1,6 +1,8 @@
 import xarray as xr
 import numpy as np
 
+# ------------------------------------------------------------------------------------ regrid function ----------------------------------------------------------------------------------------------------- #
+
 def regrid_conserv(M_in):
     # dimensions of model to regrid to
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
@@ -111,7 +113,7 @@ def regrid_conserv(M_in):
             M_n = xr.DataArray(
                 data = np.zeros([len(M_in.time.data), len(lat_n), len(lon_n)]),
                 dims = ['time', 'lat_n', 'lon_n'],
-                coords = {'time': time_dim, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
+                coords = {'time': M_in.time.data, 'lat_n': M_out.lat.data, 'lon_n': M_out.lon.data},
                 attrs = M_in.attrs
                 )
 
@@ -151,29 +153,52 @@ def regrid_conserv(M_in):
     return M_n
 
 
+# ------------------------------------------------------------------- Get the data from the dataset, regrid, and save ----------------------------------------------------------------------------------------------------- #
+
+def run_regridder(switch, dataset):
+    print(f'Running regridder')
+    print(f'switch: {[key for key, value in switch.items() if value]}')
+
+    source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    print(f'{dataset} ({source})')
+
+    da = xr.open_dataset('/Users/cbla0002/Documents/data/lw/sample_data/obs/CERES_rlut_monthly_orig.nc')['toa_lw_all_mon']
+    print(da.lat[0:3])
+    da = regrid_conserv(da)
+    print(da.lat[0:3])
+
+    ds = xr.Dataset({f'toa_lw_all_mon' : da})
+    folder = '/Users/cbla0002/Documents/data/lw/sample_data/obs'
+    filename = 'CERES_rlut_monthly_regridded.nc'
+    mV.save_file(ds, folder, filename) if switch['save'] else None
 
 
 
 
 
+# --------------------------------------------------------------------------------- Choose what to regrid ----------------------------------------------------------------------------------------------------- #
 
+if __name__ == '__main__':
 
+    import sys
+    import os
+    home = os.path.expanduser("~")
+    folder_code = f'{home}/Documents/code/phd'
+    sys.path.insert(0, f'{folder_code}/functions')
+    import myFuncs as mF # imports common operators
+    import myVars as mV # imports common variables
 
+    # Chose observation to regrid
+    switch = {
+        'rlut': True,
 
+        'show': True,
+        'save': True
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    run_regridder(switch, 
+                  dataset = 'CERES', 
+                  )
 
 
 
