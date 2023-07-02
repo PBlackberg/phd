@@ -140,7 +140,7 @@ def plot_one_scene(switch, variable_type, metric, metric_option, cmap, title, cb
     return fig
 
 
-def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save):
+def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, timescale, resolution, folder_save):
     nrows = 4
     ncols = 4
     
@@ -181,7 +181,7 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
     ticklabel_size = 9
 
     # Find common limits
-    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets, resolution, folder_load = folder_save,
+    vmin, vmax = find_limits(switch, variable_type, metric, metric_option, datasets, timescale, resolution, folder_load = folder_save,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         quantileBetween_low = 0,   # remove extreme low models' from colorbar range
@@ -194,7 +194,7 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
-        scene = get_scene(switch, variable_type, metric, metric_option, dataset, resolution, folder_save)
+        scene = get_scene(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
         pcm = plot_axScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
 
         mF.move_col(ax, move_col0_by) if col == 0 else None
@@ -333,7 +333,7 @@ def run_map_plot(switch, datasets, timescale, resolution, folder_save = mV.folde
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         filename = f'{dataset}_{metric_option}' if switch['climatology'] else f'{dataset}_{metric_option}_difference' 
     else:
-        fig = plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, resolution, folder_save)
+        fig = plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, title, cbar_label, datasets, timescale, resolution, folder_save)
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         with_obs = mV.find_ifWithObs(datasets, mV.observations)
         filename = f'{source}_{metric_option}{with_obs}' if switch['climatology'] else f'{source}_{metric_option}_difference' 
@@ -358,8 +358,8 @@ if __name__ == '__main__':
         'wap':                 False,       # 6
         'tas':                 False,       # 7
 
-        'hur':                 False,       # 8
-        'rlut':                True,       # 9
+        'hur':                 True,       # 8
+        'rlut':                False,       # 9
 
         'lcf':                 False,       # 10
         'hcf':                 False,       # 11

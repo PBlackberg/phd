@@ -67,7 +67,7 @@ def load_hur_data(switch, source, dataset, timescale, experiment, resolution, fo
     elif switch['sample_data']:
         return mV.load_sample_data(folder_load, source, dataset, 'hur', timescale, experiment, resolution)['hur']
     else:
-        return gD.get_hus(source, dataset, timescale, experiment, resolution)
+        return gD.get_hur(source, dataset, timescale, experiment, resolution)
     
 def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
     for experiment in experiments:
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data':        False,
+        'sample_data':        True,
 
         'ascent':             False,
         'descent':            False,
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                                experiments = mV.experiments,
                                timescale =   mV.timescales[0],
                                resolution =  mV.resolutions[0],
-                                folder_save = f'{mV.folder_save_gadi}/hur'
+                                # folder_save = f'{mV.folder_save_gadi}/hur'
                                 )
 
 
