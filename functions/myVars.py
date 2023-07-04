@@ -27,30 +27,30 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    # 'TaiESM1',           # 1
+    'TaiESM1',           # 1
     'BCC-CSM2-MR',       # 2
-    # 'FGOALS-g3',         # 3
-    # 'CNRM-CM6-1',        # 4
-    # 'MIROC6',            # 5
-    # 'MPI-ESM1-2-LR',     # 6
-    # 'NorESM2-MM',        # 7
-    # 'GFDL-CM4',          # 8
-    # 'CanESM5',           # 9
-    # 'CMCC-ESM2',         # 10
-    # 'UKESM1-0-LL',       # 11
-    # 'MRI-ESM2-0',        # 12
-    # 'CESM2',             # 13
-    # 'NESM3',             # 14
-    # 'IITM-ESM',          # 15 (new from here)
-    # 'EC-Earth3',         # 16
-    # 'INM-CM5-0',         # 18
-    # 'IPSL-CM6A-LR',      # 19
-    # 'KIOST-ESM',         # 20
+    'FGOALS-g3',         # 3
+    'CNRM-CM6-1',        # 4
+    'MIROC6',            # 5
+    'MPI-ESM1-2-LR',     # 6
+    'NorESM2-MM',        # 7
+    'GFDL-CM4',          # 8
+    'CanESM5',           # 9
+    'CMCC-ESM2',         # 10
+    'UKESM1-0-LL',       # 11
+    'MRI-ESM2-0',        # 12
+    'CESM2-WACCM',       # 19
+    'NESM3',             # 14
+    'IITM-ESM',          # 15 (new from here)
+    'EC-Earth3',         # 16
+    'INM-CM5-0',         # 17
+    'IPSL-CM6A-LR',      # 18
+    'KIOST-ESM',         # 19
     ]
 
 observations = [
-    # 'GPCP',              # precipitation (from project al33 on gadi)
-    # 'ISCCP'              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html )
+    'GPCP',              # precipitation (from project al33 on gadi)
+    # 'ISCCP'              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
     # 'CERES'              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
     ]
 
@@ -64,8 +64,8 @@ experiments = [
     ]
 
 timescales = [
-    # 'daily',
-    'monthly'
+    'daily',
+    # 'monthly'
     ]
 
 resolutions = [
@@ -73,26 +73,24 @@ resolutions = [
     'regridded'
     ]
 
-
-
-
-
-# -------------------------------------------------------------------------------------- Determining folder to save to ----------------------------------------------------------------------------------------------------- #
-
-folder_save = f'{os.path.expanduser("~")}/Documents/data'
-folder_save_gadi = '/g/data/k10/cb4968/data'
-
-# --------------------
-# structure of folders 
-# for metric: folder_save/variable_type/metrics/metric/source/dataset_filename ex: pr/metrics/rxday/cmip6/FGOALS-g3_rxday_historical_regridded.nc
-# for figure: folder_save/variable_type/figures/plot_metric/source/source_filename ex: pr/figures/rxday_tMean/cmip6/cmip6_rx1day_regridded.pdf 
-# --------------------
-
-
+folder_save = [
+    os.path.expanduser("~") + '/Documents/data',
+    # '/g/data/k10/cb4968/data'
+    ]
 
 
 
 # ------------------------------------------------------------------------------------------------ save / load ----------------------------------------------------------------------------------------------------- #
+
+# --------------------
+# structure of folders 
+# for metric: [folder_save]/[variable_type]/metrics/[metric]/[source]/[dataset]_[filename] ex: [folder_save]/pr/metrics/rxday/cmip6/[filename]
+# for figure: [folder_save]/[variable_type]/figures/[plot_metric]/[source]/[source]_[filename] ex: [folder_save]/pr/figures/rxday_tMean/cmip6/[filename]
+
+# structure of filename
+# for metric: [dataset]_[metric]_[timescale]_[experiment]_[resolution] ex: FGOALS-g3_rxday_daily_historical_regridded.nc
+# for figure_metric: [source]_[metric]_[timescale]_[resolution]  ex: cmip6_rx1day_daily_regridded.pdf 
+# --------------------
 
 def save_file(data, folder, filename):
     ''' Saves file to specified folder and filename '''
@@ -122,7 +120,7 @@ def save_metric(data, folder_save, metric, source, dataset, timescale, experimen
     ''' Save calculated metric to file '''
     folder = f'{folder_save}/metrics/{metric}/{source}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{dataset}_{metric}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{metric}_{resolution}.nc'
+    filename = f'{dataset}_{metric}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{metric}_{timescale}_{resolution}.nc'
     save_file(data, folder, filename)
     return
 
@@ -131,7 +129,6 @@ def save_figure_from_metric(figure, folder_save, metric, source, filename):
     folder = f'{folder_save}/figures/{metric}/{source}'
     save_figure(figure, folder, filename)
     return None
-
 
 def load_sample_data(folder_load, source, dataset, name, timescale, experiment, resolution):
     ''' Load saved sample data'''
@@ -209,7 +206,45 @@ def no_data(source, experiment, data_exists):
 
     if not data_exists:
         return True
-    
+
+
+# ------------------------------------------------------------------------------------------------ load_metrics ----------------------------------------------------------------------------------------------------- #
+
+def get_super(x):
+    ''' For adding superscripts in strings (input is string) '''
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+
+def name_region(switch):
+    if switch['descent']:
+        region = '_d' 
+    elif switch['ascent']:
+        region = '_a' 
+    else:
+        region = ''
+    return region
+
+def find_general_metric_and_specify_cbar(switch):
+    if switch['pr'] or switch['percentiles_pr'] or switch['rx1day_pr'] or switch['rx5day_pr']:
+        variable_type = 'pr'
+        cmap = 'Blues'
+        cbar_label = 'pr [mm day{}]'.format(get_super('-1'))
+    if switch['pr']:
+        metric = 'pr' 
+        metric_option = metric
+    if switch['percentiles_pr']:
+        metric = 'percentiles_pr' 
+        metric_option = 'pr97' # there is also pr95, pr99
+    return variable_type, metric, metric_option, cmap, cbar_label
+
+
+
+
+
+
+# ---------------------------------------------------------------------------------------- Other variables ----------------------------------------------------------------------------------------------------- #
 
 institutes_cmip5 = {
     'IPSL-CM5A-MR': 'IPSL',
@@ -247,7 +282,7 @@ institutes_cmip6 = {
     'GFDL-CM4':          'NOAA-GFDL',
     'UKESM1-0-LL':       'MOHC',
     'MRI-ESM2-0':        'MRI',
-    'CESM2':             'NCAR',
+    'CESM2-WACCM':       'NCAR'
     'NESM3':             'NUIST',
     'IITM-ESM':          'CCCR-IITM',
     'EC-Earth3':         'EC-Earth-Consortium',
@@ -267,13 +302,8 @@ institutes_cmip6 = {
 # 'FIO-ESM-2-0':     'FIO-QLNM',            (only monthly)
 # 'MPI-ESM-1-2-HAM': 'HAMMOZ-Consortium'    (no future scenario)
 # 'SAM0-UNICON':     'SNU',                 (no future scenario)
+# *'CESM2':           'NCAR',                (regular CESM2 does not have monthly hur in ssp585, but does have it in CESM2-WACCM)
 institutes = {**institutes_cmip5, **institutes_cmip6}
-
-
-
-
-
-
 
 
 

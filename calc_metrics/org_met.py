@@ -192,58 +192,65 @@ def calc_o_area(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, source, dataset, experiment, conv_threshold, resolution, folder_save):
+def calc_metrics(switch, da, conv_threshold, source, dataset, timescale, experiment, resolution, folder_save):
     ''' Calls metric calculation on input data and saves metric to dataset
     '''
     if switch['o_scene']:
-        o_scene = xr.DataArray(data=get_o_scene(da, conv_threshold), dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data})
-        ds_o_scene = xr.Dataset({'o_scene':o_scene})
-        mV.save_metric(ds_o_scene, folder_save, 'o_scene', source, dataset, experiment, resolution) if switch['save'] else None
+        o_scene = xr.DataArray(data=get_o_scene(da, conv_threshold), dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data},
+                                attrs = {'Description': f'Scene of contigiuos convetive regions (objects), \
+                                        with convection as precipitation rates exceeding the time-mean {int(conv_threshold*100)}th percentile'})
+        ds_o_scene = xr.Dataset(data_vars = {'o_scene': o_scene})
+        mV.save_metric(ds_o_scene, folder_save, 'o_scene', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['rome']:
-        ds_rome = xr.DataArray(data = calc_rome(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
-                               attrs = {'units':'km' + mF.get_super('2'),
-                                        'Description': f'ROME based on convection from {int(conv_threshold*100)}th percentile precipitation'})
-        
-        mV.save_metric(ds_rome, folder_save, 'rome', source, dataset, experiment, resolution) if switch['save'] else None
+        rome = xr.DataArray(data = calc_rome(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
+                               attrs = {'units': 'km' + mF.get_super('2'),
+                                        'Description': f'ROME based on contigiuos convetive regions (objects), \
+                                        with convection as precipitation rates exceeding the time-mean {int(conv_threshold*100)}th percentile'})
+        ds_rome = xr.Dataset(data_vars = {'rome': rome})
+        mV.save_metric(ds_rome, folder_save, 'rome', source, dataset, timescale, experiment, resolution) if switch['save'] else None
     if switch['rome_n']:
         n=8
-        ds_rome = xr.DataArray(data = calc_rome_n(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
+        rome_n = xr.DataArray(data = calc_rome_n(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
                                attrs = {'units':'km' + mF.get_super('2'),
                                         'Description': f'ROME_n based on {n} largest contigiuos convetive regions (objects) \
-                                        from {int(conv_threshold*100)}th percentile precipitation'})
-        mV.save_metric(ds_rome, folder_save, 'rome_n', source, dataset, experiment, resolution) if switch['save'] else None
+                                        with convection as precipitation rates exceeding the time-mean {int(conv_threshold*100)}th percentile'})
+        ds_rome = xr.Dataset(data_vars = {'rome_n': rome_n})
+        mV.save_metric(ds_rome, folder_save, 'rome_n', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['ni']:
         ni, areafraction = calc_ni(da, conv_threshold)
         ni = xr.DataArray(data=ni, dims=['time'], coords={'time': da.time.data},
                                 attrs={'units':'Nb',
-                                       'Description': f'Number of contigiuos convetive regions (objects) in convection \
-                                        from {int(conv_threshold*100)}th percentile precipitation'})
+                                       'Description': f'Number of contigiuos convetive regions (objects), \
+                                        with convection as precipitation rates exceeding the time-mean {int(conv_threshold*100)}th percentile'})
         areafraction = xr.DataArray(data=areafraction, dims=['time'], coords={'time': da.time.data},
                                 attrs = {'units': '%'})
         ds_numberIndex = xr.Dataset(data_vars = {'ni': ni, 'areafraction': areafraction}) 
-        mV.save_metric(ds_numberIndex, folder_save, 'ni', source, dataset, experiment, resolution) if switch['save'] else None
+        mV.save_metric(ds_numberIndex, folder_save, 'ni', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
     if switch['o_area']:
-        o_area = calc_o_area(da, conv_threshold)
-        ds_o_area = xr.DataArray(data = o_area, dims = 'object',
-                                attrs = {'units':'km' + mF.get_super('2')})
-        mV.save_metric(ds_o_area, folder_save, 'o_area', source, dataset, experiment, resolution) if switch['save'] else None
+        o_area = xr.DataArray(data = calc_o_area(da, conv_threshold), 
+                              dims = 'object',
+                              attrs = {'units':'km' + mF.get_super('2')})
+        ds_o_area = xr.Dataset(data_vars = {'o_area': o_area}, 
+                               attrs = {'Description': f'Area of contigiuos convetive regions (objects), \
+                                        with convection as precipitation rates exceeding the time-mean {int(conv_threshold*100)}th percentile'})
+        mV.save_metric(ds_o_area, folder_save, 'o_area', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
 
 # -------------------------------------------------------------------------------- Get the data from the model / experiment and run ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, source, dataset, experiment, timescale, resolution):
+def load_data(switch, source, dataset, timescale, experiment, resolution):
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(f'{mV.folder_save}/pr', source, dataset, 'pr', timescale, experiment, resolution)['pr']
+        return mV.load_sample_data(f'{mV.folder_save[0]}/pr', source, dataset, 'pr', timescale, experiment, resolution)['precip']
     else:
-        return gD.get_pr(source, dataset, experiment, timescale, resolution)
+        return gD.get_pr(source, dataset, timescale, experiment, resolution)
 
 
-def run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save):
+def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
     for experiment in experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
@@ -252,13 +259,13 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
 
-        da = load_data(switch, source, dataset, experiment, timescale, resolution)
+        da = load_data(switch, source, dataset, timescale, experiment, resolution)
         conv_percentile = 0.97
         conv_threshold = da.quantile(conv_percentile, dim=('lat', 'lon'), keep_attrs=True).mean(dim='time')
-        calc_metrics(switch, da, source, dataset, experiment, conv_threshold, resolution, folder_save)
+        calc_metrics(switch, da, conv_threshold, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_org_metrics(switch, datasets, experiments, timescale = 'daily', resolution= 'regridded', folder_save = f'{mV.folder_save}/org'):
+def run_org_metrics(switch, datasets, timescale, experiments, resolution, folder_save):
     print(f'Running org metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -266,7 +273,7 @@ def run_org_metrics(switch, datasets, experiments, timescale = 'daily', resoluti
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
 
-        run_experiment(switch, source, dataset, experiments, timescale, resolution, folder_save)
+        run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save)
 
 
 
@@ -279,21 +286,23 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
-        'o_scene':            False,
-        'rome':               False, 
+        'o_scene':            True,
+        'rome':               True, 
         'rome_n':             False, 
-        'ni':                 False, 
-        'o_area':             False,
+        'ni':                 True, 
+        'o_area':             True,
         
-        'save':               False
+        'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_org_metrics(switch=switch,
-                                   datasets = mV.datasets, 
-                                   experiments = mV.experiments,
-                                #    folder_save = f'{mV.folder_save_gadi}/org'
-                                   )
+    ds_metric = run_org_metrics(switch =      switch,
+                                datasets =    mV.datasets,
+                                timescale =   mV.timescales[0], 
+                                experiments = mV.experiments,
+                                resolution =  mV.resolutions[0],
+                                folder_save = f'{mV.folder_save[0]}/org'
+                                )
     
 
     stop = timeit.default_timer()

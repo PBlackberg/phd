@@ -213,7 +213,7 @@ def plot_multiple_scenes(switch, variable_type, metric, metric_option, cmap, tit
         mF.plot_xlabel(fig, ax, xlabel, xlabel_pad, xylabel_fontsize) if i >= num_subplots-nrows else None
         mF.plot_ylabel(fig, ax, ylabel, ylabel_pad, xylabel_fontsize) if col == 0 else None
         mF.plot_axtitle(fig, ax, dataset, axtitle_xpad, axtitle_ypad, axtitle_fontsize)
-        format_ticks(ax, i, num_subplots, nrows, col, ticklabel_size )
+        format_ticks(ax, i, num_subplots, nrows, col, ticklabel_size)
 
     ax.text(title_x, title_y, title, ha = 'center', fontsize = title_fontsize, transform=fig.transFigure)
     cbar_ax = fig.add_axes(cbar_position)
@@ -320,7 +320,7 @@ def specify_metric_and_title(switch, metric, metric_option):
 #    Run script
 # ------------------
 
-def run_map_plot(switch, datasets, timescale, resolution, folder_save = mV.folder_save):
+def run_map_plot(switch, datasets, timescale, resolution, folder_save):
     print(f'Plotting map_plot with {resolution} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -337,8 +337,12 @@ def run_map_plot(switch, datasets, timescale, resolution, folder_save = mV.folde
         source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         with_obs = mV.find_ifWithObs(datasets, mV.observations)
         filename = f'{source}_{metric_option}{with_obs}' if switch['climatology'] else f'{source}_{metric_option}_difference' 
-        
-    mF.save_metric_figure(name = filename, metric = metric, figure = fig, folder_save = folder_save, source = source) if switch['save'] else None
+
+
+    folder = f'{home}/Desktop'
+    filename = 'snapshot'    
+    mV.save_figure(fig, folder, f'{filename}.pdf') if switch['save'] else None
+    # mF.save_figure_metric(name = filename, metric = metric, figure = fig, folder_save = folder_save, source = source) if switch['save'] else None
     plt.show() if switch['show'] else None
 
 
@@ -376,7 +380,7 @@ if __name__ == '__main__':
         
         'one scene':           True,   # plots all chosen datasets if False (20 datasets max)
         'show':                True,
-        'save':                False,
+        'save':                True,
         }
     
 
@@ -385,7 +389,7 @@ if __name__ == '__main__':
                  datasets =    mV.datasets, 
                  timescale =  mV.timescales[0],
                  resolution =  mV.resolutions[0],
-                #  folder_save = f'{mV.folder_save_gadi}'
+                 folder_save = f'{mV.folder_save[0]}'
                  )
 
     stop = timeit.default_timer()

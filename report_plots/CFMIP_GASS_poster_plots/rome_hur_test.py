@@ -12,16 +12,14 @@ sys.path.insert(0, f'{folder_code}/functions')
 import myFuncs as mF # imports common operators
 import myVars as mV # imports common variables
 
-
 # ------------------------------------------------------------------------------ Formatting axes for scatter plot ----------------------------------------------------------------------------------------------------- #
 
 def plot_correlation(ax, x,y):
     x_text = 0.725
-    y_text = 0.075
+    y_text = 0.85
     res= stats.pearsonr(x,y)
     if res[1]<=0.05:
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=(x_text, y_text), textcoords='axes fraction', fontsize = 8, color = 'r')
-
 
 def plot_ax_scatter(ax,x,y, color='k', xmin=None, ymin=None):
     ax.scatter(x,y,facecolors='none', edgecolor=color)
@@ -40,7 +38,21 @@ def create_figure(width, height, nrows = 1, ncols = 1):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height))
     return fig, axes
 
-# -------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
+def find_limits(switch, plot_var, datasets, timescale, resolution, folder_load, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
+    vmin_list, vmax_list = [], []
+    for dataset in datasets:
+        variable_type, metric, metric_option, xlabel = find_metric_and_units(plot_var)
+        da = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load)
+        da = mF.resample_timeMean(da, timescale)
+        vmin_list = np.append(vmin_list, np.nanquantile(da, quantileWithin_low))
+        vmax_list = np.append(vmax_list, np.nanquantile(da, quantileWithin_high))
+
+    vmin = np.nanquantile(vmin_list, quantileBetween_low)
+    vmax = np.nanquantile(vmax_list, quantileBetween_high)
+
+    return (vmin, vmax)
+
+# -------------------------------------------------------------------------------------- Labeling ----------------------------------------------------------------------------------------------------- #
 
 def name_region(switch):
     if switch['descent']:
@@ -109,31 +121,23 @@ def find_metric_and_units(plot_var):
         axis_label = '{}{} K{}'.format(axis_label[:-1], mF.get_super('-1'), axis_label[-1:]) if plot_var['per_kelvin'] else axis_label
     return variable_type, metric, metric_option, axis_label
 
+# -------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
+
+def calc_anomalies(da, timescale):
+    if timescale == 'monthly': 
+        climatology = da.groupby('time.month').mean('time')
+        da = da.groupby('time.month') - climatology 
+    return da
 
 def calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load):
     source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    if timescale == 'monthly' and (metric == 'percentiles_pr' or metric_option == 'rome'):
-        var = mV.load_metric(folder_load, variable_type, metric, source, dataset, 'daily', experiment = mV.experiments[0], resolution=resolution)[metric_option]
-        var = mF.resample_timeMean(var, timescale)
-    else:
-        var = mV.load_metric(folder_load, variable_type, metric, source, dataset, timescale, experiment = mV.experiments[0], resolution=resolution)[metric_option]
-    return var
+    data_timescale = 'daily' if metric == 'percentiles_pr' or metric_option == 'rome' else timescale
+    da = mV.load_metric(folder_load, variable_type, metric, source, dataset, data_timescale, experiment = mV.experiments[0], resolution=resolution)[metric_option]
+    da = mF.resample_timeMean(da, timescale)
 
+    da = calc_anomalies(da, timescale) if switch['anomalies'] else da
+    return da
 
-def find_limits(switch, plot_var, datasets, timescale, resolution, folder_load, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
-    vmin_list, vmax_list = [], []
-    for dataset in datasets:
-        variable_type, metric, metric_option, xlabel = find_metric_and_units(plot_var)
-        var = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load)
-        if timescale == 'monthly' and (switch['percentiles_pr'] or switch['rome']):
-            var = mF.resample_timeMean(var, timescale)
-        vmin_list = np.append(vmin_list, np.nanquantile(var, quantileWithin_low))
-        vmax_list = np.append(vmax_list, np.nanquantile(var, quantileWithin_high))
-
-    vmin = np.nanquantile(vmin_list, quantileBetween_low)
-    vmax = np.nanquantile(vmax_list, quantileBetween_high)
-
-    return (vmin, vmax)
 
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
@@ -161,16 +165,16 @@ def plot_one_scatter(switch, var0, var1, title, dataset, timescale, resolution, 
     # find variables and variable limits
     variable_type, metric, metric_option, xlabel = find_metric_and_units(var0)
     x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
-    xmin, xmax = find_limits(switch, var0, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
-        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
-        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
-        )
+    # xmin, xmax = find_limits(switch, var0, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
+    #     quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+    #     quantileWithin_high = 1,   # remove extreme high values from colorbar range 
+    #     )
     variable_type, metric, metric_option, ylabel = find_metric_and_units(var1)
     y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
-    ymin, ymax = find_limits(switch, var1, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
-        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
-        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
-        )
+    # ymin, ymax = find_limits(switch, var1, datasets = [dataset], timescale = timescale, resolution = resolution, folder_load = folder_save,
+    #     quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+    #     quantileWithin_high = 1,   # remove extreme high values from colorbar range 
+    #     )
     
     if timescale == 'monthly' and (switch['percentiles_pr'] or switch['rome']):
         x = x.assign_coords(time=y.time)
@@ -218,24 +222,24 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
     title_y = 0.9625
 
     xlabel_pad = 0.0725
-    ylabel_pad = 0.055
+    ylabel_pad = 0.055 
 
-    axtitle_xpad = 0.002
+    axtitle_xpad = 0.03
     axtitle_ypad = 0.0095
 
     # Find common limits
-    xmin, xmax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
-        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
-        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
-        quantileBetween_low = 0,   # remove extreme low models' from colorbar range
-        quantileBetween_high = 1   # remove extreme high models' from colorbar range
-        )
-    ymin, ymax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
-        quantileWithin_low = 0,    # remove extreme low values from colorbar range 
-        quantileWithin_high = 1,   # remove extreme high values from colorbar range 
-        quantileBetween_low = 0,   # remove extreme low models' from colorbar range
-        quantileBetween_high = 1   # remove extreme high models' from colorbar range
-        )
+    # xmin, xmax = find_limits(switch, var0, datasets, timescale, resolution, folder_load = folder_save,
+    #     quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+    #     quantileWithin_high = 1,   # remove extreme high values from colorbar range 
+    #     quantileBetween_low = 0,   # remove extreme low models' from colorbar range
+    #     quantileBetween_high = 1   # remove extreme high models' from colorbar range
+    #     )
+    # ymin, ymax = find_limits(switch, var1, datasets, timescale, resolution, folder_load = folder_save,
+    #     quantileWithin_low = 0,    # remove extreme low values from colorbar range 
+    #     quantileWithin_high = 1,   # remove extreme high values from colorbar range 
+    #     quantileBetween_low = 0,   # remove extreme low models' from colorbar range
+    #     quantileBetween_high = 1   # remove extreme high models' from colorbar range
+    #     )
 
     fig, axes = create_figure(width = width, height = height, nrows=nrows, ncols=ncols)
     num_subplots = len(datasets)
@@ -248,10 +252,14 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
         x = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
         variable_type, metric, metric_option, ylabel = find_metric_and_units(var1)
         y = calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_save)
-        # sp = plot_ax_scatter(ax, x, y) if switch['xy'] else plot_ax_scatter(ax, y, x)
-        color = 'Blues'
-        ax.hist2d(x,y,[20,20], cmap = color) if switch['xy'] else ax.hist2d(y,x,[20,20], cmap = color)
-        color = 'Blue'
+
+        if timescale == 'monthly' and (switch['percentiles_pr'] or switch['rome']):
+            x = x.assign_coords(time=y.time)
+
+        print(dataset)
+
+        ax.hist2d(x,y,[20,20], cmap ='Greens') if switch['xy'] else ax.hist2d(y,x,[20,20], cmap ='Greens')
+        color = 'Green'
         sp = plot_ax_bins(ax, x, y, color) if switch['xy'] else plot_ax_bins(ax, y, x, color)
 
         mF.move_col(ax, move_col0_by) if col == 0 else None
@@ -276,6 +284,7 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
         
         mF.plot_axtitle(fig, ax, dataset, axtitle_xpad, axtitle_ypad, axtitle_fontsize)
 
+    title = f'{title}_anomalies' if switch['anomalies'] else title
     ax.text(title_x, title_y, title, ha = 'center', fontsize = title_fontsize, transform=fig.transFigure)
     # mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
@@ -288,7 +297,7 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
 #    Run script
 # ------------------
 
-def run_scatter_plot(switch, datasets, timescale, resolution, folder_save = mV.folder_save):
+def run_scatter_plot(switch, datasets, timescale, resolution, folder_save):
     print(f'Plotting scatter_plot with {resolution} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -323,13 +332,14 @@ if __name__ == '__main__':
         'rome':                True,       # First metric
 
         'pr':                  False,      
-        'percentiles_pr':      True,       
+        'percentiles_pr':      False,       
         'rx1day_pr':           False,       
         'rx5day_pr':           False,       
 
         'wap':                 False,       
         'tas':                 False,       
-        'hur':                 False,       
+        'hur':                 True,       
+        'rlut':                False,       
 
         'lcf':                 False,       
         'hcf':                 False,       
@@ -338,7 +348,7 @@ if __name__ == '__main__':
 
         'descent':             False,
         'ascent':              False,
-        'anomalies':           False,
+        'anomalies':           True,
         'per_kelvin':          False,
         
         'xy':                  True,   # if False, reverse explanatory and response variable
@@ -353,7 +363,7 @@ if __name__ == '__main__':
                  datasets =    mV.datasets, 
                  timescale =   mV.timescales[0],
                  resolution =  mV.resolutions[0],
-                #  folder_save = f'{mV.folder_save_gadi}'
+                 folder_save = mV.folder_save[0]
                  )
 
     stop = timeit.default_timer()
