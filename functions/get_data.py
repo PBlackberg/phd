@@ -107,30 +107,30 @@ def get_p_hybridsigma(source, dataset, experiment, timescale, resolution):
 
 # ------------------------------------------------------------------------------------------ Relative humidity ----------------------------------------------------------------------------------------------------- #
 
-def get_hur(source, dataset, experiment, timescale, resolution):
+def get_hur(source, dataset, timescale, experiment, resolution):
     ''' Relative humidity
     '''
     if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('hur', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip5_data('hur', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['hur'] # units in %
 
     if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('hur', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip6_data('hur', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['hur'] # units in %
     return da
 
 
 # ------------------------------------------------------------------------------------------- Specific humidity ----------------------------------------------------------------------------------------------------- #
 
-def get_hus(source, dataset, experiment, timescale, resolution):
+def get_hus(source, dataset, timescale, experiment, resolution):
     ''' Specific humidity
     '''
     if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('hus', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip5_data('hus', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['hus'] # unitless kg/kg
 
     if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('hus', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+        ds = cfiles.get_cmip6_data('hus', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['hus'] # unitless kg/kg
     return da
 
@@ -145,7 +145,7 @@ def get_rlut(source, dataset, timescale, experiment, resolution):
         da = ds['rlut'] # W/m^2
 
     if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, timescale, resolution)
+        ds = cfiles.get_cmip6_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['rlut'] # W/m^2
     return da
 
@@ -177,7 +177,7 @@ def get_var_data(switch, source, dataset, timescale, experiment, resolution, fol
         mV.save_sample_data(xr.Dataset({'p_hybridsigma': da}), f'{folder_save}/cl', source, dataset, 'p_hybridsigma', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['hur']:
-        da = get_hur(source, dataset, experiment, timescale, resolution)
+        da = get_hur(source, dataset, timescale, experiment, resolution)
         mV.save_sample_data(xr.Dataset({'hur': da}), f'{folder_save}/hur', source, dataset, 'hur', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['hus']:

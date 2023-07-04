@@ -108,8 +108,8 @@ if __name__ == '__main__':
         'descent':            False,
 
         'snapshot':           True, 
-        'sMean':              False, 
-        'tMean':              False, 
+        'sMean':              True, 
+        'tMean':              True, 
         
         'save':               True
         }

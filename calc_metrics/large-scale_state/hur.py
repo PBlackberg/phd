@@ -103,25 +103,25 @@ if __name__ == '__main__':
     # choose which metrics to calculate
     switch = {
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         'ascent':             False,
         'descent':            False,
 
         'snapshot':           True, 
-        'sMean':              False, 
-        'tMean':              False, 
+        'sMean':              True, 
+        'tMean':              True, 
         
         'save':               True
         }
 
     # choose which datasets and experiments to run, and where to save the metric
     ds_metric = run_hur_metrics(switch = switch,
-                               datasets =    mV.datasets, 
-                               experiments = mV.experiments,
-                               timescale =   mV.timescales[0],
-                               resolution =  mV.resolutions[0],
-                                # folder_save = f'{mV.folder_save_gadi}/hur'
+                                datasets =    mV.datasets, 
+                                timescale =   mV.timescales[0],
+                                experiments = mV.experiments,
+                                resolution =  mV.resolutions[0],
+                                folder_save = f'{mV.folder_save_gadi}/hur'
                                 )
 
 
