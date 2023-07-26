@@ -1,7 +1,9 @@
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-# a = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/obs/GPCP_rome_daily_regridded.nc')['rome'] # GPCP
+a = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/obs/GPCP_rome_daily_regridded.nc')['rome'] # GPCP
+print(a.time[0:5])
+
 # b = xr.open_dataset('/Users/cbla0002/Documents/data/lw/metrics/rlut_sMean/obs/CERES_rlut_sMean_monthly_regridded.nc')['rlut_sMean'] # CERES
 
 x = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_historical_regridded.nc')['rome'] 

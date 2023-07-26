@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-from scipy import statss
+from scipy import stats
 import timeit
 
 import os
@@ -75,6 +75,52 @@ def calc_plot_var(switch, variable_type, metric, metric_option, dataset, timesca
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
 
+xlims = {
+    'TaiESM1':          [-200000, 200000],              # 1
+    'BCC-CSM2-MR':      [-100000, 100000],       # 2
+    'FGOALS-g3':        [-100000, 100000],              # 3
+    'CNRM-CM6-1':       [-100000, 100000],     # 4
+    'MIROC6':           [-100000, 100000],     # 5
+    'MPI-ESM1-2-LR':    [-200000, 200000],     # 6
+    'NorESM2-MM':       [-200000, 200000],     # 7
+    'GFDL-CM4':         [-100000, 100000],     # 8
+    'CanESM5':          [-50000, 50000],       # 9
+    'CMCC-ESM2':        [-200000, 200000],     # 10
+    'UKESM1-0-LL':      [-100000, 100000],     # 11
+    'MRI-ESM2-0':       [-200000, 200000],     # 12
+    'CESM2':            [-200000, 200000],     # 19
+    'NESM3':            [-200000, 200000],     # 14
+    'IITM-ESM':         [-200000, 200000],     # 15
+    'EC-Earth3':        [-100000, 100000],     # 16
+    'INM-CM5-0':        [-100000, 100000],     # 17
+    'IPSL-CM6A-LR':     [-100000, 100000],     # 18
+    'KIOST-ESM':        [-250000, 250000],     # 19
+    'CERES':            [-200000, 200000],     # 20
+}
+
+xticks = {
+    'TaiESM1':          [-200000, 0, 200000],              # 1
+    'BCC-CSM2-MR':      [-50000, 0, 50000],       # 2
+    'FGOALS-g3':        [-100000, 0, 100000],              # 3
+    'CNRM-CM6-1':       [-100000, 0, 100000],     # 4
+    'MIROC6':           [-100000, 0, 100000],     # 5
+    'MPI-ESM1-2-LR':    [-200000, 0, 200000],     # 6
+    'NorESM2-MM':       [-200000, 0, 200000],     # 7
+    'GFDL-CM4':         [-100000, 0, 100000],     # 8
+    'CanESM5':          [-50000, 0, 50000],       # 9
+    'CMCC-ESM2':        [-200000, 0, 200000],     # 10
+    'UKESM1-0-LL':      [-100000, 0, 100000],     # 11
+    'MRI-ESM2-0':       [-200000, 0, 200000],     # 12
+    'CESM2':            [-200000, 0, 200000],     # 19
+    'NESM3':            [-200000, 0, 200000],     # 14
+    'IITM-ESM':         [-200000, 0, 200000],     # 15
+    'EC-Earth3':        [-100000, 0, 100000],     # 16
+    'INM-CM5-0':        [-100000, 0, 100000],     # 17
+    'IPSL-CM6A-LR':     [-100000, 0, 100000],     # 18
+    'KIOST-ESM':        [-250000, 0, 250000],     # 19
+    'CERES':            [-200000, 0, 200000],     # 20
+}
+
 def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolution, folder_save):    
     nrows = 5
     ncols = 4
@@ -111,6 +157,10 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
         mF.scale_ax_x(ax, 0.9)
         mF.scale_ax_y(ax, 1)
 
+        ax.set_ylim([-2.5, 2.5])
+        ax.set_xlim(xlims[dataset])
+        ax.set_xticks(xticks[dataset])
+        ax.set_xticklabels(xticks[dataset])
         ax.tick_params(axis='x', labelsize=10)
 
         if i >= num_subplots-ncols:

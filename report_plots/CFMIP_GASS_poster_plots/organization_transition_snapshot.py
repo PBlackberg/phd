@@ -16,6 +16,9 @@ import map_plot_scene as mp # imports functions to plot maps
 
 da = xr.open_dataset('/Users/cbla0002/Documents/data/pr/sample_data/cmip6/TaiESM1_pr_daily_historical_regridded.nc')['pr']
 array = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_historical_regridded.nc')['rome']
+number_index = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/ni/cmip6/TaiESM1_ni_daily_historical_regridded.nc')['ni']
+areafraction = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/ni/cmip6/TaiESM1_ni_daily_historical_regridded.nc')['areafraction']
+
 conv_percentile = 0.97
 conv_threshold = da.quantile(conv_percentile, dim=('lat', 'lon'), keep_attrs=True).mean(dim='time')
 
@@ -56,9 +59,9 @@ for i, timestep in enumerate(timesteps):
 
     pcm = mp.plot_axScene(ax, scene, cmap='Greys', vmin = None, vmax = None)
 
-    ax_title = f'Low DOC: ROME = {int(doc_values[0])}'      if row == 0 else None
-    ax_title = f'Moderate DOC: ROME = {int(doc_values[1])}' if row == 1 else ax_title
-    ax_title = f'High DOC: ROME = {int(doc_values[2])}'     if row == 2 else ax_title
+    ax_title = f'Low DOC: ROME = {int(array[timestep])}, NI = {int(number_index.data[timestep])}, areafraction = {round(areafraction.data[timestep], 2)}' if row == 0 else None
+    ax_title = f'Moderate DOC: ROME = {int(array[timestep])}, NI = {int(number_index.data[timestep])}, areafraction = {round(areafraction.data[timestep], 2)}'  if row == 1 else ax_title
+    ax_title = f'High DOC: ROME = {int(array[timestep])}, NI = {int(number_index.data[timestep])}, areafraction = {round(areafraction.data[timestep], 2)}'      if row == 2 else ax_title
 
     mF.move_col(ax, -0.04) if col == 0 else None
 

@@ -245,7 +245,7 @@ def load_data(switch, source, dataset, timescale, experiment, resolution):
     if switch['constructed_fields']:
         return cF.var2D
     elif switch['sample_data']:
-        return mV.load_sample_data(f'{mV.folder_save[0]}/pr', source, dataset, 'pr', timescale, experiment, resolution)['precip']
+        return mV.load_sample_data(f'{mV.folder_save[0]}/pr', source, dataset, 'pr', timescale, experiment, resolution)['pr']
     else:
         return gD.get_pr(source, dataset, timescale, experiment, resolution)
 
@@ -286,11 +286,11 @@ if __name__ == '__main__':
         'constructed_fields': False, 
         'sample_data':        True,
 
-        'o_scene':            True,
-        'rome':               True, 
+        'o_scene':            False,
+        'rome':               False, 
         'rome_n':             False, 
         'ni':                 True, 
-        'o_area':             True,
+        'o_area':             False,
         
         'save':               True
         }
