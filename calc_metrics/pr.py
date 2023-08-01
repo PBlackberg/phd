@@ -1,12 +1,11 @@
 import numpy as np
 import xarray as xr
-import timeit
 import skimage.measure as skm
 import os
 import sys
 home = os.path.expanduser("~")
 folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/functions')
+sys.path.insert(0, f'{folder_code}/util')
 import myFuncs as mF # imports common operators
 import myVars as mV # imports common variables
 import constructed_fields as cF # imports fields for testing
@@ -85,8 +84,16 @@ def calc_o_pr(da, conv_threshold):
 
 # ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def calc_metrics(switch, da, source, dataset, timescale, experiment, resolution, folder_save):
+def load_data(switch, source, dataset, experiment, timescale, resolution, folder_save):
+    if switch['constructed_fields']:
+        return cF.var2D
+    elif switch['sample_data']:
+        return mV.load_sample_data(folder_save, source, dataset, 'pr', timescale, experiment, resolution)['pr']
+    else:
+        return gD.get_pr(source, dataset, experiment, timescale, resolution)
+    
 
+def calc_metrics(switch, da, source, dataset, timescale, experiment, resolution, folder_save):
     if switch['snapshot']:
         ds_snapshot = xr.Dataset({f'pr_snapshot' : mF.get_scene(da)})
         mV.save_metric(ds_snapshot, folder_save, f'pr_snapshot', source, dataset, timescale, experiment, resolution) if switch['save'] else None
@@ -134,51 +141,38 @@ def calc_metrics(switch, da, source, dataset, timescale, experiment, resolution,
         mV.save_metric(ds_o_pr, folder_save, 'o_pr', source, dataset, timescale, experiment, resolution) if switch['save'] else None
 
 
-
 # -------------------------------------------------------------------------------- Get the data from the dataset / experiment and run ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, source, dataset, experiment, timescale, resolution, folder_save):
-    if switch['constructed_fields']:
-        return cF.var2D
-    elif switch['sample_data']:
-        return mV.load_sample_data(folder_save, source, dataset, 'pr', timescale, experiment, resolution)['pr']
-    else:
-        return gD.get_pr(source, dataset, experiment, timescale, resolution)
-    
-
-def run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save):
-    for experiment in experiments:
+def run_experiment(switch, source, dataset):
+    for experiment in mV.experiments:
         if experiment and source in ['cmip5', 'cmip6']:
             print(f'\t {experiment}') if mV.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
         print( '\t obserational dataset') if not experiment and source == 'obs' else None
-
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
-
         da = load_data(switch, source, dataset, experiment, timescale, resolution, folder_save)
         calc_metrics(switch, da, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_precip_metrics(switch, datasets, timescale, experiments, resolution, folder_save = f'{mV.folder_save}/pr'):
-    print(f'Running pr metrics with {resolution} {timescale} data')
+
+@mF.timing_decorator
+def run_pr_metrics(switch):
+    if not switch['run']:
+        return
+    print(f'Running pr metrics with {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
-    for dataset in datasets:
+    for dataset in mV.datasets:
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
-
-        run_experiment(switch, source, dataset, timescale, experiments, resolution, folder_save)
+        run_experiment(switch, source, dataset)
 
 
 
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
 if __name__ == '__main__':
-
-    start = timeit.default_timer()
-
-    # choose which metrics to calculate
-    switch = {
+    run_pr_metrics(switch = {
         'constructed_fields': False, 
         'sample_data':        True,
 
@@ -189,23 +183,11 @@ if __name__ == '__main__':
         'F_pr10':             False,
         'o_pr':               False,
         
+        'run':                False,
         'save':               True
         }
-
-    # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_precip_metrics(switch = switch,
-                                    datasets =    mV.datasets, 
-                                    experiments = mV.experiments,
-                                    timescale =   'daily',
-                                    resolution =  mV.resolutions[0],
-                                    folder_save = f'{mV.folder_save[0]}/pr'
-                                   )
+    )
     
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
-    
-
 
 
 

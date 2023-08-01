@@ -4,7 +4,6 @@ import xarray as xr
 import warnings
 from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
-import timeit
 
 import os
 import sys
@@ -18,30 +17,37 @@ import constructed_fields as cF # imports fields for testing
 
 # ---------------------------------------------------------------------------------- Calculate plot metric ----------------------------------------------------------------------------------------------------- #
 
+def get_data(switch, source, dataset, options, metric, experiment):
+    if switch['snapshot']:
+        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_snapshot', source)
+        filename = metric.get_filename(f'{metric.name}_snapshot', source, dataset, options.timescale, options.experiment[0], options.resolution)
+        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_snapshot']
+    if switch['climatology'] or switch['change with warming']:
+        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_tMean', source)
+        filename = metric.get_filename(f'{metric.name}_tMean', source, dataset, options.timescale, experiment, options.resolution)
+        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_tMean']
+    return scene
+
 def calc_scene(switch, dataset, options, metric):
     source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    if switch['snapshot']:
-        title = f'{metric.option} snapshot'
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_snapshot', source)
-        filename = metric.get_filename(f'{metric.name}_snapshot', source, dataset, options.timescale, options.experiment, options.resolution)
-        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_snapshot']
-    if switch['climatology']:
-        title = f'{metric.option} time mean'
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_tMean', source)
-        filename = metric.get_filename(f'{metric.name}_tMean', source, dataset, options.timescale, options.experiment, options.resolution)
-        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_tMean']
+    scene = get_data(switch, source, dataset, options, metric, options.experiment[0]) if switch['snapshot'] or switch['climatology'] else None
+
     if switch['change with warming']:
-        title = f'{metric.option} change with warming'
-        scene_historical = mV.load_metric(metric.variable_type, f'{metric.name}_tMean', dataset, timescale = mV.timescales[0], experiment = mV.experiments[0], resolution= mV.resolutions[0])[metric.option]
-        scene_warm = mV.load_metric(metric.variable_type, f'{metric.name}_tMean', dataset, experiment=mV.experiments[1], resolution= mV.resolutions[0])[metric.option]
+        scene_historical = get_data(switch, source, dataset, options, metric, metric.experiment[0])
+        scene_warm = get_data(switch, source, dataset, options, metric, metric.experiment[1])
         scene = scene_warm - scene_historical 
-    return scene, title
+    return scene
 
+# -------------------------------------------------------------------------------------- plot / format plot ----------------------------------------------------------------------------------------------------- #
 
-# -------------------------------------------------------------------------------------- plot functions ----------------------------------------------------------------------------------------------------- #
+def find_title(switch, metric):
+    title = f'{metric.option} snapshot' if switch['snapshot'] else None
+    title = f'{metric.option} clim' if switch['climatology'] else title
+    title = f'{metric.option} change with warming' if switch['change with warming'] else title
+    return title
 
 def plot_one_scene(switch, dataset, options, metric):
-    calc_cbar_limits = False
+    calc_cbar_limits = True
     if calc_cbar_limits:
         vmin, vmax = mF.find_limits(switch, [dataset], options, metric, calc_scene,
             quantileWithin_low = 0,    # remove extreme low values from colorbar range 
@@ -49,18 +55,18 @@ def plot_one_scene(switch, dataset, options, metric):
             )
     else:
         vmin, vmax = [None , None]
-    
+
     fig, ax = mF.create_map_figure(width = 12, height = 4)
-    scene, title = calc_scene(switch, dataset, options, metric)
+    scene = calc_scene(switch, dataset, options, metric)
     pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
 
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
     mF.scale_ax(ax, scaleby = 1.15)
-    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = metric.cbar_label, text_pad = 0.125)
+    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = metric.label, text_pad = 0.125)
     mF.plot_xlabel(fig, ax, 'Lon', pad = 0.1, fontsize = 12)
     mF.plot_ylabel(fig, ax, 'Lat', pad = 0.055, fontsize = 12)
-    mF.plot_axtitle(fig, ax, f'{dataset}: {title}', xpad = 0.005, ypad = 0.025, fontsize = 15)
+    mF.plot_axtitle(fig, ax, f'{dataset}: {find_title(switch, metric)}', xpad = 0.005, ypad = 0.025, fontsize = 15)
     mF.format_ticks(ax, labelsize = 11)
     return fig
 
@@ -75,7 +81,7 @@ def plot_multiple_scenes(switch, datasets, options, metric):
         quantileBetween_high = 1   # remove extreme high models' from colorbar range
         )
     else:
-        vmin, vmax = [None , None] # needs to be numbers if used, otherwise the limits will vary from subplot to subplot (not reflecting common colorbar)
+        vmin, vmax = [None , None] # needs to be fixed values if used, otherwise the limits will vary from subplot to subplot (not reflecting common colorbar)
     
     nrows = 5
     ncols = 4                                                     
@@ -85,7 +91,7 @@ def plot_multiple_scenes(switch, datasets, options, metric):
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
-        scene, title = calc_scene(switch, dataset, options, metric)
+        scene = calc_scene(switch, dataset, options, metric)
         pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
 
         mF.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
@@ -106,7 +112,7 @@ def plot_multiple_scenes(switch, datasets, options, metric):
         mF.plot_axtitle(fig, ax, dataset, xpad = 0.002, ypad = 0.0095, fontsize = 9)
         mF.format_ticks(ax, i, num_subplots, ncols, col, labelsize = 9)
 
-    ax.text(0.5, 0.95, title, ha = 'center', fontsize = 15, transform=fig.transFigure)
+    ax.text(0.5, 0.95, find_title(switch, metric), ha = 'center', fontsize = 15, transform=fig.transFigure)
 
     cbar_position = [0.225, 0.095, 0.60, 0.02] # [left, bottom, width, height]
     cbar_ax = fig.add_axes(cbar_position)
@@ -115,18 +121,19 @@ def plot_multiple_scenes(switch, datasets, options, metric):
     mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
+# ----------------------------------------------------------------------- Find the metric and labels / run ----------------------------------------------------------------------------------------------------- #
 
-# ----------------------------------------------------------------------- Find the metric and units / run ----------------------------------------------------------------------------------------------------- #
-
+@mF.timing_decorator
 def run_map_plot(switch):
-    datasets = mV.datasets
-    options = mF.dataset_class(mV.timescales[0], mV.experiments[0], mV.resolutions[0])
+    if not switch['run']:
+        return
+    options = mF.dataset_class(mV.timescales[0], mV.experiments, mV.resolutions[0])
     metric = mF.get_metric_object(switch)
 
-    print(f'Plotting map_plot with {options.timescale} {options.resolution} data')
+    print(f'Plotting map_plot from {options.timescale} {options.resolution} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
-    fig = plot_one_scene(switch, datasets[0], options, metric) if switch['one dataset'] else plot_multiple_scenes(switch, datasets, options, metric)
+    fig = plot_one_scene(switch, mV.datasets[0], options, metric) if switch['one dataset'] else plot_multiple_scenes(switch, mV.datasets, options, metric)
 
     if switch['save'] or switch['save to desktop']:
         source = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
@@ -144,16 +151,12 @@ def run_map_plot(switch):
 
 
 
-
 if __name__ == '__main__':
-
-    start = timeit.default_timer()
-    # choose which metrics to plot
-    switch = {
+    run_map_plot(switch = {
         # metrics
         'pr':                  False,
         'pr99':                False,
-        'rx1day_pr':           True,
+        'rx1day_pr':           False,
         'rx5day_pr':           False,
 
         'obj':                 False,
@@ -165,7 +168,7 @@ if __name__ == '__main__':
         'hur':                 False,
         'rlut':                False,
 
-        'lcf':                 False,
+        'lcf':                 True,
         'hcf':                 False,
 
 
@@ -182,19 +185,13 @@ if __name__ == '__main__':
         
 
         # show/save
-        'one dataset':         False,
+        'one dataset':         True,
+        'run':                 False,
         'show':                True,
         'save':                False,
         'save to desktop':     False
         }
-
-
-
-    # plot and save figure
-    run_map_plot(switch)
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
+    )
 
 
 

@@ -2,7 +2,6 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from scipy import stats
-import timeit
 
 import os
 import sys
@@ -14,21 +13,7 @@ import myVars as mV # imports common variables
 
 # ---------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
 
-def calc_anomalies(array, timescale):
-    if timescale == 'monthly': 
-        climatology = array.groupby('time.month').mean('time')
-        array = array.groupby('time.month') - climatology 
-
-    if timescale == 'daily': 
-        rolling_mean = array.rolling(time=12, center=True).mean()
-        array = array - rolling_mean
-        array = array.dropna(dim='time')
-    return array
-
-
-def calc_metric(switch, dataset, options, metric):
-    source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-
+def get_data(source, dataset, options, metric):
     if metric.option in ['rome']:
         folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
         filename = metric.get_filename(metric.option, source, dataset, 'daily', options.experiment, options.resolution) # rome must be calculated from daily data and then resampled
@@ -36,27 +21,41 @@ def calc_metric(switch, dataset, options, metric):
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
     elif metric.option in ['pr99']:
         folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
-        filename = metric.get_filename(metric.name, source, dataset, 'daily', options.experiment, options.resolution) # rome must be calculated from daily data and then resampled
+        filename = metric.get_filename(metric.name, source, dataset, 'daily', options.experiment, options.resolution) # same for pr99
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
-    else:
+    elif metric.option in ['rx1day_pr', 'rx5day_pr']:
+        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
+        filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, 'daily', options.experiment, options.resolution)
+        array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']        
+    else: 
         folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
         filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, options.timescale, options.experiment, options.resolution)
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_sMean']
-
     array = array.sel(time = slice('2000-03', '2021')) if dataset == 'CERES' else array
-    array = mF.resample_timeMean(array, options.timescale)
-    array = calc_anomalies(array, options.timescale) if switch['anomalies'] else array
     return array
 
+def calc_anomalies(array, timescale):
+    if timescale == 'monthly': 
+        climatology = array.groupby('time.month').mean('time')
+        array = array.groupby('time.month') - climatology 
+    if timescale == 'daily': 
+        rolling_mean = array.rolling(time=12, center=True).mean()
+        array = array - rolling_mean
+        array = array.dropna(dim='time')
+    return array
 
-# ------------------------------------------------------------------------------------- Tyeps of scatter plots ----------------------------------------------------------------------------------------------------- #
+def calc_metric(switch, dataset, options, metric):
+    source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    array = get_data(source, dataset, options, metric)
+    array = mF.resample_timeMean(array, options.timescale)
+    
+    if switch['anomalies']:
+        array = calc_anomalies(array, options.timescale)
+    return array
 
-def plot_correlation(ax, x,y, position, fontsize):
-    res= stats.pearsonr(x,y)
-    if res[1]<=0.05:
-        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=position, textcoords='axes fraction', fontsize = fontsize, color = 'r')
+# ---------------------------------------------------------------------------------------- Plot / format plot ----------------------------------------------------------------------------------------------------- #
 
-def plot_ax_scatter(ax, x, y, metric_1):
+def plot_ax_scatter(switch, ax, x, y, metric_1):
     if switch['bins']:
         pcm = ax.hist2d(x,y,[20,20], cmap = metric_1.cmap)
         bin_width = (x.max() - x.min())/100 # Each bin is one percent of the range of x values
@@ -65,21 +64,22 @@ def plot_ax_scatter(ax, x, y, metric_1):
         for i in np.arange(0,len(bins)-1):
             y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<bins[i+1])).mean())
         ax.plot(bins[:-1], y_bins, metric_1.color)
-
     else:
         pcm = ax.scatter(x, y, facecolors='none', edgecolor= metric_1.color)    
     return pcm
 
-
-# ---------------------------------------------------------------------------------------- formatting plot ----------------------------------------------------------------------------------------------------- #
+def plot_correlation(ax, x,y, position, fontsize):
+    res= stats.pearsonr(x,y)
+    if res[1]<=0.05:
+        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=position, textcoords='axes fraction', fontsize = fontsize, color = 'r')
 
 def plot_one_scatter(switch, dataset, options, metric_0, metric_1):
     fig, ax = mF.create_figure(width = 8, height = 5.5)
     x = calc_metric(switch, dataset, options, metric_0)
     y = calc_metric(switch, dataset, options, metric_1)
     x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] else x
-        
-    pcm = plot_ax_scatter(ax, x, y, metric_1)
+
+    pcm = plot_ax_scatter(switch, ax, x, y, metric_1)
     plot_correlation(ax, x,y, position = (0.8, 0.9), fontsize = 12)
 
     mF.move_col(ax, -0.035)
@@ -107,7 +107,7 @@ def plot_multiple_scatter(switch, datasets, options, metric_0, metric_1):
         y = calc_metric(switch, dataset, options, metric_1)
         x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] else x
             
-        pcm = plot_ax_scatter(ax, x, y, metric_1)
+        pcm = plot_ax_scatter(switch, ax, x, y, metric_1)
         plot_correlation(ax, x,y, position = (0.675, 0.85), fontsize = 8)
 
         mF.move_col(ax,  -0.0715+0.0025)   if col == 0 else None
@@ -142,10 +142,12 @@ def plot_multiple_scatter(switch, datasets, options, metric_0, metric_1):
     mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
+# ---------------------------------------------------------------------------------- Find metric / labels and run ----------------------------------------------------------------------------------------------------- #
 
-# ---------------------------------------------------------------------------------- Find metric / units and run ----------------------------------------------------------------------------------------------------- #
-
+@mF.timing_decorator
 def run_scatter_plot(switch):
+    if not switch['run']:
+        return
     options = mF.dataset_class(mV.timescales[0], mV.experiments[0], mV.resolutions[0])
     keys = [k for k, v in switch.items() if v]  # list of True keys
     switch_0, switch_1 = switch.copy(), switch.copy() 
@@ -175,9 +177,7 @@ def run_scatter_plot(switch):
 
 
 if __name__ == '__main__':
-    start = timeit.default_timer()
-    # choose which metrics to plot
-    switch = {
+    run_scatter_plot(switch = {
         # metrics
             # organization
             'rome':                True,
@@ -193,9 +193,9 @@ if __name__ == '__main__':
 
             'hus':                 False,
             'hur':                 False,
-            'rlut':                True,
+            'rlut':                False,
 
-            'lcf':                 False,
+            'lcf':                 True,
             'hcf':                 False,
 
         # masked by
@@ -203,28 +203,20 @@ if __name__ == '__main__':
         'ascent':              False,
 
         # metric calculation
-        'anomalies':           True,
+        'anomalies':           False,
 
         # plot modifications
         'bins':                True,
         'xy':                  True,
 
-        # show/save
-        'one dataset':         False,
+        # run/show/save
+        'one dataset':         True,
+        'run':                 True,
         'show':                True,
         'save':                False,
         'save to desktop':     False
         }
-
-    # plot and save figure
-    run_scatter_plot(switch)
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
-
-
-
-
+    )
 
 
 

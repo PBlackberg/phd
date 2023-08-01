@@ -5,6 +5,8 @@ import os
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import time
+from functools import wraps
 
 # ------------------------------------------------------- functions for common operations --------------------------------------------------------------------------------------------------- #
 
@@ -76,13 +78,24 @@ def resample_timeMean(da, timeMean_option=''):
 def find_limits(switch, datasets, options, metric, func, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
-        scene, _ = func(switch, dataset, options, metric)
+        scene = func(switch, dataset, options, metric)
         vmin_list = np.append(vmin_list, np.nanquantile(scene, quantileWithin_low))
         vmax_list = np.append(vmax_list, np.nanquantile(scene, quantileWithin_high))
     vmin = np.nanquantile(vmin_list, quantileBetween_low)
     vmax = np.nanquantile(vmax_list, quantileBetween_high)
     return vmin, vmax
 
+def timing_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        ''' wrapper '''
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"Function '{func.__name__}' took {time_taken/60:.2f} minutes.")
+        return result
+    return wrapper
 
 
 # ---------------------------------------------------------------- functions for plotting --------------------------------------------------------------------------------------------------- #
@@ -331,18 +344,19 @@ def get_metric_object(switch):
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
         # precipitation metrics (pr)
-        if key in ['pr', 'pr99', 'rx1day_pr', 'rx5day_pr']:
+        if key in ['pr', 'pr99', 'pr99_meanIn', 'rx1day_pr', 'rx5day_pr']:
             variable_type, cmap, label, color = ['pr', 'Blues', 'pr [mm day{}]'.format(get_super('-1')), 'b']
-        metric, metric_option = ['pr', key] if key ==             'pr' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key] if key == 'pr95' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key] if key == 'pr97' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key] if key == 'pr99' else [metric, metric_option]
-        metric, metric_option = ['rxday_pr', key] if key ==       'rx1day_pr' else [metric, metric_option]
-        metric, metric_option = ['rxday_pr', key] if key ==       'rx5day_pr' else [metric, metric_option]
+        metric, metric_option = ['pr', key] if key ==                     'pr' else [metric, metric_option]
+        metric, metric_option = ['percentiles_pr', key]       if key == 'pr95' else [metric, metric_option]
+        metric, metric_option = ['percentiles_pr', key]       if key == 'pr97' else [metric, metric_option]
+        metric, metric_option = ['percentiles_pr', key]       if key == 'pr99' else [metric, metric_option]
+        metric, metric_option = ['meanInPercentiles_pr', 'pr99'] if key == 'pr99_meanIn' else [metric, metric_option]
+        metric, metric_option = ['rxday_pr', key]             if key == 'rx1day_pr' else [metric, metric_option]
+        metric, metric_option = ['rxday_pr', key]             if key == 'rx5day_pr' else [metric, metric_option]
 
         # vertical pressure velocity (wap)
         if key in ['wap']:
-            variable_type, cmap, label, color = ['wap', 'RdBu_r', 'wap [hPa day' + get_super('-1') +']']
+            variable_type, cmap, label = ['wap', 'RdBu_r', 'wap [hPa day' + get_super('-1') +']']
             cmap = 'Reds' if switch['descent'] else cmap
             cmap = 'Blues' if switch['ascent'] else cmap
         metric, metric_option = [f'wap{pick_region(switch)}', f'wap{pick_region(switch)}'] if key == 'wap' else [metric, metric_option]
@@ -364,7 +378,7 @@ def get_metric_object(switch):
 
         #  cloud fraction (cl)
         if key in ['lcf', 'hcf']:
-            variable_type, cmap, label = ['cl', 'Blues', 'Cloud fraction [%]']
+            variable_type, cmap, label, color = ['cl', 'Blues', 'Cloud fraction [%]', 'b']
             metric, metric_option = [f'lcf{pick_region(switch)}', f'lcf{pick_region(switch)}'] if key == 'lcf' else [metric, metric_option]
             metric, metric_option = [f'hcf{pick_region(switch)}', f'hcf{pick_region(switch)}'] if key == 'hcf' else [metric, metric_option]
 
@@ -374,9 +388,13 @@ def get_metric_object(switch):
         metric, metric_option = [f'hus{pick_region(switch)}', f'hus{pick_region(switch)}'] if key == 'hus' else [metric, metric_option]
 
         # organization
+        if key in ['obj']:
+            variable_type, cmap, label,  = 'org', 'Greys', 'binary'
+            metric, metric_option = 'obj', 'o_scene' if key == 'obj' else [metric, metric_option]
+
         if key in ['rome']:
             variable_type, cmap, label,  = 'org', 'Greys', 'ROME [km' + get_super('2') + ']' 
-            metric, metric_option = 'rome', 'rome'
+            metric, metric_option = 'rome', 'rome' if key == 'rome' else [metric, metric_option]
 
         if key in ['change with warming']:
             cmap = 'RdBu_r'
