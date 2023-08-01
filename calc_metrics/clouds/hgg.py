@@ -157,11 +157,9 @@ def run_hgg_metrics(switch, ws, year_start = 1983, year_finish = 2017, folder_sa
 
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
-if __name__ == '__main__':
-
-    start = timeit.default_timer()
-    # choose which metrics to plot
-    switch = {
+if __name__ == '__main__':    
+    # Choose weather state (ws) (number between 1-11), and years to plot [1983, 2017]
+    run_hgg_metrics(switch = {
         '3hr':      False,
         'day':      False,
         'month':    False,
@@ -172,17 +170,13 @@ if __name__ == '__main__':
 
         'show':     True,
         'save':     False
-        }
-    
-    # Choose weather state (ws) (number between 1-11), and years to plot [1983, 2017]
-    run_hgg_metrics(switch, 
-                    ws=7, 
-                    year_start=1999, 
-                    year_finish=2018, 
-                    folder_save = f'{mV.folder_save}/hgg') 
+        }, 
+        ws=7, 
+        year_start=1999, 
+        year_finish=2018, 
+        folder_save = f'{mV.folder_save}/hgg'
+        ) 
 
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
 
 
 

@@ -62,18 +62,65 @@ def calc_plot_var(switch, variable_type, metric, metric_option, dataset, timesca
     source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
 
     data_timescale = 'daily' if metric_option == 'rome' else timescale
-    dataset = 'GPCP' if dataset == 'CERES' and metric_option == 'rome' else dataset
+    dataset = 'GPCP' if dataset == 'ERA5' and metric_option == 'rome' else dataset
 
     array = mV.load_metric(folder_load, variable_type, metric, source, dataset, data_timescale, experiment = mV.experiments[0], resolution=resolution)[metric_option]
     array = mF.resample_timeMean(array, timescale)
     array = calc_anomalies(array, timescale) if switch['anomalies'] else array
 
-    array = array.sel(time = slice('2000-03', '2021')) if dataset == 'GPCP' else array
-    array = array.sel(time = slice('2000', '2021')) if dataset == 'CERES' else array
+    # array = array.sel(time = slice('2000-03', '2021')) if dataset == 'GPCP' else array
+    # array = array.sel(time = slice('2000', '2021')) if dataset == 'CERES' else array
     return array
 
 
 # -------------------------------------------------------------------------------------- different plots ----------------------------------------------------------------------------------------------------- #
+
+xlims = {
+    'TaiESM1':          [-200000, 200000],              # 1
+    'BCC-CSM2-MR':      [-100000, 100000],       # 2
+    'FGOALS-g3':        [-100000, 100000],              # 3
+    'CNRM-CM6-1':       [-100000, 100000],     # 4
+    'MIROC6':           [-100000, 100000],     # 5
+    'MPI-ESM1-2-LR':    [-200000, 200000],     # 6
+    'NorESM2-MM':       [-200000, 200000],     # 7
+    'GFDL-CM4':         [-100000, 100000],     # 8
+    'CanESM5':          [-50000, 50000],       # 9
+    'CMCC-ESM2':        [-200000, 200000],     # 10
+    'UKESM1-0-LL':      [-100000, 100000],     # 11
+    'MRI-ESM2-0':       [-200000, 200000],     # 12
+    'CESM2':            [-200000, 200000],     # 19
+    'NESM3':            [-200000, 200000],     # 14
+    'IITM-ESM':         [-200000, 200000],     # 15
+    'EC-Earth3':        [-100000, 100000],     # 16
+    'INM-CM5-0':        [-100000, 100000],     # 17
+    'IPSL-CM6A-LR':     [-100000, 100000],     # 18
+    'KIOST-ESM':        [-250000, 250000],     # 19
+    'ERA5':             [-200000, 200000],     # 20
+}
+
+xticks = {
+    'TaiESM1':          [-200000, 0, 200000],              # 1
+    'BCC-CSM2-MR':      [-50000, 0, 50000],       # 2
+    'FGOALS-g3':        [-100000, 0, 100000],              # 3
+    'CNRM-CM6-1':       [-100000, 0, 100000],     # 4
+    'MIROC6':           [-100000, 0, 100000],     # 5
+    'MPI-ESM1-2-LR':    [-200000, 0, 200000],     # 6
+    'NorESM2-MM':       [-200000, 0, 200000],     # 7
+    'GFDL-CM4':         [-100000, 0, 100000],     # 8
+    'CanESM5':          [-50000, 0, 50000],       # 9
+    'CMCC-ESM2':        [-200000, 0, 200000],     # 10
+    'UKESM1-0-LL':      [-100000, 0, 100000],     # 11
+    'MRI-ESM2-0':       [-200000, 0, 200000],     # 12
+    'CESM2':            [-200000, 0, 200000],     # 19
+    'NESM3':            [-200000, 0, 200000],     # 14
+    'IITM-ESM':         [-200000, 0, 200000],     # 15
+    'EC-Earth3':        [-100000, 0, 100000],     # 16
+    'INM-CM5-0':        [-100000, 0, 100000],     # 17
+    'IPSL-CM6A-LR':     [-100000, 0, 100000],     # 18
+    'KIOST-ESM':        [-250000, 0, 250000],     # 19
+    'ERA5':             [-200000, 0, 200000],     # 20
+}
+
 
 def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolution, folder_save):    
     nrows = 5
@@ -97,20 +144,24 @@ def plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolu
         color = 'g'
         plot_ax_bins(ax, x, y, color)
 
-        mF.move_col(ax,  -0.0715+0.0025) if col == 0 else None
-        mF.move_col(ax, -0.035)   if col == 1 else None
-        mF.move_col(ax, 0.0)   if col == 2 else None
-        mF.move_col(ax, 0.035)    if col == 3 else None
+        mF.move_col(ax,  -0.0715+0.0025)   if col == 0 else None
+        mF.move_col(ax, -0.035)            if col == 1 else None
+        mF.move_col(ax, 0.0)               if col == 2 else None
+        mF.move_col(ax, 0.035)             if col == 3 else None
 
-        mF.move_row(ax, 0.0875)   if row == 0 else None
-        mF.move_row(ax, 0.0495)  if row == 1 else None
-        mF.move_row(ax, 0.01)  if row == 2 else None
-        mF.move_row(ax, -0.0195) if row == 3 else None
-        mF.move_row(ax, -0.05) if row == 4 else None
+        mF.move_row(ax, 0.0875)            if row == 0 else None
+        mF.move_row(ax, 0.0495)            if row == 1 else None
+        mF.move_row(ax, 0.01)              if row == 2 else None
+        mF.move_row(ax, -0.0195)           if row == 3 else None
+        mF.move_row(ax, -0.05)             if row == 4 else None
 
         mF.scale_ax_x(ax, 0.9)
         mF.scale_ax_y(ax, 1)
 
+        ax.set_ylim([-1, 1])
+        ax.set_xlim(xlims[dataset])
+        ax.set_xticks(xticks[dataset])
+        ax.set_xticklabels(xticks[dataset])
         ax.tick_params(axis='x', labelsize=10)
 
         if i >= num_subplots-ncols:

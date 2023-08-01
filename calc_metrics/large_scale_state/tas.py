@@ -94,11 +94,7 @@ def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
 if __name__ == '__main__':
-
-    start = timeit.default_timer()
-
-    # choose which metrics to calculate
-    switch = {
+    ds_metric = run_tas_metrics(switch = {
         'constructed_fields': False, 
         'sample_data':        True,
 
@@ -111,20 +107,7 @@ if __name__ == '__main__':
         
         'save':               True
         }
-
-    # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_tas_metrics(switch = switch,
-                               datasets =    mV.datasets, 
-                               experiments = mV.experiments,
-                               timescale =   mV.timescales[0],
-                               resolution =  mV.resolutions[0],
-                                # folder_save = f'{mV.folder_save_gadi}/cl'
-                                )
-
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
-    
+    )
 
 
 
