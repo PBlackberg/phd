@@ -39,7 +39,7 @@ def pick_wap_region(switch, da, source, dataset, timescale, experiment, resoluti
     return da, region
 
 def calc_vertical_mean(da):
-    da = da.sel(plev=slice(850e2,0)) # free troposphere (most values at 1000 hPa over land are NaN)
+    da = da.sel(plev=slice(0,850e2)) # free troposphere (most values at 1000 hPa over land are NaN)
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
 
@@ -77,8 +77,17 @@ def run_experiment(switch, source, dataset, timescale, experiments, resolution, 
 
         if mV.no_data(source, experiment, mV.data_exist(dataset, experiment)):
             continue
+            
+        if dataset == 'ERA5':
+            r = gD.get_hus(source, dataset, timescale, experiment, resolution) # unitless (kg/kg)
+            t = gD.get_ta(source, dataset, timescale, experiment, resolution) + 273.15 # convert to degrees Kelvin
+            p = t['plev'] # Pa
+            e_s = 611.2 * np.exp(17.67*(t-273.15)/(t-29.66)) # saturation water vapor pressure
+            r_s = 0.622 * e_s/p
+            da = (r/r_s)*100 # relative humidity
+        else:
+            da = load_hur_data(switch, source, dataset, timescale, experiment, resolution, folder_load = folder_save)
 
-        da = load_hur_data(switch, source, dataset, timescale, experiment, resolution, folder_load = folder_save)
         da = calc_vertical_mean(da)
         da, region = pick_wap_region(switch, da, source, dataset, timescale, experiment, resolution, folder_load = f'{mV.folder_save}/wap')
         calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save)
@@ -121,7 +130,7 @@ if __name__ == '__main__':
                                 timescale =   mV.timescales[0],
                                 experiments = mV.experiments,
                                 resolution =  mV.resolutions[0],
-                                folder_save = f'{mV.folder_save_gadi}/hur'
+                                folder_save = f'{mV.folder_save[0]}/hur'
                                 )
 
 

@@ -38,7 +38,6 @@ def get_pr(source, dataset, timescale, experiment, resolution):
         da.attrs['units']= 'mm day' + mF.get_super('-1')
     return da
 
-
 # ----------------------------------------------------------------------------------- Vertical pressure velocity ----------------------------------------------------------------------------------------------------- #
 
 def get_wap(source, dataset, experiment, timescale, resolution):
@@ -54,7 +53,6 @@ def get_wap(source, dataset, experiment, timescale, resolution):
         da = ds['wap']*60*60*24/100 # convert to hPa/day   
         da.attrs['units']= 'hPa day' + mF.get_super('-1')
     return da
-
 
 # -------------------------------------------------------------------------------------- Surface temperature ----------------------------------------------------------------------------------------------------- #
 
@@ -72,6 +70,26 @@ def get_tas(source, dataset, experiment, timescale, resolution):
         da.attrs['units']= mF.get_super('o') + 'C'
     return da
 
+# ----------------------------------------------------------------------------------------- temperature ----------------------------------------------------------------------------------------------------- #
+
+def get_ta(source, dataset, timescale, experiment, resolution):
+    ''' temperature
+    '''
+    # if source == 'cmip5':
+    #     ds = cfiles.get_cmip5_data('tas', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+    #     da = ds['tas']-273.15 # convert to degrees Celsius
+    #     da.attrs['units']= mF.get_super('o') + 'C'
+
+    # if source == 'cmip6':
+    #     ds = cfiles.get_cmip6_data('tas', mV.institutes[dataset], dataset, experiment, timescale, resolution)
+    #     da = ds['tas']-273.15 # convert to degrees Celsius
+    #     da.attrs['units']= mF.get_super('o') + 'C'
+
+    if dataset == 'ERA5':
+        ds = cfiles.get_era5_monthly('t', resolution)
+        da = ds['t']-273.15 # convert to degrees Celsius
+        da.attrs['units']= mF.get_super('o') + 'C'
+    return da
 
 # ---------------------------------------------------------------------------------------- Cloud fraction ----------------------------------------------------------------------------------------------------- #
 
@@ -89,7 +107,6 @@ def get_cl(source, dataset, experiment, timescale, resolution):
         da.attrs['units']= '%'
     return da
 
-
 # ---------------------------------------------------------------------------------- Hybrid-sgima pressure coordinates ----------------------------------------------------------------------------------------------------- #
 
 def get_p_hybridsigma(source, dataset, experiment, timescale, resolution):
@@ -103,7 +120,6 @@ def get_p_hybridsigma(source, dataset, experiment, timescale, resolution):
         _, ds = cfiles.get_cmip6_cl('cl', mV.institutes[dataset], dataset, experiment, timescale, resolution)
         da = ds['p_hybridsigma'] # units in hPa/day
     return da
-
 
 # ------------------------------------------------------------------------------------------ Relative humidity ----------------------------------------------------------------------------------------------------- #
 
@@ -119,7 +135,6 @@ def get_hur(source, dataset, timescale, experiment, resolution):
         da = ds['hur'] # units in %
     return da
 
-
 # ------------------------------------------------------------------------------------------- Specific humidity ----------------------------------------------------------------------------------------------------- #
 
 def get_hus(source, dataset, timescale, experiment, resolution):
@@ -132,8 +147,11 @@ def get_hus(source, dataset, timescale, experiment, resolution):
     if source == 'cmip6':
         ds = cfiles.get_cmip6_data('hus', mV.institutes[dataset], dataset, timescale, experiment, resolution)
         da = ds['hus'] # unitless kg/kg
-    return da
 
+    if dataset == 'ERA5':
+        ds = cfiles.get_era5_monthly('q', resolution)
+        da = ds['q'] # unitless kg/kg
+    return da
 
 # --------------------------------------------------------------------------------------- Outgoing longwave radiation ----------------------------------------------------------------------------------------------------- #
 
@@ -164,9 +182,14 @@ def get_var_data(switch, source, dataset, timescale, experiment, resolution, fol
     if switch['wap']:
         da = get_wap(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'wap': da}), f'{folder_save}/wap', source, dataset, 'wap', timescale, experiment, resolution) if switch['save'] else None
+
     if switch['tas']:
         da = get_tas(source, dataset, experiment, timescale, resolution)
         mV.save_sample_data(xr.Dataset({'tas': da}), f'{folder_save}/tas', source, dataset, 'tas', timescale, experiment, resolution) if switch['save'] else None
+
+    if switch['ta']:
+        da = get_ta(source, dataset, timescale, experiment, resolution)
+        mV.save_sample_data(xr.Dataset({'ta': da}), f'{folder_save}/ta', source, dataset, 'ta', timescale, experiment, resolution) if switch['save'] else None
 
     if switch['cl']:
         da = get_cl(source, dataset, experiment, timescale, resolution)
@@ -220,12 +243,13 @@ if __name__ == '__main__':
 
     start = timeit.default_timer()
     switch = {
-        'pr'  :          True,
+        'pr'  :          False,
         'wap' :          False,
         'tas' :          False,
+        'ta' :           True,
         'cl'  :          False,
         'p_hybridsigma': False,
-        'hus' :          False,
+        'hus' :          True,
         'hur' :          False,
         'rlut':          False,
 
@@ -238,7 +262,7 @@ if __name__ == '__main__':
                  experiments = mV.experiments,
                  timescale =   mV.timescales[0],
                  resolution =  mV.resolutions[0],
-                 folder_save = mV.folder_save_gadi
+                 folder_save = mV.folder_save[0]
                  )
     
 

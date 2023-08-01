@@ -27,45 +27,46 @@ models_cmip5 = [
     ]
 
 models_cmip6 = [
-    'TaiESM1',           # 1
-    'BCC-CSM2-MR',       # 2
-    'FGOALS-g3',         # 3
-    'CNRM-CM6-1',        # 4
-    'MIROC6',            # 5
-    'MPI-ESM1-2-LR',     # 6
-    'NorESM2-MM',        # 7
-    'GFDL-CM4',          # 8
-    'CanESM5',           # 9
-    'CMCC-ESM2',         # 10
-    'UKESM1-0-LL',       # 11
-    'MRI-ESM2-0',        # 12
-    'CESM2-WACCM',       # 19
-    'NESM3',             # 14
-    'IITM-ESM',          # 15 (new from here)
-    'EC-Earth3',         # 16
-    'INM-CM5-0',         # 17
-    'IPSL-CM6A-LR',      # 18
-    'KIOST-ESM',         # 19
+    # 'TaiESM1',           # 1
+    # 'BCC-CSM2-MR',       # 2
+    # 'FGOALS-g3',         # 3
+    # 'CNRM-CM6-1',        # 4
+    # 'MIROC6',            # 5
+    # 'MPI-ESM1-2-LR',     # 6
+    # 'NorESM2-MM',        # 7
+    # 'GFDL-CM4',          # 8
+    # 'CanESM5',           # 9
+    # 'CMCC-ESM2',         # 10
+    # 'UKESM1-0-LL',       # 11
+    # 'MRI-ESM2-0',        # 12
+    # 'CESM2-WACCM',       # 19
+    # 'NESM3',             # 14
+    # 'IITM-ESM',          # 15 (new from here)
+    # 'EC-Earth3',         # 16
+    # 'INM-CM5-0',         # 17
+    # 'IPSL-CM6A-LR',      # 18
+    # 'KIOST-ESM',         # 19
     ]
 
 observations = [
-    'GPCP',              # precipitation (from project al33 on gadi)
+    # 'GPCP',              # precipitation (from project al33 on nci)
     # 'ISCCP'              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
-    # 'CERES'              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
+    # 'CERES'              # radiation (https://ceres.larc.nasa.gov/data/)
+    'ERA5'               # relative humidity
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
 
 experiments = [
-    'historical',     
+    # 'historical',     
     # 'rcp85',             # warm scenario cmip5
     # 'ssp585',            # warm scenario for cmip6
-    # ''                   # observations
+    ''                   # observations
     ]
 
 timescales = [
-    'daily',
-    # 'monthly'
+    # 'daily',
+    'monthly'
     ]
 
 resolutions = [
@@ -74,8 +75,8 @@ resolutions = [
     ]
 
 folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
+    # os.path.expanduser("~") + '/Documents/data',
+    '/g/data/k10/cb4968/data'
     ]
 
 
@@ -192,7 +193,6 @@ def data_exist(model, experiment):
     data_exist = 'True'
     return data_exist
 
-
 def no_data(source, experiment, data_exists):
     if experiment and source in ['cmip5', 'cmip6']:
         pass
@@ -240,10 +240,6 @@ def find_general_metric_and_specify_cbar(switch):
     return variable_type, metric, metric_option, cmap, cbar_label
 
 
-
-
-
-
 # ---------------------------------------------------------------------------------------- Other variables ----------------------------------------------------------------------------------------------------- #
 
 institutes_cmip5 = {
@@ -282,7 +278,7 @@ institutes_cmip6 = {
     'GFDL-CM4':          'NOAA-GFDL',
     'UKESM1-0-LL':       'MOHC',
     'MRI-ESM2-0':        'MRI',
-    'CESM2-WACCM':       'NCAR'
+    'CESM2-WACCM':       'NCAR',
     'NESM3':             'NUIST',
     'IITM-ESM':          'CCCR-IITM',
     'EC-Earth3':         'EC-Earth-Consortium',

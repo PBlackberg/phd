@@ -211,7 +211,8 @@ def get_gpcp(resolution):
 
     ds = xr.open_mfdataset(path_fileList, combine='by_coords')
     ds = ds.rename({'latitude': 'lat', 'longitude': 'lon'})
-    da = ds.precip.sel(lat=slice(-35,35))
+    ds = ds.sel(lat=slice(-35,35))
+    da = ds['precip']
     valid_range = [0, 10000] # There are some e+33 values in the dataset
     da = da.where((da >= valid_range[0]) & (da <= valid_range[1]), np.nan)
     da = da.dropna('time', how='all') # drop days where all values are NaN (one day)
@@ -225,16 +226,38 @@ def get_gpcp(resolution):
     return ds
 
 
+# ----------------------------------------------------------------------------------------- OBS: ERA5 data ----------------------------------------------------------------------------------------------------------#
 
+def get_era5_monthly(variable, resolution):
+    ''' Reanalysis data from ERA5 '''
+    path_gen = f'/g/data/rt52/era5/pressure-levels/monthly-averaged/{variable}'
+    years = range(1998,2022)
+    folders = [f for f in os.listdir(path_gen) if (f.isdigit() and int(f) in years)]
+    folders = sorted(folders, key=int)
 
-# ----------------------------------------------------------------------------------------- OBS: IMERGE data ----------------------------------------------------------------------------------------------------------#
+    path_fileList = []
+    for folder in folders:
+        path_folder = os.path.join(path_gen, folder)
+        files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
+        files = sorted(files, key=lambda x: x[x.index("l_")+1:x.index("-")])
+        for file in files:
+            path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
 
-def get_imerge(resolution):
-    return
+    ds = xr.open_mfdataset(path_fileList, combine='by_coords')
+    ds = ds.rename({'latitude': 'lat', 'longitude': 'lon'})
+    ds = ds.sortby('lat').sel(lat = slice(-35,35))
+    da = ds[variable]
 
+    da['level'] = da['level']*100 # convert from millibar to Pa
+    da = da.rename({'level': 'plev'})
 
-
-
+    if resolution == 'regridded':
+        import xesmf_regrid as rD
+        regridder = rD.regrid_conserv_xesmf(ds)
+        da = regridder(da)
+    
+    ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
+    return ds
 
 
 
