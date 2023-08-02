@@ -16,8 +16,8 @@ import myVars as mV # imports common variables
 def get_data(source, dataset, options, metric):
     if metric.option in ['rome']:
         folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
-        filename = metric.get_filename(metric.option, source, dataset, 'daily', options.experiment, options.resolution) # rome must be calculated from daily data and then resampled
-        filename = metric.get_filename(metric.option, source, 'GPCP', 'daily', options.experiment, options.resolution) if dataset in ['ERA5', 'CERES'] else filename
+        filename = metric.get_filename(metric.name, source, dataset, 'daily', options.experiment, options.resolution) # rome must be calculated from daily data and then resampled
+        filename = metric.get_filename(metric.name, source, 'GPCP', 'daily', options.experiment, options.resolution) if dataset in ['ERA5', 'CERES'] else filename
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
     elif metric.option in ['pr99']:
         folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
@@ -105,7 +105,7 @@ def plot_multiple_scatter(switch, datasets, options, metric_0, metric_1):
 
         x = calc_metric(switch, dataset, options, metric_0)
         y = calc_metric(switch, dataset, options, metric_1)
-        x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] else x
+        x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] or switch['rome_equal_area'] else x
             
         pcm = plot_ax_scatter(switch, ax, x, y, metric_1)
         plot_correlation(ax, x,y, position = (0.675, 0.85), fontsize = 8)
@@ -181,10 +181,11 @@ if __name__ == '__main__':
         # metrics
             # organization
             'rome':                True,
+            'rome_equal_area':     False,
 
             # other
             'pr':                  False,
-            'pr99':                False,
+            'pr99':                True,
             'rx1day_pr':           False,
             'rx5day_pr':           False,
 
@@ -195,7 +196,7 @@ if __name__ == '__main__':
             'hur':                 False,
             'rlut':                False,
 
-            'lcf':                 True,
+            'lcf':                 False,
             'hcf':                 False,
 
         # masked by
@@ -203,20 +204,21 @@ if __name__ == '__main__':
         'ascent':              False,
 
         # metric calculation
-        'anomalies':           False,
+        'anomalies':           True,
 
         # plot modifications
         'bins':                True,
         'xy':                  True,
 
         # run/show/save
-        'one dataset':         True,
+        'one dataset':         False,
         'run':                 True,
         'show':                True,
         'save':                False,
-        'save to desktop':     False
+        'save to desktop':     True
         }
     )
+
 
 
 

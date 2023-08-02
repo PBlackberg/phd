@@ -20,27 +20,33 @@ def get_data(source, dataset, options, metric, experiment):
         filename = metric.get_filename(f'{metric.name}', source, dataset, 'daily', experiment, options.resolution)
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
         array = mF.resample_timeMean(array, options.timescale)
+        mean_value = array.mean(dim=('time'))
     elif metric.option in ['pr99']:
         folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
         filename = metric.get_filename(metric.name, source, dataset, 'daily', experiment, options.resolution)
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
+        mean_value = array.mean(dim=('time'))
     elif metric.option in ['rx1day_pr', 'rx5day_pr']:
         folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
         filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, 'daily', options.experiment[0], options.resolution)
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']    
+        mean_value = array.mean(dim=('time'))
+    elif metric.option in ['ecs']:
+        mean_value = mV.ecs_list[dataset]
     else:
         folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
         filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, options.timescale, experiment, options.resolution)
         array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_sMean']
-    return array
+        mean_value = array.mean(dim=('time'))
+    return mean_value
 
 def calc_metric(switch, dataset, options, metric):
     source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
     if switch['climatology']:
-        mean_value = get_data(source, dataset, options, metric, options.experiment[0]).mean(dim=('time'))
+        mean_value = get_data(source, dataset, options, metric, options.experiment[0])
     if switch['change with warming']:
-        array_historical = get_data(switch, source, dataset, options, metric, options.experiment[0])[metric.option].mean(dim=('time'))
-        array_warm = get_data(switch, source, dataset, options, metric, options.experiment[1])[metric.option].mean(dim=('time'))
+        array_historical = get_data(switch, source, dataset, options, metric, options.experiment[0])[metric.option]
+        array_warm = get_data(switch, source, dataset, options, metric, options.experiment[1])[metric.option]
         mean_value = array_warm - array_historical 
     return mean_value
     
@@ -120,11 +126,12 @@ if __name__ == '__main__':
     run_scatter_plot(switch = {
         # metrics
             # organization
-            'rome':                True,
+            'rome':                False,
 
             # other
+            'ecs':                 True,
             'pr':                  False,
-            'pr99':                False,
+            'pr99':                True,
             'pr99_meanIn':         False,
             'rx1day_pr':           False,
             'rx5day_pr':           False,

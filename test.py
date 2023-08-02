@@ -1,59 +1,22 @@
 
-# import numpy as np
-# import xarray as xr
-# import matplotlib.pyplot as plt
-# # a = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/obs/GPCP_rome_daily_regridded.nc')['rome'] # GPCP
-# # b = xr.open_dataset('/Users/cbla0002/Documents/data/lw/metrics/rlut_sMean/obs/CERES_rlut_sMean_monthly_regridded.nc')['rlut_sMean'] # CERES
-
-# x = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_historical_regridded.nc')['rome'] 
-# y = xr.open_dataset('/Users/cbla0002/Documents/data/pr/metrics/meanInPercentiles_pr/cmip6/TaiESM1_meanInPercentiles_pr_daily_historical_regridded.nc')['pr99'] 
-
-# def plot_bins(x,y, ax):    
-#     bin_width = (x.max() - x.min())/100
-#     bin_end = x.max()
-#     bins = np.arange(0, bin_end+bin_width, bin_width)
-#     y_bins = []
-#     for i in np.arange(0,len(bins)-1):
-#         y_bins = np.append(y_bins, y.where((x>=bins[i]) & (x<=bins[i+1])).mean())
-#     ax.plot(bins[:-1], y_bins, 'k')
-
-# # fig= plt.figure(figsize=(22.5,17.5))
-# # ax= fig.add_subplot(2,2,1)
-# # plt.hist2d(x,y,[20,20], cmap = 'Greys') #, vmin=0, vmax=300)
-# # plot_bins(x,y, ax)
-# # ax.set_title('model')
-# # plt.colorbar()
-# # plt.show()
-
-
-
-# fig, ax = plt.subplots(1, 1, figsize=(5,5))
-# h2d = plt.hist2d(x,y,[20,20], cmap ='Purples')
-# color = 'purple'
-# sp = plot_bins(x, y, ax)
-# plt.colorbar()
-# plt.show()
-
-
-
-print('finished')
-
-
-
-
-
-
-
-
-
 import xarray as xr
-import matplotlib.pyplot as plt
+import os
+def save_file(data, folder, filename):
+    ''' Saves file to specified folder and filename '''
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, filename)
+    os.remove(path) if os.path.exists(path) else None
+    data.to_netcdf(path)
+    return
 
-a = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome_equal_area/cmip6/BCC-CSM2-MR_rome_equal_area_daily_historical_regridded')
-print(a)
 
+ds = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_ssp585_regridded.nc')
+print(ds)
+ds = ds.rename({'__xarray_dataarray_variable__': 'rome'})
+print(ds)
 
-plt.figure()
-plt.plot(a['rome'])
-plt.show()
+folder = '/Users/cbla0002/Documents/data/org/metrics/rome/cmip6'
+filename = 'TaiESM1_rome_daily_ssp585_regridded.nc'
+save_file(ds, folder, filename)
+
 

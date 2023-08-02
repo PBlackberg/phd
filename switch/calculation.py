@@ -9,19 +9,19 @@ import org_met as oM
 oM.run_org_metrics(switch = {
     # choose data to calculate metric on
     'constructed_fields': False, 
-    'sample_data':        False,
+    'sample_data':        True,
     'gadi_data':          False,
 
     # choose metrics to calculate
     'obj_snapshot':       False,
-    'rome':               False, 
+    'rome':               True, 
     'rome_n':             False, 
     'ni':                 False, 
     'o_area':             False,
     
     # run/savve
-    'run':                False,
-    'save':               False
+    'run':                True,
+    'save':               True
     }
 )
 

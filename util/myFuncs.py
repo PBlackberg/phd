@@ -396,6 +396,13 @@ def get_metric_object(switch):
             variable_type, cmap, label,  = 'org', 'Greys', 'ROME [km' + get_super('2') + ']' 
             metric, metric_option = 'rome', 'rome' if key == 'rome' else [metric, metric_option]
 
+        if key in ['rome_equal_area']:
+            variable_type, cmap, label,  = 'org', 'Greys', 'ROME [km' + get_super('2') + ']' 
+            metric, metric_option = 'rome_equal_area', 'rome' if key == 'rome_equal_area' else [metric, metric_option]
+
+        if key in ['ecs']:
+            metric_option, color = 'ecs', 'red'
+
         if key in ['change with warming']:
             cmap = 'RdBu_r'
             label = '{}{} K{}'.format(label[:-1], get_super('-1'), label[-1:]) if switch['per_kelvin'] else label

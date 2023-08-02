@@ -63,9 +63,9 @@ timescales = [
     ]
 
 experiments = [
-    'historical',     
+    # 'historical',     
     # 'rcp85',             # warm scenario cmip5
-    # 'ssp585',            # warm scenario for cmip6
+    'ssp585',            # warm scenario for cmip6
     # ''                   # observations
     ]
 
@@ -129,7 +129,8 @@ ecs_cmip6 = {
     'EC-Earth3':     4.26,         
     'INM-CM5-0':     1.92,         
     'IPSL-CM6A-LR':  4.70,      
-    'KIOST-ESM':     3.36,         
+    'KIOST-ESM':     3.36,
+    'CESM2':         5.15         
     }
 ecs_list = {**ecs_cmip5, **ecs_cmip6}
 

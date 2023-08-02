@@ -120,19 +120,6 @@ if __name__ == '__main__':
         
         'save':               True
         }
-
-    # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_hur_metrics(switch = switch,
-                                datasets =    mV.datasets, 
-                                timescale =   mV.timescales[0],
-                                experiments = mV.experiments,
-                                resolution =  mV.resolutions[0],
-                                folder_save = f'{mV.folder_save[0]}/hur'
-                                )
-
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
     )
     
 

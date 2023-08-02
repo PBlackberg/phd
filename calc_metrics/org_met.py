@@ -216,8 +216,8 @@ def calc_metrics(switch, da, conv_threshold, source, dataset, options):
                                       {int(conv_threshold*100)}th percentile'})
         ds_obj_snapshot = xr.Dataset(data_vars = {'obj_snapshot': obj_snapshot})
         folder = f'{mV.folder_save[0]}/org/metrics/obj_snapshot/{source}'
-        filename = f'{dataset}_obj_snapshot_daily_{options.experiment}_{options.resolution}'
-        mF.save_file(ds_obj_snapshot, folder, filename)
+        filename = f'{dataset}_obj_snapshot_daily_{options.experiment}_{options.resolution}.nc'
+        mF.save_file(ds_obj_snapshot, folder, filename) if switch['save'] else None
 
     if switch['rome']:
         rome = xr.DataArray(
@@ -228,8 +228,8 @@ def calc_metrics(switch, da, conv_threshold, source, dataset, options):
                                     {int(conv_threshold*100)}th percentile'}) #time-mean
         ds_rome = xr.Dataset(data_vars = {'rome': rome})
         folder = f'{mV.folder_save[0]}/org/metrics/rome_equal_area/{source}'
-        filename = f'{dataset}_rome_equal_area_daily_{options.experiment}_{options.resolution}'
-        mF.save_file(ds_rome, folder, filename)
+        filename = f'{dataset}_rome_equal_area_daily_{options.experiment}_{options.resolution}.nc'
+        mF.save_file(ds_rome, folder, filename) if switch['save'] else None
 
     if switch['rome_n']:
         n=8
@@ -241,8 +241,8 @@ def calc_metrics(switch, da, conv_threshold, source, dataset, options):
                                {int(conv_threshold*100)}th percentile'})
         ds_rome_n = xr.Dataset(data_vars = {'rome_n': rome_n})
         folder = f'{mV.folder_save[0]}/org/metrics/rome_n/{source}'
-        filename = f'{dataset}_rome_n_daily_{options.experiment}_{options.resolution}'
-        mF.save_file(ds_rome_n, folder, filename)
+        filename = f'{dataset}_rome_n_daily_{options.experiment}_{options.resolution}.nc'
+        mF.save_file(ds_rome_n, folder, filename) if switch['save'] else None
 
     if switch['ni']:
         ni, areafraction = calc_ni(da, conv_threshold)
@@ -261,8 +261,8 @@ def calc_metrics(switch, da, conv_threshold, source, dataset, options):
             attrs = {'units': '%'})
         ds_numberIndex = xr.Dataset(data_vars = {'ni': ni, 'areafraction': areafraction}) 
         folder = f'{mV.folder_save[0]}/org/metrics/ni/{source}'
-        filename = f'{dataset}_ni_equal_area_daily_{options.experiment}_{options.resolution}'
-        mF.save_file(ds_numberIndex, folder, filename)
+        filename = f'{dataset}_ni_equal_area_daily_{options.experiment}_{options.resolution}.nc'
+        mF.save_file(ds_numberIndex, folder, filename) if switch['save'] else None
 
     if switch['o_area']:
         o_area = xr.DataArray(
@@ -274,8 +274,8 @@ def calc_metrics(switch, da, conv_threshold, source, dataset, options):
                                     {int(conv_threshold*100)}th percentile'})
         ds_o_area = xr.Dataset(data_vars = {'o_area': o_area}) 
         folder = f'{mV.folder_save[0]}/org/metrics/o_area/{source}'
-        filename = f'{dataset}_o_area_daily_{options.experiment}_{options.resolution}'
-        mF.save_file(ds_o_area, folder, filename)
+        filename = f'{dataset}_o_area_daily_{options.experiment}_{options.resolution}.nc'
+        mF.save_file(ds_o_area, folder, filename) if switch['save'] else None
 
 # -------------------------------------------------------------------------------- Get the data from the model / experiment and run ----------------------------------------------------------------------------------------------------- #
 
@@ -318,9 +318,9 @@ if __name__ == '__main__':
 
         # choose metrics to calculate
         'obj_snapshot':       False,
-        'rome':               False, 
+        'rome':               True, 
         'rome_n':             False, 
-        'ni':                 True, 
+        'ni':                 False, 
         'o_area':             False,
         
         # run/savve
