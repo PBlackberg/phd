@@ -97,10 +97,11 @@ s2P.run_scatter_plot(switch = {
         'rome':                True,
 
         # other
+        'ecs':                 True,
         'pr':                  False,
         'pr99':                False,
         'pr99_meanIn':         False,
-        'rx1day_pr':           True,
+        'rx1day_pr':           False,
         'rx5day_pr':           False,
 
         'wap':                 False,

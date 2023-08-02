@@ -13,15 +13,15 @@ oM.run_org_metrics(switch = {
     'gadi_data':          False,
 
     # choose metrics to calculate
-    'obj_snapshot':       False,
-    'rome':               True, 
+    'obj_snapshot':       True,
+    'rome':               False, 
     'rome_n':             False, 
-    'ni':                 False, 
+    'ni':                 True, 
     'o_area':             False,
     
     # run/savve
     'run':                True,
-    'save':               True
+    'save':               False
     }
 )
 

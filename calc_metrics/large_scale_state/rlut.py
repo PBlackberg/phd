@@ -81,7 +81,9 @@ def run_experiment(switch, source, dataset, timescale, experiments, resolution, 
         calc_metrics(switch, da, region, source, dataset, timescale, experiment, resolution, folder_save)
 
 
-def run_rlut_metrics(switch, datasets, timescale, experiments, resolution, folder_save = f'{mV.folder_save}/lw'):
+def run_rlut_metrics(switch):
+    if not switch['run']:
+        return
     print(f'Running lw metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -107,6 +109,7 @@ if __name__ == '__main__':
         'sMean':              True, 
         'tMean':              True, 
         
+        'run':                True,
         'save':               True
         }
     )

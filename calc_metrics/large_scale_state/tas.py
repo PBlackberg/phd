@@ -79,7 +79,9 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
 
 
-def run_tas_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/tas'):
+def run_tas_metrics(switch):
+    if not switch['run']:
+        return
     print(f'Running tas metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -105,6 +107,7 @@ if __name__ == '__main__':
         'sMean':              False, 
         'tMean':              False, 
         
+        'run':                True,
         'save':               True
         }
     )

@@ -71,7 +71,9 @@ def run_experiment(switch, source, dataset, experiments, timescale, resolution, 
         calc_metrics(switch, da, region, source, dataset, experiment, resolution, folder_save)
 
 
-def run_wap_metrics(switch, datasets, experiments, timescale, resolution, folder_save = f'{mV.folder_save}/wap'):
+def run_wap_metrics(switch):
+    if not switch['run']:
+        return
     print(f'Running wap metrics with {resolution} {timescale} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -85,11 +87,7 @@ def run_wap_metrics(switch, datasets, experiments, timescale, resolution, folder
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
 if __name__ == '__main__':
-
-    start = timeit.default_timer()
-
-    # choose which metrics to calculate
-    switch = {
+    ds_metric = run_wap_metrics(switch = {
         'constructed_fields': False, 
         'sample_data':        True,
 
@@ -100,23 +98,10 @@ if __name__ == '__main__':
         'sMean':              False, 
         'tMean':              False, 
         
+        'run':                True,
         'save':               True
         }
-
-    # choose which datasets and experiments to run, and where to save the metric
-    ds_metric = run_wap_metrics(switch = switch,
-                               datasets =    mV.datasets, 
-                               experiments = mV.experiments,
-                               timescale =   mV.timescales[0],
-                               resolution =  mV.resolutions[0],
-                                # folder_save = f'{mV.folder_save_gadi}/cl'
-                                )
-
-
-    stop = timeit.default_timer()
-    print(f'Finshed, script finished in {round((stop-start)/60, 2)} minutes.')
-    
-
+    )
 
 
 

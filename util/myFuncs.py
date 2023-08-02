@@ -401,7 +401,7 @@ def get_metric_object(switch):
             metric, metric_option = 'rome_equal_area', 'rome' if key == 'rome_equal_area' else [metric, metric_option]
 
         if key in ['ecs']:
-            metric_option, color = 'ecs', 'red'
+            metric_option, color, label = 'ecs', 'red', 'ECS [K]'
 
         if key in ['change with warming']:
             cmap = 'RdBu_r'
