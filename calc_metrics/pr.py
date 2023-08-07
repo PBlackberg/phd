@@ -12,69 +12,59 @@ import constructed_fields as cF # imports fields for testing
 import get_data as gD # imports functions to get data from gadi
 
 
-# ------------------------------------------------------------------------------------- Calculating metric from data array ----------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- Calculattion ----------------------------------------------------------------------------------------------------- #
 
-def calc_rx1day(da):
-    ''' Most extreme daily gridpoint value locally over time (1 year here)
-    '''
-    rx1day = da.resample(time='Y').max(dim='time')
+def calc_rxday_sMean(da):
+    ''' Most extreme daily gridpoint value locally over set time period '''
     aWeights = np.cos(np.deg2rad(da.lat))
-    rx1day_tMean = rx1day.mean(dim='time')
-    rx1day_sMean = rx1day.weighted(aWeights).mean(dim=('lat', 'lon'))
-    return rx1day_tMean, rx1day_sMean
-
-def calc_rx5day(da):
-    ''' Most extreme 5-day average gridpoint value locally over time (1 year here)
-    '''
+    rx1day = da.resample(time='Y').max(dim='time')
     da5day = da.resample(time='5D').mean(dim='time')
     rx5day = da5day.resample(time='Y').max(dim='time')
-    aWeights = np.cos(np.deg2rad(da.lat))
-    rx5day_tMean = rx5day.mean(dim='time')
-    rx5day_sMean = rx5day.weighted(aWeights).mean(dim=('lat', 'lon'))
-    return rx5day_tMean, rx5day_sMean
+    return rx1day.weighted(aWeights).mean(dim=('lat', 'lon')), rx5day.weighted(aWeights).mean(dim=('lat', 'lon'))
+
+def calc_rxday_tMean(da):
+    ''' Time-mean of local extremes over set time period '''
+    rx1day = da.resample(time='Y').max(dim='time')
+    da5day = da.resample(time='5D').mean(dim='time')
+    rx5day = da5day.resample(time='Y').max(dim='time')
+    return rx1day.mean(dim='time'), rx5day.mean(dim='time')
 
 def find_percentile(da, percentile):
-    ''' Spatial percentile of the scene
-    '''
-    percentile_value = da.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
-    return percentile_value
+    ''' Spatial percentile of the scene '''
+    return da.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
 
 def calc_percentile_snapshot(da, percentile):
-    ''' snapshot of gridboxes exceeding percentile threshold
-    '''
+    ''' snapshot of gridboxes exceeding percentile threshold '''
     da_snapshot = da.isel(time=0)
     return da_snapshot.where(da_snapshot>=find_percentile(da, percentile).isel(time=0))
 
 def calc_meanInPercentile(da, percentile):
-    ''' Mean precipitation rate of the gridboxes included in the percentile of each scene
-    '''
+    ''' Mean precipitation rate of the gridboxes included in the percentile of each scene (precipiration rate threshold) '''
     aWeights = np.cos(np.deg2rad(da.lat))
-    meanInPercentile = da.where(da >= find_percentile(da, percentile)).weighted(aWeights).mean(dim=('lat', 'lon'), keep_attrs=True)
-    return meanInPercentile
+    return da.where(da >= find_percentile(da, percentile).mean(dim='time')).weighted(aWeights).mean(dim=('lat', 'lon'), keep_attrs=True)
+
+def calc_meanInPercentile_fixedArea(da, percentile):
+    ''' Mean precipitation rate of the gridboxes included in the percentile of each scene (fixed area threshold) '''
+    aWeights = np.cos(np.deg2rad(da.lat))
+    return da.where(da >= find_percentile(da, percentile)).weighted(aWeights).mean(dim=('lat', 'lon'), keep_attrs=True)
 
 def calc_F_pr10(da):
-    ''' Frequency of gridboxes exceeding 10 mm/day
-    '''
+    ''' Frequency of gridboxes exceeding 10 mm/day on monthly'''
     da = mF.resample_timeMean(da, 'M')
     mask = xr.where(da>10,1,0)
-    F_pr10 = mask.sum(dim=('lat','lon'))
-    return F_pr10
+    return mask.sum(dim=('lat','lon'))
 
 def calc_F_pr10_snapshot(da):
-    ''' snapshot of frequency of gridboxes exceeding 10 mm/day
-    '''
+    ''' Snapshot of gridboxes exceeding 10 mm/day '''
     da = mF.resample_timeMean(da, 'M')
     mask = xr.where(da>10,1,0)
     return da.isel(time=0).where(mask.isel(time=0) > 0)
 
 def calc_o_pr(da, conv_threshold):
-    ''' Precipitation rate in each contigous convective region (object)
-    '''
-    lat = da['lat'].data
-    lon = da['lon'].data
-    lonm,latm = np.meshgrid(lon,lat)
-    dlat = (lat[1]-lat[0])
-    dlon = (lon[1]-lon[0])
+    ''' Precipitation rate in each contigous convective region (object) '''
+    lat, lon = da['lat'].data, da['lon'].data
+    lonm, latm = np.meshgrid(lon,lat)
+    dlat, dlon = (lat[1]-lat[0]), (lon[1]-lon[0])
     R = 6371 # km
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
     aream3d = np.expand_dims(aream,axis=2) # used for broadcasting
@@ -91,80 +81,75 @@ def calc_o_pr(da, conv_threshold):
     return o_pr
 
 
-# ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
-
-def load_data(switch, source, dataset, experiment):
-    da = cF.var2D if switch['constructed_fields'] else None
-    if switch['sample_data']:
-        folder = f'/Users/cbla0002/Documents/data/pr/sample_data/{source}'
-        filename = f'{dataset}_pr_daily_{experiment}_{mV.resolutions[0]}.nc'
-        da = xr.open_dataset(folder + '/' + filename)['pr']
-    da = gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0]) if switch['gadi_data'] else da
-    return da
+# ---------------------------------------------------------------------------------------------- Put in dataset and save ----------------------------------------------------------------------------------------------------- #
     
 def calc_metrics(switch, da, source, dataset, experiment):
-    if switch['pr_snapshot']:
-        ds_pr_snapshot = xr.Dataset({f'pr_snapshot' : da.isel(time=0)})
-
-        folder = f'{mV.folder_save[0]}/pr/metrics/pr_snapshot/{source}'
-        filename = f'{dataset}_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+    if switch['snapshot_pr']:
+        ds_pr_snapshot = xr.Dataset({f'snapshot_pr' : da.isel(time=0)})
+        folder = f'{mV.folder_save[0]}/pr/metrics/snapshot_pr/{source}'
+        filename = f'{dataset}_snapshot_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_pr_snapshot, folder, filename) if switch['save'] else None
 
-    if switch['rxday_pr']:
-        rx1day_tMean, rx1day_sMean = calc_rx1day(da)
-        rx5day_tMean, rx5day_sMean = calc_rx5day(da)
-        ds_rxday_tMean = xr.Dataset({'rx1day_pr_tMean': rx1day_tMean , 'rx5day_pr_tMean': rx5day_tMean})
-
-        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_pr_tMean/{source}'
-        filename = f'{dataset}_rxday_pr_tMean_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(ds_rxday_tMean, folder, filename) if switch['save'] else None
-
-        ds_rxday_sMean = xr.Dataset({'rx1day_pr_sMean': rx1day_sMean , 'rx5day_pr_sMean': rx5day_sMean}) 
-        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_pr_sMean/{source}'
-        filename = f'{dataset}_rxday_pr_sMean_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+    if switch['rxday_sMean']:
+        rx1day_sMean, rx5day_sMean = calc_rxday_sMean(da)
+        ds_rxday_sMean = xr.Dataset({'rx1day_sMean_pr': rx1day_sMean , 'rx5day_sMean_pr': rx5day_sMean})         
+        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_sMean_pr/{source}'
+        filename = f'{dataset}_rxday_sMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_rxday_sMean, folder, filename) if switch['save'] else None
 
-    if switch['percentiles_snapshot']:
-        ds_percentile_snapshot = xr.Dataset()
-        for percentile in percentiles:
-            percentile_snapshot= calc_percentile_snapshot(da, percentile)
-            ds_percentile_snapshot[f'pr{int(percentile*100)}_snapshot'] = percentile_snapshot
-
-        folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr_snapshot/{source}'
-        filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
+    if switch['rxday_tMean']:
+        rx1day_tMean, rx5day_tMean = calc_rxday_tMean(da)
+        ds_rxday_tMean = xr.Dataset({'rx1day_tMean_pr': rx1day_tMean , 'rx5day_tMean_pr': rx5day_tMean})
+        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_tMean_pr/{source}'
+        filename = f'{dataset}_rxday_tMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        mF.save_file(ds_rxday_tMean, folder, filename) if switch['save'] else None
 
     if switch['percentiles']:
         percentiles = [0.95, 0.97, 0.99]
         ds_percentile_value = xr.Dataset()
         for percentile in percentiles:
             ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
-
         folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr/{source}'
         filename = f'{dataset}_percentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
         
+    if switch['snapshot_percentiles']:
+        ds_percentile_snapshot = xr.Dataset()
+        for percentile in percentiles:
+            percentile_snapshot= calc_percentile_snapshot(da, percentile)
+            ds_percentile_snapshot[f'snapshot_pr{int(percentile*100)}'] = percentile_snapshot
+        folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr_snapshot/{source}'
+        filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
+
     if switch['meanInPercentiles']:
         percentiles = [0.95, 0.97, 0.99]
         ds_meanInPercentiles = xr.Dataset()
         for percentile in percentiles:
             meanInPercentile = calc_meanInPercentile(da, percentile)
-            ds_meanInPercentiles[f'pr{int(percentile*100)}'] = meanInPercentile
-
+            ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn'] = meanInPercentile
         folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_pr/{source}'
         filename = f'{dataset}_meanInPercentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
 
-    if switch['F_pr10_snapshot']:
-        ds_F_pr10_snapshot = xr.Dataset({'F_pr10': calc_F_pr10_snapshot(da)})
+    if switch['meanInPercentiles_fixedArea']:
+        percentiles = [0.95, 0.97, 0.99]
+        ds_meanInPercentiles = xr.Dataset()
+        for percentile in percentiles:
+            meanInPercentile = calc_meanInPercentile_fixedArea(da, percentile)
+            ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn_fixedArea'] = meanInPercentile
+        folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_fixedArea_pr/{source}'
+        filename = f'{dataset}_meanInPercentiles_fixedArea_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
 
+    if switch['snapshot_F_pr10']:
+        ds_F_pr10_snapshot = xr.Dataset({'F_pr10': calc_F_pr10_snapshot(da)})
         folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10_snapshot/{source}'
         filename = f'{dataset}_F_pr10_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_F_pr10_snapshot, folder, filename) if switch['save'] else None
 
     if switch['F_pr10']:
         ds_F_pr10 = xr.Dataset({'F_pr10': calc_F_pr10(da)})
-
         folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10/{source}'
         filename = f'{dataset}_F_pr10_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_F_pr10, folder, filename) if switch['save'] else None
@@ -176,12 +161,21 @@ def calc_metrics(switch, da, source, dataset, experiment):
                                 attrs = {'units':'mm day' + mF.get_super('-1'),
                                          'descrption': 'area weighted mean precipitation in contiguous convective region (object)'})
         ds_o_pr = xr.Dataset({'o_pr': o_pr})
-
         folder = f'{mV.folder_save[0]}/pr/metrics/o_pr/{source}'
         filename = f'{dataset}_o_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
         mF.save_file(ds_o_pr, folder, filename) if switch['save'] else None
 
-# -------------------------------------------------------------------------------- Get the data from the dataset / experiment and run ----------------------------------------------------------------------------------------------------- #
+
+# -------------------------------------------------------------------------------------------- Load data ----------------------------------------------------------------------------------------------------- #
+
+def load_data(switch, source, dataset, experiment):
+    if switch['constructed_fields']:
+        return cF.var2D
+    if switch['sample_data']:
+        path = f'/Users/cbla0002/Documents/data/pr/sample_data/{source}/{dataset}_pr_daily_{experiment}_{mV.resolutions[0]}.nc'
+        return xr.open_dataset(path)['pr']
+    else:
+        return gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
@@ -193,11 +187,8 @@ def run_experiment(switch, source, dataset):
         da = load_data(switch, source, dataset, experiment)
         calc_metrics(switch, da, source, dataset, experiment)
 
-
 @mF.timing_decorator
 def run_pr_metrics(switch):
-    if not switch['run']:
-        return
     print(f'Running pr metrics with {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -215,21 +206,21 @@ if __name__ == '__main__':
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        True,
-        'gadi_data':          False,
 
         # choose metrics to calculate
-        'pr_snapshot':          True,
-        'rxday_pr':             False, 
-        'percentiles_snapshot': False, 
-        'percentiles':          False, 
-        'meanInPercentiles':    False, 
-        'F_pr10_snapshot':      False,
-        'F_pr10':               False,
-        'o_pr':                 False,
+        'snapshot_pr':                    False,
+        'rxday_sMean':                    False, 
+        'rxday_tMean':                    False, 
+        'percentiles':                    False, 
+        'snapshot_percentiles':           False, 
+        'meanInPercentiles':              False, 
+        'meanInPercentiles_fixedArea':    False,
+        'F_pr10':                         False,
+        'snapshot_F_pr10':                False,
+        'o_pr':                           False,
         
-        # run/savve
-        'run':                True,
-        'save':               True
+        # save
+        'save':               False
         }
     )
     

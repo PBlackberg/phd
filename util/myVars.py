@@ -58,14 +58,14 @@ observations = [
 datasets = models_cmip5 + models_cmip6 + observations
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 experiments = [
     'historical',     
     # 'rcp85',             # warm scenario cmip5
-    'ssp585',            # warm scenario for cmip6
+    # 'ssp585',            # warm scenario for cmip6
     # ''                   # observations
     ]
 

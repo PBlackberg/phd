@@ -4,176 +4,190 @@ home = os.path.expanduser("~")
 folder_code = f'{home}/Documents/code/phd'
 sys.path.insert(0, f'{folder_code}/calc_metrics')
 
-# -------------------------------------------------------------------------------------- Organization metrics ----------------------------------------------------------------------------------------------------- #
-import org_met as oM
-oM.run_org_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        True,
-    'gadi_data':          False,
-
-    # choose metrics to calculate
-    'obj_snapshot':       True,
-    'rome':               False, 
-    'rome_n':             False, 
-    'ni':                 True, 
-    'o_area':             False,
-    
-    # run/savve
-    'run':                True,
-    'save':               False
-    }
-)
-
 # --------------------------------------------------------------------------------------- Precipiration metrics ----------------------------------------------------------------------------------------------------- #
-import pr as pM
-pM.run_pr_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
+run = False
+if run:
+    import pr as pM
+    pM.run_pr_metrics(switch = {
+            # choose data to calculate metric on
+            'constructed_fields': False, 
+            'sample_data':        True,
+            'gadi_data':          False,
 
-    # choose metrics to calculate
-    'snapshot':           False,
-    'rxday_pr':           False, 
-    'percentiles':        False, 
-    'meanInPercentiles':  False, 
-    'F_pr10':             False,
-    'o_pr':               False,
+            # choose metrics to calculate
+            'snapshot_pr':                    False,
+            'rxday_sMean':                    True, 
+            'rxday_tMean':                    True, 
+            'percentiles':                    True, 
+            'snapshot_percentiles':           False, 
+            'meanInPercentiles':              True, 
+            'meanInPercentiles_fixedArea':    True,
+            'F_pr10':                         True,
+            'snapshot_F_pr10':                False,
+            'o_pr':                           True,
+            
+            # savve
+            'save':               True
+            }
+        )
+    
+# -------------------------------------------------------------------------------------- Organization metrics ----------------------------------------------------------------------------------------------------- #
+run = True
+if run:
+    import org_met as oM
+    oM.run_org_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
+        'gadi_data':          False,
 
-    # run/savve
-    'run':                False,
-    'save':               False
-    }
-)
+        # choose metrics to calculate
+        'rome':               True, 
+        'rome_n':             True, 
+        'ni':                 True, 
+        'o_area':             True,
+        'snapshot_obj':       False,
+        
+        # threshold
+        'fixed_area':         True,
 
+        # save
+        'save':               True
+        }
+    )
+
+        
 # ------------------------------------------------------------------------------------- Large-scale environmental state ----------------------------------------------------------------------------------------------------- #
 # -----------------------
 # relative humidity (hur)
 # -----------------------
-import large_scale_state.hur as hM 
-hM.run_hur_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
+run = False
+if run:
+    import large_scale_state.hur as hM 
+    hM.run_hur_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
 
-    # choose metrics to calculate
-    'snapshot':           False, 
-    'sMean':              False, 
-    'tMean':              False, 
+        # choose metrics to calculate
+        'sMean':              True, 
+        'tMean':              True, 
+        'snapshot':           True, 
+        
+        # mask by
+        'ascent':             False,
+        'descent':            False,
 
-    # mask data by
-    'ascent':             False,
-    'descent':            False,
+        # save
+        'save':               False
+        }
+    )
     
-    # run/save
-    'run':                False,
-    'save':               False
-    }
-)
 
 # ----------------------------------------
 # Outgoing Longwave Radiation (OLR) (rlut)
 # ----------------------------------------
-import large_scale_state.rlut as rM 
-rM.run_rlut_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
+run = False
+if run:
+    import large_scale_state.rlut as rM 
+    rM.run_rlut_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
+
+        # choose metrics to calculate
+        'sMean':              True, 
+        'tMean':              True, 
+        'snapshot':           True, 
+
+        # mask by
+        'ascent':             False,
+        'descent':            False,
+
+        # save
+        'save':               True
+        }
+    )
     
-    # choose metrics to calculate
-    'snapshot':           False, 
-    'sMean':              False, 
-    'tMean':              False, 
-
-    # mask data by
-    'ascent':             False,
-    'descent':            False,
-
-    # run/save
-    'run':                False,    
-    'save':               False
-    }
-)
 
 # ----------------------------------------
 # Surface temperature (tas)
 # ----------------------------------------
-import large_scale_state.tas as tM
-tM.run_tas_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
+run = False
+if run:
+    import large_scale_state.tas as tM
+    tM.run_tas_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
+
+        # choose metrics to calculate
+        'sMean':              True, 
+        'tMean':              True, 
+        'snapshot':           True, 
+        
+        # mask by
+        'ascent':             False,
+        'descent':            False,
+
+        # save
+        'save':               True
+        }
+    )
     
-    # choose metrics to calculate
-    'snapshot':           False, 
-    'sMean':              False, 
-    'tMean':              False, 
-
-    # mask data by
-    'ascent':             False,
-    'descent':            False,
-
-    # run/save
-    'run':                False,    
-    'save':               False
-    }
-)
 
 # ----------------------------------------
 # Vertical pressure velocity (wap)
 # ----------------------------------------
-import large_scale_state.wap as wM
-wM.run_wap_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
-    
-    # choose metrics to calculate
-    'snapshot':           False, 
-    'sMean':              False, 
-    'tMean':              False, 
+run = False
+if run:
+    import large_scale_state.wap as wM
+    wM.run_wap_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
 
-    # mask data by
-    'ascent':             False,
-    'descent':            False,
+        # choose metrics to calculate
+        'sMean':              True, 
+        'tMean':              True, 
+        'snapshot':           True, 
+        
+        # mask by
+        'ascent':             False,
+        'descent':            False,
 
-    # run/save
-    'run':                False,    
-    'save':               False
-    }
-)
+        # save
+        'save':               True
+        }
+    )
+
 
 # ------------------------------------------------------------------------------------------------- clouds ----------------------------------------------------------------------------------------------------- #
-import clouds.cl as cM
-cM.run_cl_metrics(switch = {
-    # choose data to calculate metric on
-    'constructed_fields': False, 
-    'sample_data':        False,
-    'gadi_data':          False,
+run = False
+if run:
+    import clouds.cl as cM
+    cM.run_cl_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        True,
 
-    # choose type of cloud
-    'low_clouds':         False,
-    'high_clouds':        False,
+        # choose metrics to calculate
+        'snapshot':           True, 
+        'sMean':              True, 
+        'tMean':              True, 
 
-    # choose metrics to calculate
-    'snapshot':           False, 
-    'sMean':              False, 
-    'tMean':              False, 
+        # choose type of cloud
+        'low_clouds':         True,
+        'high_clouds':        False,
 
-    # mask data by
-    'ascent':             False,
-    'descent':            False,
+        # mask by
+        'ascent':             False,
+        'descent':            False,
 
-    # run/save
-    'run':                False,   
-    'save':               False
-    }
-)
+        # save
+        'save':               True
+        }
+    )
 
 
 

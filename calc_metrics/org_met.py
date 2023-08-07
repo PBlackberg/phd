@@ -13,19 +13,21 @@ import constructed_fields as cF # imports fields for testing
 import get_data as gD # imports functions to get data from gadi
 
 
+# --------------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
 
-# ------------------------------------------------------------------------------------- Calculating metric from data array ----------------------------------------------------------------------------------------------------- #
+def calc_conv_threshold(switch, da, conv_percentile): # conv_threshold is number [0,1]
+    ''' Convection can be based on fixed precipitation rate threshold or fixed area fraction (same time-mean area)'''
+    conv_threshold = da.quantile(conv_percentile, dim=('lat', 'lon'), keep_attrs=True)
+    if switch['fixed_area']:
+        conv_threshold = xr.DataArray(data = conv_threshold.mean(dim='time').data * np.ones(shape = len(da.time)), dims = 'time', coords = {'time': da.time.data}) 
+    return conv_threshold
 
 def get_obj_snapshot(da, conv_threshold):
-    ''' Snapshot to visualize the calculation by the organization metrics.
-        Consists of connected components of precipiation rate exceeding threshold 
-        (contiguous convective reigons) 
-    '''
-    scene = da.isel(time=0)
-    L_obj = skm.label(scene.where(scene>=conv_threshold,0)>0, background=np.nan,connectivity=2) # label matrix first gives a unique number to all groups of connected components.
-    L_obj = (L_obj>0)*1  # This line sets all unique labels to 1 
+    ''' Connected components of precipiation rate exceeding threshold (objects) '''
+    pr_day = da.isel(time=0) 
+    L_obj = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=0),0)>0, background=np.nan,connectivity=2) # label matrix first gives a unique number to all groups of connected components.
+    L_obj = (L_obj>0)*1  # Sets all unique labels to 1 
     return L_obj
-
 
 def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
     ''' Calculate rome for a scene: 
@@ -33,8 +35,7 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
         where
         A_a - larger area of pair
         A_b - smaller area of pair
-        A_d - shortest distance between pair boundaries (km)
-    '''
+        A_d - shortest distance between pair boundaries (km) '''
     rome_allPairs = []
     shape_L = np.shape(L)
     if len(labels) ==1:
@@ -43,8 +44,7 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
     else:
         for idx, labeli in enumerate(labels[0:-1]): # compare object i and object j
             I, J = zip(*np.argwhere(L==labeli)) # find coordinates of object i
-            I = list(I)
-            J = list(J)
+            I, J = list(I), list(J)
             oi_area = np.sum(np.squeeze(aream)[I,J]) # find area of object i
             Ni = len(I) # find number of gridboxes in object i
             lati3d = np.tile(lat[I],reps =[shape_L[0], shape_L[1], 1]) # replicate each gridbox lon and lat into Ni 2D slices in the shape of L
@@ -72,25 +72,19 @@ def rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d):
 @mF.timing_decorator
 def calc_rome(da, conv_threshold):
     ''' ROME - RAdar Organization MEtric
-        Define scenes of contihuous convective regions
-        and puts the calculated daily values of rome in a list
-    '''
+        Define scenes of continuous convective regions
+        and puts the calculated daily values of rome in a list '''
     rome = []
-    lat = da['lat'].data
-    lon = da['lon'].data
+    lat, lon = da['lat'].data, da['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
-    dlat = (lat[1]-lat[0])
-    dlon = (lon[1]-lon[0])
+    dlat, dlon = (lat[1]-lat[0]), (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2) # used for area of object
-    latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
-    lonm3d = np.expand_dims(lonm,axis=2)
+    latm3d, lonm3d = np.expand_dims(latm,axis=2), np.expand_dims(lonm,axis=2) # used for broadcasting
 
     for day in np.arange(0,len(da.time.data)):
         pr_day = da.isel(time=day)
-        threshold = pr_day.quantile(conv_threshold, dim=('lat', 'lon'), keep_attrs=True)
-        L = skm.label(pr_day.where(pr_day>=threshold,0)>0, background=0,connectivity=2)
-        
+        L = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0, background=0,connectivity=2)
         mF.connect_boundary(L)
         labels = np.unique(L)[1:] # first unique value is background
         rome = np.append(rome, rome_scene(L, labels, lat, lon, aream, latm3d, lonm3d))
@@ -98,8 +92,7 @@ def calc_rome(da, conv_threshold):
 
 
 def rome_nScene(L, labels, lat, lon, aream, latm3d, lonm3d, n, o_areaScene):
-    ''' Finds n largest objects and calls rome_scene
-    '''
+    ''' Finds n largest objects and calls rome_scene '''
     if len(o_areaScene) <= n:
         labels_n = labels
     else:
@@ -111,27 +104,21 @@ def rome_nScene(L, labels, lat, lon, aream, latm3d, lonm3d, n, o_areaScene):
 def calc_rome_n(da, conv_threshold, n): 
     ''' Define scenes of contihuous convective regions
         and finds the area of objects. 
-        Then puts the calculated daily values of rome_n in a list
-    '''
+        Then puts the calculated daily values of rome_n in a list '''
     rome_n = []
-    lat = da['lat'].data
-    lon = da['lon'].data
+    lat, lon = da['lat'].data, da['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
-    dlat = (lat[1]-lat[0])
-    dlon = (lon[1]-lon[0])
+    dlat, dlon = (lat[1]-lat[0]), (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
-    latm3d = np.expand_dims(latm,axis=2) # used for broadcasting
-    lonm3d = np.expand_dims(lonm,axis=2)
+    latm3d, lonm3d = np.expand_dims(latm,axis=2), np.expand_dims(lonm,axis=2) # used for broadcasting
     aream3d = np.expand_dims(aream,axis=2)
 
     for day in np.arange(0,len(da.time.data)):
-        pr_day = da.isel(time=day)
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
-        
+        pr_day = da.isel(time = day)
+        L = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0, background=0,connectivity=2)
         mF.connect_boundary(L)
         labels = np.unique(L)[1:]
-
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1
         o_areaScene = np.sum(obj3d * aream3d, axis=(0,1))
         rome_n = np.append(rome_n, rome_nScene(L, labels, lat, lon, aream, latm3d, lonm3d, n, o_areaScene))
@@ -142,50 +129,39 @@ def calc_rome_n(da, conv_threshold, n):
 def calc_ni(da, conv_threshold):
     ''' ni - number index
         Counts the number of object in each scene and records the area fraction convered
-        by convection 
-    '''
-    lat = da['lat'].data
-    lon = da['lon'].data
+        by convection '''
+    lat, lon = da['lat'].data, da['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
-    dlat = (lat[1]-lat[0])
-    dlon = (lon[1]-lon[0])
+    dlat, dlon = (lat[1]-lat[0]), (lon[1]-lon[0])
     R = 6371
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
 
     ni, areaf = [], []
     for day in np.arange(0,len(da.time.data)):
         pr_day = da.isel(time=day)
-        threshold = pr_day.quantile(conv_threshold, dim=('lat', 'lon'), keep_attrs=True)
-        L = skm.label(pr_day.where(pr_day>=threshold,0)>0, background=0,connectivity=2)
-        
+        L = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0, background=0,connectivity=2)
         mF.connect_boundary(L)
         labels = np.unique(L)[1:]
         o_numberScene = len(labels)
-
-        conv_day = (pr_day.where(pr_day>=threshold,0)>0)*1
+        conv_day = (pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0)*1
         areaf_scene = (np.sum(conv_day * aream)/np.sum(aream))*100
-        
         ni = np.append(ni, o_numberScene)
         areaf = np.append(areaf, areaf_scene)
     return ni, areaf
 
-
 @mF.timing_decorator
 def calc_o_area(da, conv_threshold):
-    ''' Area of each contiguous convective region (object) 
-    '''
-    lat = da['lat'].data
-    lon = da['lon'].data
+    ''' Area of each contiguous convective region (object) '''
+    lat, lon = da['lat'].data, da['lon'].data
     lonm,latm = np.meshgrid(lon,lat)
-    dlat = (lat[1]-lat[0])
-    dlon = (lon[1]-lon[0])
+    dlat, dlon = (lat[1]-lat[0]), (lon[1]-lon[0])
     R = 6371 # km
     aream = np.cos(np.deg2rad(latm))*np.float64(dlon*dlat*R**2*(np.pi/180)**2)
     aream3d = np.expand_dims(aream,axis=2) # used for broadcasting
     o_area = []
     for day in np.arange(0,len(da.time.data)):
         pr_day = da.isel(time=day)
-        L = skm.label(pr_day.where(pr_day>=conv_threshold,0)>0, background=0,connectivity=2)
+        L = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0, background=0,connectivity=2)
         mF.connect_boundary(L)
         labels = np.unique(L)[1:]
         obj3d = np.stack([(L==label) for label in labels],axis=2)*1 # 3d matrix with each object in a scene being a binary 2d slice
@@ -194,90 +170,77 @@ def calc_o_area(da, conv_threshold):
     return o_area
 
 
-# ------------------------------------------------------------------------------------ Organize metric into dataset and save ----------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------------------------------ Put into dataset and save ----------------------------------------------------------------------------------------------------- #
 
-def load_data(switch, source, dataset, options):
-    da = cF.var2D if switch['constructed_fields'] else None
-    if switch['sample_data']:
-        folder = f'/Users/cbla0002/Documents/data/pr/sample_data/{source}'
-        filename = f'{dataset}_pr_daily_{options.experiment}_{options.resolution}.nc'
-        da = xr.open_dataset(folder + '/' + filename)['pr']
-    da = gD.get_pr(source, dataset, options.timescale, options.experiment, options.resolution) if switch['gadi_data'] else da
-    return da
+def calc_metrics(switch, da, conv_percentile, source, dataset, experiment):
+    ''' Calls metric calculation on input data and saves metric to dataset '''
+    conv_threshold = calc_conv_threshold(switch, da, conv_percentile)
 
-def calc_metrics(switch, da, conv_threshold, source, dataset, options):
-    ''' Calls metric calculation on input data and saves metric to dataset
-    '''
-    if switch['obj_snapshot']:
-        obj_snapshot = xr.DataArray(
-            data=get_obj_snapshot(da, conv_threshold), dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data},
-            attrs = {'Description': f'Scene of contigiuos convetive regions (objects), \
-                                      with convection as precipitation rates exceeding the time-mean \
-                                      {int(conv_threshold*100)}th percentile'})
-        ds_obj_snapshot = xr.Dataset(data_vars = {'obj_snapshot': obj_snapshot})
-        folder = f'{mV.folder_save[0]}/org/metrics/obj_snapshot/{source}'
-        filename = f'{dataset}_obj_snapshot_daily_{options.experiment}_{options.resolution}.nc'
+    if switch['snapshot_obj']:
+        metric_name = 'snapshot_obj' if not switch['fixed_area'] else 'snapshot_obj_fixed_area'
+        obj_snapshot = xr.DataArray(data=get_obj_snapshot(da, conv_threshold), dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data},
+            attrs = {'Description': f'Contigiuos convetive regions (objects). \
+                                      Threshold: {int(conv_percentile*100)}th percentile'})
+        ds_obj_snapshot = xr.Dataset(data_vars = {'snapshot_obj': obj_snapshot})
+        folder = f'{mV.folder_save[0]}/org/metrics/snapshot_obj/{source}'
+        filename = f'{dataset}_snapshot_obj_daily_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_obj_snapshot, folder, filename) if switch['save'] else None
 
     if switch['rome']:
-        rome = xr.DataArray(
-            data = calc_rome(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
+        metric_name = 'rome' if not switch['fixed_area'] else 'rome_fixed_area'
+        rome = xr.DataArray(data = calc_rome(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
             attrs = {'units': 'km' + mF.get_super('2'),
-                     'description': f'ROME based on contigiuos convetive regions (objects), \
-                                    with convection as precipitation rates exceeding the \
-                                    {int(conv_threshold*100)}th percentile'}) #time-mean
+                     'description': f'Threshold: {int(conv_percentile*100)}th percentile'})
         ds_rome = xr.Dataset(data_vars = {'rome': rome})
-        folder = f'{mV.folder_save[0]}/org/metrics/rome_equal_area/{source}'
-        filename = f'{dataset}_rome_equal_area_daily_{options.experiment}_{options.resolution}.nc'
+        folder = f'{mV.folder_save[0]}/org/metrics/{metric_name}/{source}' 
+        filename = f'{dataset}_{metric_name}_daily_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_rome, folder, filename) if switch['save'] else None
 
     if switch['rome_n']:
+        metric_name = 'rome_n' if not switch['fixed_area'] else 'rome_n_fixed_area'
         n=8
-        rome_n = xr.DataArray(
-            data = calc_rome_n(da, conv_threshold), dims = ['time'], coords = {'time': da.time.data}, 
+        rome_n = xr.DataArray(data = calc_rome_n(da, conv_threshold, n), dims = ['time'], coords = {'time': da.time.data}, 
             attrs = {'units': 'km' + mF.get_super('2'),
-                              'description': f'ROME_n based on {n} largest contigiuos convetive regions (objects) \
-                               with convection as precipitation rates exceeding the time-mean \
-                               {int(conv_threshold*100)}th percentile'})
+                     'description': f'{n} largest contigiuos convetive regions (objects) \
+                                    Threshold: {int(conv_percentile*100)}th percentile'})
         ds_rome_n = xr.Dataset(data_vars = {'rome_n': rome_n})
-        folder = f'{mV.folder_save[0]}/org/metrics/rome_n/{source}'
-        filename = f'{dataset}_rome_n_daily_{options.experiment}_{options.resolution}.nc'
+        folder = f'{mV.folder_save[0]}/org/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_rome_n_daily_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_rome_n, folder, filename) if switch['save'] else None
 
     if switch['ni']:
+        metric_name = 'ni' if not switch['fixed_area'] else 'ni_fixed_area'
         ni, areafraction = calc_ni(da, conv_threshold)
-        ni = xr.DataArray(
-            data=ni, 
-            dims=['time'], 
-            coords={'time': da.time.data},
+        ni = xr.DataArray(data=ni, dims=['time'], coords={'time': da.time.data},
             attrs={'units':'Nb',
-                   'description': f'Number of contigiuos convetive regions (objects), \
-                                    with convection as precipitation rates exceeding the time-mean \
-                                    {int(conv_threshold*100)}th percentile'})
-        areafraction = xr.DataArray(
-            data=areafraction, 
-            dims=['time'], 
-            coords={'time': da.time.data},
+                   'description': f'Threshold: {int(conv_percentile*100)}th percentile'})
+        areafraction = xr.DataArray(data=areafraction, dims=['time'], coords={'time': da.time.data},
             attrs = {'units': '%'})
         ds_numberIndex = xr.Dataset(data_vars = {'ni': ni, 'areafraction': areafraction}) 
-        folder = f'{mV.folder_save[0]}/org/metrics/ni/{source}'
-        filename = f'{dataset}_ni_equal_area_daily_{options.experiment}_{options.resolution}.nc'
+        folder = f'{mV.folder_save[0]}/org/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_daily_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_numberIndex, folder, filename) if switch['save'] else None
 
     if switch['o_area']:
-        o_area = xr.DataArray(
-            data = calc_o_area(da, conv_threshold), 
-            dims = 'object',
+        metric_name = 'o_area' if not switch['fixed_area'] else 'o_area_fixed_area'
+        o_area = xr.DataArray(data = calc_o_area(da, conv_threshold), dims = 'obj', 
             attrs = {'units':'km' + mF.get_super('2'),
-                    'description': f'Area of contigiuos convetive regions (objects), \
-                                    with convection as precipitation rates exceeding the time-mean \
-                                    {int(conv_threshold*100)}th percentile'})
+                     'description': f'Threshold: {int(conv_percentile*100)}th percentile'})
         ds_o_area = xr.Dataset(data_vars = {'o_area': o_area}) 
-        folder = f'{mV.folder_save[0]}/org/metrics/o_area/{source}'
-        filename = f'{dataset}_o_area_daily_{options.experiment}_{options.resolution}.nc'
+        folder = f'{mV.folder_save[0]}/org/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_daily_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_o_area, folder, filename) if switch['save'] else None
 
-# -------------------------------------------------------------------------------- Get the data from the model / experiment and run ----------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
+
+def load_data(switch, source, dataset, experiment):
+    if switch['constructed_fields']:
+        return cF.var2D
+    if switch['sample_data']:
+        path = f'/Users/cbla0002/Documents/data/pr/sample_data/{source}/{dataset}_pr_daily_{experiment}_{mV.resolutions[0]}.nc'
+        return xr.open_dataset(path)['pr']
+    else:
+        return gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
@@ -288,17 +251,12 @@ def run_experiment(switch, source, dataset):
         if mF.no_data(source, experiment, mF.data_exist(dataset, experiment)):
             continue
             
-        options = mF.dataset_class(mV.timescales[0], experiment, mV.resolutions[0])
-        da = load_data(switch, source, dataset, options)
+        da = load_data(switch, source, dataset, experiment)
         conv_percentile = 0.97
-        conv_threshold = conv_percentile
-        # conv_threshold = da.quantile(conv_percentile, dim=('lat', 'lon'), keep_attrs=True).mean(dim='time')
-        calc_metrics(switch, da, conv_threshold, source, dataset, options)
+        calc_metrics(switch, da, conv_percentile, source, dataset, experiment)
 
 @mF.timing_decorator
 def run_org_metrics(switch):
-    if not switch['run']:
-        return
     print(f'Running org metrics with {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
@@ -314,17 +272,18 @@ if __name__ == '__main__':
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        True,
-        'gadi_data':          False,
 
         # choose metrics to calculate
-        'obj_snapshot':       False,
         'rome':               True, 
-        'rome_n':             False, 
-        'ni':                 False, 
-        'o_area':             False,
+        'rome_n':             True, 
+        'ni':                 True, 
+        'o_area':             True,
+        'snapshot_obj':       True,
         
-        # run/savve
-        'run':                True,
+        # threshold
+        'fixed_area':         False,
+
+        # save
         'save':               True
         }
     )

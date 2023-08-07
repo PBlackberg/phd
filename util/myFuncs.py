@@ -319,6 +319,7 @@ class dataset_class():
 
 class metric_class():
     ''' Creates object with properties corresponding to folders where metric / figure is stored or loaded from'''
+
     def __init__(self, variable_type, metric, metric_option, cmap, label, color='k'):
         self.variable_type = variable_type
         self.name = metric
@@ -326,12 +327,14 @@ class metric_class():
         self.color = color
         self.cmap = cmap
         self.label = label
-    def get_figure_folder(self, folder_save, source):
-        return f'{folder_save}/{self.variable_type}/figures/{self.name}/{source}'
+
     def get_metric_folder(self, folder_save, name, source):    
         return f'{folder_save}/{self.variable_type}/metrics/{name}/{source}'
-    def get_filename(self, name, source, dataset, timescale, experiment, resolution):
+    def get_metric_filename(self, name, source, dataset, timescale, experiment, resolution):
         return f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{name}_{timescale}_{resolution}.nc'
+    def get_figure_folder(self, folder_save, source):
+        return f'{folder_save}/{self.variable_type}/figures/{self.name}/{source}'
+
 
 def pick_region(switch):
     region = ''
@@ -346,13 +349,12 @@ def get_metric_object(switch):
         # precipitation metrics (pr)
         if key in ['pr', 'pr99', 'pr99_meanIn', 'rx1day_pr', 'rx5day_pr']:
             variable_type, cmap, label, color = ['pr', 'Blues', 'pr [mm day{}]'.format(get_super('-1')), 'b']
-        metric, metric_option = ['pr', key] if key ==                     'pr' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key]       if key == 'pr95' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key]       if key == 'pr97' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key]       if key == 'pr99' else [metric, metric_option]
-        metric, metric_option = ['meanInPercentiles_pr', 'pr99'] if key == 'pr99_meanIn' else [metric, metric_option]
+        metric, metric_option = ['pr', key]                   if key == 'pr' else [metric, metric_option]
         metric, metric_option = ['rxday_pr', key]             if key == 'rx1day_pr' else [metric, metric_option]
         metric, metric_option = ['rxday_pr', key]             if key == 'rx5day_pr' else [metric, metric_option]
+        metric, metric_option = ['percentiles_pr', key]       if key in ['pr95','pr97','pr99' ] else [metric, metric_option]
+        metric, metric_option = ['meanInPercentiles_pr', key] if key == 'pr99_meanIn' else [metric, metric_option]
+
 
         # vertical pressure velocity (wap)
         if key in ['wap']:
