@@ -47,7 +47,7 @@ if run:
         'snapshot_obj':       False,
         
         # threshold
-        'fixed_area':         True,
+        'fixed_area':         False,
 
         # save
         'save':               True

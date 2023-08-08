@@ -125,8 +125,6 @@ def plot_multiple_scenes(switch, datasets, options, metric):
 
 @mF.timing_decorator
 def run_map_plot(switch):
-    if not switch['run']:
-        return
     options = mF.dataset_class(mV.timescales[0], mV.experiments, mV.resolutions[0])
     metric = mF.get_metric_object(switch)
 
@@ -186,7 +184,6 @@ if __name__ == '__main__':
 
         # show/save
         'one dataset':         True,
-        'run':                 False,
         'show':                True,
         'save':                False,
         'save to desktop':     False
