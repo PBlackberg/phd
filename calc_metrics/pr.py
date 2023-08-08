@@ -85,10 +85,10 @@ def calc_o_pr(da, conv_threshold):
 # ---------------------------------------------------------------------------------------------- Put in dataset and save ----------------------------------------------------------------------------------------------------- #
     
 def calc_metrics(switch, da, source, dataset, experiment):
-    if switch['snapshot_pr']:
-        ds_pr_snapshot = xr.Dataset({f'snapshot_pr' : da.isel(time=0)})
-        folder = f'{mV.folder_save[0]}/pr/metrics/snapshot_pr/{source}'
-        filename = f'{dataset}_snapshot_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+    if switch['pr_snapshot']:
+        ds_pr_snapshot = xr.Dataset({f'pr_snapshot' : da.isel(time=0)})
+        folder = f'{mV.folder_save[0]}/pr/metrics/pr_snapshot/{source}'
+        filename = f'{dataset}_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_pr_snapshot, folder, filename) if switch['save'] else None
 
     if switch['rxday_sMean']:
@@ -114,11 +114,11 @@ def calc_metrics(switch, da, source, dataset, experiment):
         filename = f'{dataset}_percentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
         
-    if switch['snapshot_percentiles']:
+    if switch['percentiles_snapshot']:
         ds_percentile_snapshot = xr.Dataset()
         for percentile in percentiles:
             percentile_snapshot= calc_percentile_snapshot(da, percentile)
-            ds_percentile_snapshot[f'snapshot_pr{int(percentile*100)}'] = percentile_snapshot
+            ds_percentile_snapshot[f'pr{int(percentile*100)}_snapshot'] = percentile_snapshot
         folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr_snapshot/{source}'
         filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
@@ -143,8 +143,8 @@ def calc_metrics(switch, da, source, dataset, experiment):
         filename = f'{dataset}_meanInPercentiles_fixedArea_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
 
-    if switch['snapshot_F_pr10']:
-        ds_F_pr10_snapshot = xr.Dataset({'F_pr10': calc_F_pr10_snapshot(da)})
+    if switch['F_pr10_snapshot']:
+        ds_F_pr10_snapshot = xr.Dataset({'F_pr10_snapshot': calc_F_pr10_snapshot(da)})
         folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10_snapshot/{source}'
         filename = f'{dataset}_F_pr10_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_F_pr10_snapshot, folder, filename) if switch['save'] else None

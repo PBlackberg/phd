@@ -46,24 +46,24 @@ def calc_sMean(da):
 
 def calc_metrics(switch, da, cloud_type, region, source, dataset, experiment):
     if switch['snapshot']:
-        metric_name =f'snapshot_cl{cloud_type}{region}' 
+        metric_name =f'cl{cloud_type}{region}_snapshot' 
         ds_snapshot = xr.Dataset({metric_name: da.isel(time=0)})
         folder = f'{mV.folder_save[0]}/cl/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_snapshot, folder, filename) if switch['save'] else None
 
     if switch['sMean']:
         metric_name =f'cl{cloud_type}{region}_sMean' 
         ds_sMean = xr.Dataset({metric_name: calc_sMean(da)})
         folder = f'{mV.folder_save[0]}/cl/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_sMean, folder, filename) if switch['save'] else None
 
     if switch['tMean']:
         metric_name =f'cl{cloud_type}{region}_tMean' 
         ds_tMean = xr.Dataset({metric_name: da.mean(dim='time', keep_attrs=True)})
         folder = f'{mV.folder_save[0]}/cl/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_tMean, folder, filename) if switch['save'] else None
 
 

@@ -25,6 +25,10 @@ def pick_wap_region(switch, da, source, dataset, experiment):
         return da.where(wap500<0), '_a'
 
 def calc_vertical_mean(da):
+    da = da.sel(plev=slice(850e2, 0)) # free troposphere (most values at 1000 hPa over land are NaN)
+    return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
+
+def calc_vertical_mean_era(da):
     da = da.sel(plev=slice(0,850e2)) # free troposphere (most values at 1000 hPa over land are NaN)
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
@@ -37,7 +41,7 @@ def calc_sMean(da):
 
 def calc_metrics(switch, da, region, source, dataset, experiment):
     if switch['snapshot']:
-        metric_name =f'snapshot_hur{region}' 
+        metric_name =f'hur{region}_snapshot' 
         ds_snapshot = xr.Dataset({metric_name: da.isel(time=0)})
         folder = f'{mV.folder_save[0]}/hur/metrics/{metric_name}/{source}'
         filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
@@ -101,10 +105,10 @@ def run_experiment(switch, source, dataset):
             e_s = 611.2 * np.exp(17.67*(t-273.15)/(t-29.66)) # saturation water vapor pressure
             r_s = 0.622 * e_s/p
             da = (r/r_s)*100 # relative humidity
+            da = calc_vertical_mean_era(da)
         else:
             da = load_hur_data(switch, source, dataset, experiment)
-
-        da = calc_vertical_mean(da)
+            da = calc_vertical_mean(da)
         da, region = pick_wap_region(switch, da, source, dataset, experiment)
         calc_metrics(switch, da, region, source, dataset, experiment)
 

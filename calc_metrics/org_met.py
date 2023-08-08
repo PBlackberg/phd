@@ -176,8 +176,8 @@ def calc_metrics(switch, da, conv_percentile, source, dataset, experiment):
     ''' Calls metric calculation on input data and saves metric to dataset '''
     conv_threshold = calc_conv_threshold(switch, da, conv_percentile)
 
-    if switch['snapshot_obj']:
-        metric_name = 'snapshot_obj' if not switch['fixed_area'] else 'snapshot_obj_fixed_area'
+    if switch['obj_snapshot']:
+        metric_name = 'obj_snapshot' if not switch['fixed_area'] else 'obj_snapshot_fixed_area'
         obj_snapshot = xr.DataArray(data=get_obj_snapshot(da, conv_threshold), dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data},
             attrs = {'Description': f'Contigiuos convetive regions (objects). \
                                       Threshold: {int(conv_percentile*100)}th percentile'})
@@ -278,7 +278,7 @@ if __name__ == '__main__':
         'rome_n':             True, 
         'ni':                 True, 
         'o_area':             True,
-        'snapshot_obj':       True,
+        'obj_snapshot':       True,
         
         # threshold
         'fixed_area':         False,
