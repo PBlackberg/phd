@@ -83,35 +83,9 @@ if run:
     
 
 # ----------------------------------------
-# Outgoing Longwave Radiation (OLR) (rlut)
-# ----------------------------------------
-run = False
-if run:
-    import large_scale_state.rlut as rM 
-    rM.run_rlut_metrics(switch = {
-        # choose data to calculate metric on
-        'constructed_fields': False, 
-        'sample_data':        False,
-
-        # choose metrics to calculate
-        'sMean':              True, 
-        'tMean':              True, 
-        'snapshot':           True, 
-
-        # mask by
-        'ascent':             False,
-        'descent':            False,
-
-        # save
-        'save':               True
-        }
-    )
-    
-
-# ----------------------------------------
 # Surface temperature (tas)
 # ----------------------------------------
-run = True
+run = False
 if run:
     import large_scale_state.tas as tM
     tM.run_tas_metrics(switch = {
@@ -133,17 +107,16 @@ if run:
         }
     )
     
-
 # ----------------------------------------
 # Vertical pressure velocity (wap)
 # ----------------------------------------
-run = False
+run = True
 if run:
     import large_scale_state.wap as wM
     wM.run_wap_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         # choose metrics to calculate
         'sMean':              True, 
@@ -189,8 +162,33 @@ if run:
 
 
 
+# ------------------------------------------------------------------------------------------------- radiation ----------------------------------------------------------------------------------------------------- #
 
+# ----------------------------------------
+# Outgoing Longwave Radiation (OLR) (rlut)
+# ----------------------------------------
+run = False
+if run:
+    import large_scale_state.rlut as rM 
+    rM.run_rlut_metrics(switch = {
+        # choose data to calculate metric on
+        'constructed_fields': False, 
+        'sample_data':        False,
 
+        # choose metrics to calculate
+        'sMean':              True, 
+        'tMean':              True, 
+        'snapshot':           True, 
+
+        # mask by
+        'ascent':             False,
+        'descent':            False,
+
+        # save
+        'save':               True
+        }
+    )
+    
 
 
 

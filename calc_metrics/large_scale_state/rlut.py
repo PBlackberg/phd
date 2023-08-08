@@ -33,7 +33,7 @@ def calc_sMean(da):
 
 def calc_metrics(switch, da, region, source, dataset, experiment):
     if switch['snapshot']:
-        metric_name =f'snapshot_rlut{region}' 
+        metric_name =f'rlut{region}_snapshot' 
         ds_snapshot = xr.Dataset({metric_name: da.isel(time=0)})
         folder = f'{mV.folder_save[0]}/lw/metrics/{metric_name}/{source}'
         filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
