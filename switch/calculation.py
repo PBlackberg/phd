@@ -11,8 +11,7 @@ if run:
     pM.run_pr_metrics(switch = {
             # choose data to calculate metric on
             'constructed_fields': False, 
-            'sample_data':        True,
-            'gadi_data':          False,
+            'sample_data':        False,
 
             # choose metrics to calculate
             'snapshot_pr':                    False,
@@ -32,14 +31,13 @@ if run:
         )
     
 # -------------------------------------------------------------------------------------- Organization metrics ----------------------------------------------------------------------------------------------------- #
-run = True
+run = False
 if run:
     import org_met as oM
     oM.run_org_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        True,
-        'gadi_data':          False,
 
         # choose metrics to calculate
         'rome':               True, 
@@ -67,7 +65,7 @@ if run:
     hM.run_hur_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         # choose metrics to calculate
         'sMean':              True, 
@@ -79,7 +77,7 @@ if run:
         'descent':            False,
 
         # save
-        'save':               False
+        'save':               True
         }
     )
     
@@ -93,7 +91,7 @@ if run:
     rM.run_rlut_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         # choose metrics to calculate
         'sMean':              True, 
@@ -113,13 +111,13 @@ if run:
 # ----------------------------------------
 # Surface temperature (tas)
 # ----------------------------------------
-run = False
+run = True
 if run:
     import large_scale_state.tas as tM
     tM.run_tas_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         # choose metrics to calculate
         'sMean':              True, 

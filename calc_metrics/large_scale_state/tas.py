@@ -40,21 +40,21 @@ def calc_metrics(switch, da, region, source, dataset, experiment):
         metric_name =f'snapshot_tas{region}' 
         ds_snapshot = xr.Dataset({metric_name: da.isel(time=0)})
         folder = f'{mV.folder_save[0]}/tas/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_snapshot, folder, filename) if switch['save'] else None
 
     if switch['sMean']:
         metric_name =f'tas{region}_sMean' 
         ds_sMean = xr.Dataset({metric_name: calc_sMean(da)})
         folder = f'{mV.folder_save[0]}/tas/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_sMean, folder, filename) if switch['save'] else None
 
     if switch['tMean']:
         metric_name =f'tas{region}_tMean' 
         ds_tMean = xr.Dataset({metric_name: da.mean(dim='time', keep_attrs=True)})
         folder = f'{mV.folder_save[0]}/tas/metrics/{metric_name}/{source}'
-        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_tMean, folder, filename) if switch['save'] else None
 
 
@@ -67,7 +67,7 @@ def load_tas_data(switch, source, dataset, experiment):
         path = f'/Users/cbla0002/Documents/data/tas/sample_data/{source}/{dataset}_tas_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         return xr.open_dataset(path)['tas']
     else:
-        return gD.get_tas(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])
+        return gD.get_tas(source, dataset, experiment, mV.timescales[0], mV.resolutions[0])
     
 def load_wap_data(switch, source, dataset, experiment):
     if  switch['constructed_fields']:
@@ -76,7 +76,7 @@ def load_wap_data(switch, source, dataset, experiment):
         path = f'/Users/cbla0002/Documents/data/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         return xr.open_dataset(path)['wap']
     else:
-        return gD.get_wap(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])
+        return gD.get_wap(source, dataset, experiment, mV.timescales[0], mV.resolutions[0])
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:

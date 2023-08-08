@@ -330,7 +330,7 @@ class metric_class():
 
     def get_metric_folder(self, folder_save, name, source):    
         return f'{folder_save}/{self.variable_type}/metrics/{name}/{source}'
-    def get_metric_filename(self, name, source, dataset, timescale, experiment, resolution):
+    def get_filename(self, name, source, dataset, timescale, experiment, resolution):
         return f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{name}_{timescale}_{resolution}.nc'
     def get_figure_folder(self, folder_save, source):
         return f'{folder_save}/{self.variable_type}/figures/{self.name}/{source}'
