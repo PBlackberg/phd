@@ -60,6 +60,7 @@ def calc_F_pr10_snapshot(da):
     mask = xr.where(da>10,1,0)
     return da.isel(time=0).where(mask.isel(time=0) > 0)
 
+@mF.timing_decorator
 def calc_o_pr(da, conv_threshold):
     ''' Precipitation rate in each contigous convective region (object) '''
     lat, lon = da['lat'].data, da['lon'].data
@@ -87,21 +88,21 @@ def calc_metrics(switch, da, source, dataset, experiment):
     if switch['snapshot_pr']:
         ds_pr_snapshot = xr.Dataset({f'snapshot_pr' : da.isel(time=0)})
         folder = f'{mV.folder_save[0]}/pr/metrics/snapshot_pr/{source}'
-        filename = f'{dataset}_snapshot_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_snapshot_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_pr_snapshot, folder, filename) if switch['save'] else None
 
     if switch['rxday_sMean']:
         rx1day_sMean, rx5day_sMean = calc_rxday_sMean(da)
         ds_rxday_sMean = xr.Dataset({'rx1day_sMean_pr': rx1day_sMean , 'rx5day_sMean_pr': rx5day_sMean})         
         folder = f'{mV.folder_save[0]}/pr/metrics/rxday_sMean_pr/{source}'
-        filename = f'{dataset}_rxday_sMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_rxday_sMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_rxday_sMean, folder, filename) if switch['save'] else None
 
     if switch['rxday_tMean']:
         rx1day_tMean, rx5day_tMean = calc_rxday_tMean(da)
         ds_rxday_tMean = xr.Dataset({'rx1day_tMean_pr': rx1day_tMean , 'rx5day_tMean_pr': rx5day_tMean})
         folder = f'{mV.folder_save[0]}/pr/metrics/rxday_tMean_pr/{source}'
-        filename = f'{dataset}_rxday_tMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_rxday_tMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_rxday_tMean, folder, filename) if switch['save'] else None
 
     if switch['percentiles']:
@@ -110,7 +111,7 @@ def calc_metrics(switch, da, source, dataset, experiment):
         for percentile in percentiles:
             ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
         folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr/{source}'
-        filename = f'{dataset}_percentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_percentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
         
     if switch['snapshot_percentiles']:
@@ -119,7 +120,7 @@ def calc_metrics(switch, da, source, dataset, experiment):
             percentile_snapshot= calc_percentile_snapshot(da, percentile)
             ds_percentile_snapshot[f'snapshot_pr{int(percentile*100)}'] = percentile_snapshot
         folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr_snapshot/{source}'
-        filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
 
     if switch['meanInPercentiles']:
@@ -129,7 +130,7 @@ def calc_metrics(switch, da, source, dataset, experiment):
             meanInPercentile = calc_meanInPercentile(da, percentile)
             ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn'] = meanInPercentile
         folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_pr/{source}'
-        filename = f'{dataset}_meanInPercentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_meanInPercentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
 
     if switch['meanInPercentiles_fixedArea']:
@@ -139,19 +140,19 @@ def calc_metrics(switch, da, source, dataset, experiment):
             meanInPercentile = calc_meanInPercentile_fixedArea(da, percentile)
             ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn_fixedArea'] = meanInPercentile
         folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_fixedArea_pr/{source}'
-        filename = f'{dataset}_meanInPercentiles_fixedArea_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_meanInPercentiles_fixedArea_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
 
     if switch['snapshot_F_pr10']:
         ds_F_pr10_snapshot = xr.Dataset({'F_pr10': calc_F_pr10_snapshot(da)})
         folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10_snapshot/{source}'
-        filename = f'{dataset}_F_pr10_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_F_pr10_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_F_pr10_snapshot, folder, filename) if switch['save'] else None
 
     if switch['F_pr10']:
         ds_F_pr10 = xr.Dataset({'F_pr10': calc_F_pr10(da)})
         folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10/{source}'
-        filename = f'{dataset}_F_pr10_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_F_pr10_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_F_pr10, folder, filename) if switch['save'] else None
 
     if switch['o_pr']:
@@ -162,7 +163,7 @@ def calc_metrics(switch, da, source, dataset, experiment):
                                          'descrption': 'area weighted mean precipitation in contiguous convective region (object)'})
         ds_o_pr = xr.Dataset({'o_pr': o_pr})
         folder = f'{mV.folder_save[0]}/pr/metrics/o_pr/{source}'
-        filename = f'{dataset}_o_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+        filename = f'{dataset}_o_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_o_pr, folder, filename) if switch['save'] else None
 
 

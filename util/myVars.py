@@ -27,6 +27,7 @@ models_cmip5 = [
 # first 14/26 models as used in schiro paper
 models_cmip6 = [
     'TaiESM1',           # 1
+<<<<<<< HEAD
     # 'BCC-CSM2-MR',       # 2
     # 'FGOALS-g3',         # 3
     # 'CNRM-CM6-1',        # 4
@@ -45,14 +46,34 @@ models_cmip6 = [
     # 'INM-CM5-0',         # 17 
     # 'IPSL-CM6A-LR',      # 18
     # 'KIOST-ESM',         # 19
+=======
+    'BCC-CSM2-MR',       # 2
+    'FGOALS-g3',         # 3
+    'CNRM-CM6-1',        # 4
+    'MIROC6',            # 5
+    'MPI-ESM1-2-LR',     # 6
+    'NorESM2-MM',        # 7
+    'GFDL-CM4',          # 8
+    'CanESM5',           # 9
+    'CMCC-ESM2',         # 10
+    'UKESM1-0-LL',       # 11
+    'MRI-ESM2-0',        # 12
+    'CESM2-WACCM',       # 13          
+    'NESM3',             # 14
+    'IITM-ESM',          # 15       
+    'EC-Earth3',         # 16       # no cl
+    'INM-CM5-0',         # 17       # no cl
+    'IPSL-CM6A-LR',      # 18
+    'KIOST-ESM',         # 19       # no cl
+>>>>>>> 3445fe6d756b6a3355197aaad4d8ff206ec8eee2
     ]
 
 
 observations = [
-    # 'GPCP',              # precipitation, organization index (from project al33 on gadi)
+    # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
     # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
     # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
-    # 'ERA5'               # humidity
+    # 'ERA5'               # humidity (from project rt52 on gadi)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
@@ -64,8 +85,8 @@ timescales = [
 
 experiments = [
     'historical',     
-    # 'rcp85',             # warm scenario cmip5
-    # 'ssp585',            # warm scenario for cmip6
+    # 'rcp85',             # warm scenario for cmip5
+    'ssp585',            # warm scenario for cmip6
     # ''                   # observations
     ]
 
@@ -75,8 +96,8 @@ resolutions = [
     ]
 
 folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
+    # os.path.expanduser("~") + '/Documents/data',
+    '/g/data/k10/cb4968/data'
     ]
 
 

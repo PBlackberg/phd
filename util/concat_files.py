@@ -4,16 +4,14 @@ import os
 
 
 def latestVersion(path):
-    ''' Picks the latest version if there are multiple 
-    '''
+    ''' Picks the latest version if there are multiple '''
     versions = os.listdir(path)
     version = max(versions, key=lambda x: int(x[1:])) if len(versions)>1 else versions[0]
     return version
 
 def concat_files(path_folder, experiment):
     ''' Concatenates files of monthly or daily data between specified years
-    (takes out a little bit wider range to not exclude data when interpolating grid) 
-    '''
+    (takes out a little bit wider range to not exclude data when interpolating grid) '''
     files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
     
     year1, year2 = (1970, 1999) if experiment == 'historical' else (2070, 2099) # range of years to concatenate files for
@@ -29,6 +27,7 @@ def concat_files(path_folder, experiment):
     paths = []
     for file in files:
         paths = np.append(paths, os.path.join(path_folder, file))
+    
     ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
     return ds
 
@@ -165,9 +164,13 @@ def get_cmip6_cl(variable, institute, model, timescale, experiment, resolution, 
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
     
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
-        
-    if model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4']: # different models have different conversions from height coordinate to pressure coordinate.
+
+    if model == 'IITM-ESM': # different models have different conversions from height coordinate to pressure coordinate.
+        p_hybridsigma = None
+        ds = ds.rename({'plev':'lev'}) 
+    elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4', 'IPSL-CM6A-LR']: 
         p_hybridsigma = ds.ap + ds.b*ds.ps
+        ds = ds.rename({'klevp1':'lev'}) if model == 'IPSL-CM6A-LR' else ds
     elif model == 'FGOALS-g3':
         p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
     elif model == 'UKESM1-0-LL':
@@ -184,12 +187,11 @@ def get_cmip6_cl(variable, institute, model, timescale, experiment, resolution, 
         cl = ds['cl'] # units in % on sigma pressure coordinates
         regridder = regrid.regrid_conserv_xesmf(ds)
         cl = regridder(cl)
-        p_hybridsigma_n = regridder(p_hybridsigma)
-
         ds_cl = xr.Dataset(data_vars = {'cl': cl}, attrs = ds.attrs)
+
+        p_hybridsigma_n = None if model == 'IITM-ESM' else regridder(p_hybridsigma)
         ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma_n}, attrs = ds.lev.attrs)
     return ds_cl, ds_p_hybridsigma
-
 
 
 # ----------------------------------------------------------------------------------------- OBS: GPCP data ----------------------------------------------------------------------------------------------------------#
