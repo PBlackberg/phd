@@ -110,7 +110,7 @@ if run:
 # ----------------------------------------
 # Vertical pressure velocity (wap)
 # ----------------------------------------
-run = True
+run = False
 if run:
     import large_scale_state.wap as wM
     wM.run_wap_metrics(switch = {
@@ -134,13 +134,13 @@ if run:
 
 
 # ------------------------------------------------------------------------------------------------- clouds ----------------------------------------------------------------------------------------------------- #
-run = False
+run = True
 if run:
     import clouds.cl as cM
     cM.run_cl_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
+        'sample_data':        False,
 
         # choose metrics to calculate
         'snapshot':           True, 
