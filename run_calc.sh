@@ -12,8 +12,7 @@
 
 module use /g/data/hh5/public/modules
 module load conda/analysis3-unstable
-python /home/565/cb4968/Documents/code/phd/calc_metrics/large-scale_state/hur.py $PBS_NCPUS 
-
+python /home/565/cb4968/Documents/code/phd/switch/calculation.py $PBS_NCPUS 
 
 
 
