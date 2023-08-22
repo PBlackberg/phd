@@ -5,7 +5,7 @@ folder_code = f'{home}/Documents/code/phd'
 sys.path.insert(0, f'{folder_code}/plot')
 
 # -------------------------------------------------------------------------------------------- Map plot ----------------------------------------------------------------------------------------------------- #
-plot = True
+plot = False
 if plot:
     import map_plot as mP
     mP.run_map_plot(switch = {
@@ -18,10 +18,10 @@ if plot:
         'obj':                 False,
 
         'wap':                 False,
-        'tas':                 False,
+        'tas':                 True,
 
         'hus':                 False,
-        'hur':                 True,
+        'hur':                 False,
         'rlut':                False,
 
         'lcf':                 False,
@@ -39,7 +39,7 @@ if plot:
         'per_kelvin':          False,
         
         # show/save
-        'one dataset':         True,
+        'one dataset':         False,
         'show':                True,
         'save':                False,
         'save to desktop':     False
@@ -54,7 +54,8 @@ if plot:
     sP.run_scatter_plot(switch = {
         # metrics
             # organization
-            'rome':                True,
+            'rome':                False,
+            'rome_fixed_area':     True,
 
             # other
             'pr':                  False,
@@ -63,10 +64,10 @@ if plot:
             'rx5day_pr':           False,
 
             'wap':                 False,
-            'tas':                 False,
+            'tas':                 True,
 
             'hus':                 False,
-            'hur':                 True,
+            'hur':                 False,
             'rlut':                False,
 
             'lcf':                 False,
@@ -85,7 +86,6 @@ if plot:
 
         # run/show/save
         'one dataset':         False,
-        'run':                 False,
         'show':                True,
         'save':                False,
         'save to desktop':     False
@@ -102,15 +102,15 @@ if plot:
             'rome':                True,
 
             # other
-            'ecs':                 True,
+            'ecs':                 False,
             'pr':                  False,
             'pr99':                False,
-            'pr99_meanIn':         False,
+            'pr99_sMean':          False,
             'rx1day_pr':           False,
             'rx5day_pr':           False,
 
             'wap':                 False,
-            'tas':                 False,
+            'tas':                 True,
 
             'hus':                 False,
             'hur':                 False,
@@ -122,6 +122,7 @@ if plot:
         # masked by
         'descent':             False,
         'ascent':              False,
+        'per_kelvin':          False,
 
         # metric calculation
         'climatology':         True,
@@ -131,7 +132,6 @@ if plot:
         'xy':                  True,
 
         # show/save
-        'run':                 True,
         'show':                True,
         'save':                False,
         'save to desktop':     False

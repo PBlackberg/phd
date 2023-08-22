@@ -17,24 +17,20 @@ import constructed_fields as cF # imports fields for testing
 
 # ---------------------------------------------------------------------------------- Calculate plot metric ----------------------------------------------------------------------------------------------------- #
 
-def get_data(switch, source, dataset, options, metric, experiment):
+def get_data(switch, source, dataset, metric, experiment):
     if switch['snapshot']:
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_snapshot', source)
-        filename = metric.get_filename(f'{metric.name}_snapshot', source, dataset, options.timescale, options.experiment[0], options.resolution)
-        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_snapshot']
+        metric_name, metric_option = f'{metric.name}_snapshot', f'{metric.option}_snapshot'
     if switch['climatology'] or switch['change with warming']:
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_tMean', source)
-        filename = metric.get_filename(f'{metric.name}_tMean', source, dataset, options.timescale, experiment, options.resolution)
-        scene = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_tMean']
-    return scene
-
-def calc_scene(switch, dataset, options, metric):
+        metric_name, metric_option = f'{metric.name}_tMean', f'{metric.option}_tMean'
+    path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc' 
+    return xr.open_dataset(path)[metric_option]
+    
+def calc_scene(switch, dataset, metric):
     source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    scene = get_data(switch, source, dataset, options, metric, options.experiment[0]) if switch['snapshot'] or switch['climatology'] else None
-
+    scene = get_data(switch, source, dataset, metric, mV.experiments[0]) if switch['snapshot'] or switch['climatology'] else None
     if switch['change with warming']:
-        scene_historical = get_data(switch, source, dataset, options, metric, metric.experiment[0])
-        scene_warm = get_data(switch, source, dataset, options, metric, metric.experiment[1])
+        scene_historical = get_data(switch, source, dataset, metric, mV.experiment[0])
+        scene_warm = get_data(switch, source, dataset, metric, mV.experiment[1])
         scene = scene_warm - scene_historical 
     return scene
 
@@ -46,10 +42,10 @@ def find_title(switch, metric):
     title = f'{metric.option} change with warming' if switch['change with warming'] else title
     return title
 
-def plot_one_scene(switch, dataset, options, metric):
-    calc_cbar_limits = True
+def plot_one_scene(switch, dataset, metric):
+    calc_cbar_limits = False
     if calc_cbar_limits:
-        vmin, vmax = mF.find_limits(switch, [dataset], options, metric, calc_scene,
+        vmin, vmax = mF.find_limits(switch, [dataset], metric, calc_scene,
             quantileWithin_low = 0,    # remove extreme low values from colorbar range 
             quantileWithin_high = 1,   # remove extreme high values from colorbar range 
             )
@@ -57,7 +53,7 @@ def plot_one_scene(switch, dataset, options, metric):
         vmin, vmax = [None , None]
 
     fig, ax = mF.create_map_figure(width = 12, height = 4)
-    scene = calc_scene(switch, dataset, options, metric)
+    scene = calc_scene(switch, dataset, metric)
     pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
 
     mF.move_col(ax, moveby = -0.055)
@@ -71,10 +67,10 @@ def plot_one_scene(switch, dataset, options, metric):
     return fig
 
 
-def plot_multiple_scenes(switch, datasets, options, metric):
+def plot_multiple_scenes(switch, datasets, metric):
     calc_cbar_limits = True
     if calc_cbar_limits:
-        vmin, vmax = mF.find_limits(switch, datasets, options, metric, calc_scene,
+        vmin, vmax = mF.find_limits(switch, datasets, metric, calc_scene,
         quantileWithin_low = 0,    # remove extreme low values from colorbar range 
         quantileWithin_high = 1,   # remove extreme high values from colorbar range 
         quantileBetween_low = 0,   # remove extreme low models' from colorbar range
@@ -91,7 +87,7 @@ def plot_multiple_scenes(switch, datasets, options, metric):
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
-        scene = calc_scene(switch, dataset, options, metric)
+        scene = calc_scene(switch, dataset, metric)
         pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
 
         mF.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
@@ -117,34 +113,34 @@ def plot_multiple_scenes(switch, datasets, options, metric):
     cbar_position = [0.225, 0.095, 0.60, 0.02] # [left, bottom, width, height]
     cbar_ax = fig.add_axes(cbar_position)
     fig.colorbar(pcm, cax=cbar_ax, orientation='horizontal')
-    ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, metric.cbar_label, ha = 'center', fontsize = 10, transform=fig.transFigure)
+    ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, metric.label, ha = 'center', fontsize = 10, transform=fig.transFigure)
     mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
 # ----------------------------------------------------------------------- Find the metric and labels / run ----------------------------------------------------------------------------------------------------- #
 
+def save_the_plot(switch, fig, metric):
+    source = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    with_obs = mF.find_ifWithObs(mV.datasets, mV.observations)
+
+    folder = metric.get_figure_folder(mV.folder_save[0], source)
+    filename = f'{metric.option}_snapshot'              if switch['snapshot'] else None
+    filename = f'{metric.option}_clim'                  if switch['climatology'] else filename
+    filename = f'{metric.option}_difference'            if switch['change with warming'] else filename
+    filename = f'{mV.datasets[0]}_{filename}' if switch['one dataset'] else f'{source}_{filename}{with_obs}'
+
+    mF.save_figure(fig, folder, f'{filename}.pdf') if switch['save'] else None
+    mF.save_figure(fig, f'{home}/Desktop', f'{filename}.pdf') if switch['save to desktop'] else None
+
+
 @mF.timing_decorator
 def run_map_plot(switch):
-    options = mF.dataset_class(mV.timescales[0], mV.experiments, mV.resolutions[0])
     metric = mF.get_metric_object(switch)
-
-    print(f'Plotting map_plot from {options.timescale} {options.resolution} data')
+    print(f'Plotting map_plot from {mV.timescales[0]} {mV.resolutions[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
-    fig = plot_one_scene(switch, mV.datasets[0], options, metric) if switch['one dataset'] else plot_multiple_scenes(switch, mV.datasets, options, metric)
-
-    if switch['save'] or switch['save to desktop']:
-        source = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        with_obs = mF.find_ifWithObs(mV.datasets, mV.observations)
-
-        folder = metric.get_figure_folder(mV.folder_save[0], source)
-        filename = f'{metric.option}_snapshot'              if switch['snapshot'] else None
-        filename = f'{metric.option}_clim'                  if switch['climatology'] else filename
-        filename = f'{metric.option}_difference'            if switch['change with warming'] else filename
-        filename = f'{mV.datasets[0]}_{filename}' if switch['one dataset'] else f'{source}_{filename}{with_obs}'
-
-        mF.save_figure(fig, folder, f'{filename}.pdf') if switch['save'] else None
-        mF.save_figure(fig, f'{home}/Desktop', f'{filename}.pdf') if switch['save to desktop'] else None
+    fig = plot_one_scene(switch, mV.datasets[0], metric) if switch['one dataset'] else plot_multiple_scenes(switch, mV.datasets, metric)
+    save_the_plot(switch, fig, metric) if switch['save'] or switch['save to desktop'] else None
     plt.show() if switch['show'] else None
 
 

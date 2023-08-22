@@ -133,13 +133,13 @@ if __name__ == '__main__':
         'sample_data':        True,
 
         # choose metrics to calculate
-        'sMean':              True, 
-        'tMean':              True, 
+        'sMean':              False, 
+        'tMean':              False, 
         'snapshot':           True, 
         
         # mask by
         'ascent':             False,
-        'descent':            True,
+        'descent':            False,
 
         # save
         'save':               True

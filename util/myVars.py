@@ -27,24 +27,24 @@ models_cmip5 = [
 # first 14/26 models as used in schiro paper
 models_cmip6 = [
     'TaiESM1',           # 1
-    # 'BCC-CSM2-MR',       # 2
-    # 'FGOALS-g3',         # 3
-    # 'CNRM-CM6-1',        # 4
-    # 'MIROC6',            # 5
-    # 'MPI-ESM1-2-LR',     # 6
-    # 'NorESM2-MM',        # 7
-    # 'GFDL-CM4',          # 8
-    # 'CanESM5',           # 9
-    # 'CMCC-ESM2',         # 10
-    # 'UKESM1-0-LL',       # 11
-    # 'MRI-ESM2-0',        # 12
+    'BCC-CSM2-MR',       # 2
+    'FGOALS-g3',         # 3
+    'CNRM-CM6-1',        # 4
+    'MIROC6',            # 5
+    'MPI-ESM1-2-LR',     # 6
+    'NorESM2-MM',        # 7
+    'GFDL-CM4',          # 8
+    'CanESM5',           # 9
+    'CMCC-ESM2',         # 10
+    'UKESM1-0-LL',       # 11
+    'MRI-ESM2-0',        # 12
     # 'CESM2-WACCM',       # 13          
-    # 'NESM3',             # 14
-    # 'IITM-ESM',          # 15 
-    # 'EC-Earth3',         # 16 
-    # 'INM-CM5-0',         # 17 
-    # 'IPSL-CM6A-LR',      # 18
-    # 'KIOST-ESM',         # 19
+    'NESM3',             # 14
+    'IITM-ESM',          # 15 
+    'EC-Earth3',         # 16 
+    'INM-CM5-0',         # 17 
+    'IPSL-CM6A-LR',      # 18
+    'KIOST-ESM',         # 19
     ]
 
 
@@ -75,8 +75,8 @@ resolutions = [
     ]
 
 folder_save = [
-    # os.path.expanduser("~") + '/Documents/data',
-    '/g/data/k10/cb4968/data'
+    os.path.expanduser("~") + '/Documents/data',
+    # '/g/data/k10/cb4968/data'
     ]
 
 

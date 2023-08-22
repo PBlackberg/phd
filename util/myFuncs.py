@@ -75,10 +75,10 @@ def resample_timeMean(da, timeMean_option=''):
         pass
     return da
 
-def find_limits(switch, datasets, options, metric, func, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
+def find_limits(switch, datasets, metric, func, quantileWithin_low, quantileWithin_high, quantileBetween_low = 0, quantileBetween_high=1):    
     vmin_list, vmax_list = [], []
     for dataset in datasets:
-        scene = func(switch, dataset, options, metric)
+        scene = func(switch, dataset, metric)
         vmin_list = np.append(vmin_list, np.nanquantile(scene, quantileWithin_low))
         vmax_list = np.append(vmax_list, np.nanquantile(scene, quantileWithin_high))
     vmin = np.nanquantile(vmin_list, quantileBetween_low)
@@ -221,7 +221,6 @@ def format_ticks(ax, i = 0, num_subplots = 1, ncols = 1, col = 0, labelsize = 8,
 
 
 
-
 # ------------------------------------------------------------ functions for saving / loading data ----------------------------------------------------------------------------------------------------- #
 
 # --------------------
@@ -290,32 +289,26 @@ def no_data(source, experiment, data_exists):
     if not data_exists:
         return True
 
-def save_file(data, folder, filename):
+def save_file(data, folder, filename, path = ''):
     ''' Saves file to specified folder and filename '''
-    os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, filename)
+    if not path:
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, filename)
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path)
     return
 
-def save_figure(figure, folder, filename):
+def save_figure(figure, folder, filename, path = ''):
     ''' Save figure to specified folder and filename '''
-    os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, filename)
+    if not path:
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, filename)
     os.remove(path) if os.path.exists(path) else None
     figure.savefig(path)
     return
 
 
-
 # ------------------------------------------------------------ functions for getting available metrics ----------------------------------------------------------------------------------------------------- #
-
-class dataset_class():
-    ''' Creates object with dataset options'''
-    def __init__(self, timescale, experiment, resolution):
-        self.timescale = timescale
-        self.experiment = experiment
-        self.resolution = resolution
 
 class metric_class():
     ''' Creates object with properties corresponding to folders where metric / figure is stored or loaded from'''
@@ -328,14 +321,6 @@ class metric_class():
         self.cmap = cmap
         self.label = label
 
-    def get_metric_folder(self, folder_save, name, source):    
-        return f'{folder_save}/{self.variable_type}/metrics/{name}/{source}'
-    def get_filename(self, name, source, dataset, timescale, experiment, resolution):
-        return f'{dataset}_{name}_{timescale}_{experiment}_{resolution}.nc' if not source == 'obs' else f'{dataset}_{name}_{timescale}_{resolution}.nc'
-    def get_figure_folder(self, folder_save, source):
-        return f'{folder_save}/{self.variable_type}/figures/{self.name}/{source}'
-
-
 def pick_region(switch):
     region = ''
     region = '_d' if switch['descent'] else region
@@ -346,61 +331,28 @@ def get_metric_object(switch):
     variable_type, metric, metric_option, cmap, label, color = [None, None, None, None, None, None]
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
-        # precipitation metrics (pr)
+        # -------------
+        # precipitation
+        # -------------
         if key in ['pr', 'pr99', 'pr99_meanIn', 'rx1day_pr', 'rx5day_pr']:
             variable_type, cmap, label, color = ['pr', 'Blues', 'pr [mm day{}]'.format(get_super('-1')), 'b']
-        metric, metric_option = ['pr', key]                   if key == 'pr' else [metric, metric_option]
-        metric, metric_option = ['rxday_pr', key]             if key == 'rx1day_pr' else [metric, metric_option]
-        metric, metric_option = ['rxday_pr', key]             if key == 'rx5day_pr' else [metric, metric_option]
-        metric, metric_option = ['percentiles_pr', key]       if key in ['pr95','pr97','pr99' ] else [metric, metric_option]
-        metric, metric_option = ['meanInPercentiles_pr', key] if key == 'pr99_meanIn' else [metric, metric_option]
+            metric, metric_option = ['pr', key]                   if key == 'pr' else [metric, metric_option]
+            metric, metric_option = ['rxday_pr', key]             if key == 'rx1day_pr' else [metric, metric_option]
+            metric, metric_option = ['rxday_pr', key]             if key == 'rx5day_pr' else [metric, metric_option]
+            metric, metric_option = ['percentiles_pr', key]       if key in ['pr95','pr97','pr99' ] else [metric, metric_option]
+            metric, metric_option = ['meanInPercentiles_pr', key] if key == 'pr99_meanIn' else [metric, metric_option]
 
-
-        # vertical pressure velocity (wap)
-        if key in ['wap']:
-            variable_type, cmap, label = ['wap', 'RdBu_r', 'wap [hPa day' + get_super('-1') +']']
-            cmap = 'Reds' if switch['descent'] else cmap
-            cmap = 'Blues' if switch['ascent'] else cmap
-        metric, metric_option = [f'wap{pick_region(switch)}', f'wap{pick_region(switch)}'] if key == 'wap' else [metric, metric_option]
-
-        # surface temperature (tas)
-        if key in ['tas']:
-            variable_type, cmap, label, color = ['tas', 'RdBu_r', 'Temperature [\u00B0C]', 'r']
-        metric, metric_option = [f'tas{pick_region(switch)}', f'tas{pick_region(switch)}'] if key == 'tas' else [metric, metric_option]
-
-        # Relative humididty (hur)
-        if key in ['hur']:
-            variable_type, cmap, label, color = ['hur', 'Greens', 'Relative humidity [%]', 'g']
-        metric, metric_option = [f'hur{pick_region(switch)}', f'hur{pick_region(switch)}'] if key == 'hur' else [metric, metric_option]
-
-        # longwave radiation
-        if key in ['rlut']:
-            variable_type, cmap, label, color = ['lw', 'Purples', 'OLR [W m' + get_super('-2') +']', 'purple']
-            metric, metric_option = [f'rlut{pick_region(switch)}', f'rlut{pick_region(switch)}'] if key == 'rlut' else [metric, metric_option]
-
-        #  cloud fraction (cl)
-        if key in ['lcf', 'hcf']:
-            variable_type, cmap, label, color = ['cl', 'Blues', 'Cloud fraction [%]', 'b']
-            metric, metric_option = [f'lcf{pick_region(switch)}', f'lcf{pick_region(switch)}'] if key == 'lcf' else [metric, metric_option]
-            metric, metric_option = [f'hcf{pick_region(switch)}', f'hcf{pick_region(switch)}'] if key == 'hcf' else [metric, metric_option]
-
-        # Specific humidity (hus)
-        if key in ['hus']:
-            variable_type, cmap, label = ['hus', 'Greens', 'Specific humidity [kg/kg]']
-        metric, metric_option = [f'hus{pick_region(switch)}', f'hus{pick_region(switch)}'] if key == 'hus' else [metric, metric_option]
-
+        # ------------
         # organization
+        # ------------
         if key in ['obj']:
             variable_type, cmap, label,  = 'org', 'Greys', 'binary'
             metric, metric_option = 'obj', 'o_scene' if key == 'obj' else [metric, metric_option]
 
-        if key in ['rome']:
+        if key in ['rome', 'rome_fixed_area']:
             variable_type, cmap, label,  = 'org', 'Greys', 'ROME [km' + get_super('2') + ']' 
-            metric, metric_option = 'rome', 'rome' if key == 'rome' else [metric, metric_option]
-
-        if key in ['rome_equal_area']:
-            variable_type, cmap, label,  = 'org', 'Greys', 'ROME [km' + get_super('2') + ']' 
-            metric, metric_option = 'rome_equal_area', 'rome' if key == 'rome_equal_area' else [metric, metric_option]
+            metric, metric_option = ['rome', 'rome'] if key == 'rome' else [metric, metric_option]
+            metric, metric_option = ['rome_fixed_area', 'rome'] if key == 'rome_fixed_area' else [metric, metric_option]
 
         if key in ['ecs']:
             metric_option, color, label = 'ecs', 'red', 'ECS [K]'
@@ -408,6 +360,46 @@ def get_metric_object(switch):
         if key in ['change with warming']:
             cmap = 'RdBu_r'
             label = '{}{} K{}'.format(label[:-1], get_super('-1'), label[-1:]) if switch['per_kelvin'] else label
+
+        # -----------------
+        # large-scale state
+        # -----------------
+        if key in ['wap']:
+            variable_type, cmap, label = ['wap', 'RdBu_r', 'wap [hPa day' + get_super('-1') +']']
+            cmap = 'Reds' if switch['descent'] else cmap
+            cmap = 'Blues' if switch['ascent'] else cmap
+        metric, metric_option = [f'wap{pick_region(switch)}', f'wap{pick_region(switch)}'] if key == 'wap' else [metric, metric_option]
+
+        if key in ['hur']:
+            variable_type, cmap, label, color = ['hur', 'Greens', 'Relative humidity [%]', 'g']
+        metric, metric_option = [f'hur{pick_region(switch)}', f'hur{pick_region(switch)}'] if key == 'hur' else [metric, metric_option]
+
+        if key in ['tas']:
+            variable_type, cmap, label, color = ['tas', 'Reds', 'Temperature [\u00B0C]', 'r']
+        metric, metric_option = [f'tas{pick_region(switch)}', f'tas{pick_region(switch)}'] if key == 'tas' else [metric, metric_option]
+
+        # ----------
+        # Radiation
+        # ----------
+        if key in ['rlut']:
+            variable_type, cmap, label, color = ['lw', 'Purples', 'OLR [W m' + get_super('-2') +']', 'purple']
+            metric, metric_option = [f'rlut{pick_region(switch)}', f'rlut{pick_region(switch)}'] if key == 'rlut' else [metric, metric_option]
+
+        # ---------
+        #  clouds
+        # ---------
+        if key in ['lcf', 'hcf']:
+            variable_type, cmap, label, color = ['cl', 'Blues', 'Cloud fraction [%]', 'b']
+            metric, metric_option = [f'lcf{pick_region(switch)}', f'lcf{pick_region(switch)}'] if key == 'lcf' else [metric, metric_option]
+            metric, metric_option = [f'hcf{pick_region(switch)}', f'hcf{pick_region(switch)}'] if key == 'hcf' else [metric, metric_option]
+
+        # -------------------
+        # Moist static energy
+        # -------------------
+        if key in ['hus']:
+            variable_type, cmap, label = ['hus', 'Greens', 'Specific humidity [kg/kg]']
+        metric, metric_option = [f'hus{pick_region(switch)}', f'hus{pick_region(switch)}'] if key == 'hus' else [metric, metric_option]
+
     return metric_class(variable_type, metric, metric_option, cmap, label, color)
 
 

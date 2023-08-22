@@ -13,44 +13,29 @@ import myVars as mV # imports common variables
 
 # ---------------------------------------------------------------------------------------- Calculation ----------------------------------------------------------------------------------------------------- #
 
-def get_data(source, dataset, options, metric):
-    if metric.option in ['rome']:
-        folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
-        filename = metric.get_filename(metric.name, source, dataset, 'daily', options.experiment, options.resolution) # rome must be calculated from daily data and then resampled
-        filename = metric.get_filename(metric.name, source, 'GPCP', 'daily', options.experiment, options.resolution) if dataset in ['ERA5', 'CERES'] else filename
-        array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
-    elif metric.option in ['pr99']:
-        folder = metric.get_metric_folder(mV.folder_save[0], metric.name, source)
-        filename = metric.get_filename(metric.name, source, dataset, 'daily', options.experiment, options.resolution) # same for pr99
-        array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']
-    elif metric.option in ['rx1day_pr', 'rx5day_pr']:
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
-        filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, 'daily', options.experiment, options.resolution)
-        array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}']        
-    else: 
-        folder = metric.get_metric_folder(mV.folder_save[0], f'{metric.name}_sMean', source)
-        filename = metric.get_filename(f'{metric.name}_sMean', source, dataset, options.timescale, options.experiment, options.resolution)
-        array = xr.open_dataset(f'{folder}/{filename}')[f'{metric.option}_sMean']
-    array = array.sel(time = slice('2000-03', '2021')) if dataset == 'CERES' else array
-    return array
+def get_data(source, dataset, metric):
+    timescale = 'daily' if  metric.option in ['rome','rome_fixed_area', 'pr99', 'rx1day_pr', 'rx5day_pr'] else mV.timescales[0]
+    dataset_alt = 'GPCP' if dataset in ['ERA5', 'CERES'] and metric.option in ['rome', 'pr99'] else dataset
+    metric_name = metric.name if metric.option in ['rome','rome_fixed_area', 'pr99'] else f'{metric.option}_sMean'
+    metric_option = metric.option if metric.option in ['rome','rome_fixed_area', 'pr99'] else f'{metric.option}_sMean'
+    path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset_alt}_{metric_name}_{timescale}_{mV.experiments[0]}_{mV.resolutions[0]}.nc' 
+    return xr.open_dataset(path)[metric_option] if not dataset == 'CERES' else xr.open_dataset(path)[metric_option].sel(time = slice('2000-03', '2021'))
 
 def calc_anomalies(array, timescale):
     if timescale == 'monthly': 
         climatology = array.groupby('time.month').mean('time')
-        array = array.groupby('time.month') - climatology 
+        return array.groupby('time.month') - climatology 
     if timescale == 'daily': 
         rolling_mean = array.rolling(time=12, center=True).mean()
         array = array - rolling_mean
-        array = array.dropna(dim='time')
-    return array
+        return array.dropna(dim='time')
 
-def calc_metric(switch, dataset, options, metric):
+def calc_metric(switch, dataset, metric):
     source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    array = get_data(source, dataset, options, metric)
-    array = mF.resample_timeMean(array, options.timescale)
-    
+    array = get_data(source, dataset, metric)
+    array = mF.resample_timeMean(array, mV.timescales[0])
     if switch['anomalies']:
-        array = calc_anomalies(array, options.timescale)
+        array = calc_anomalies(array, mV.timescales[0])
     return array
 
 # ---------------------------------------------------------------------------------------- Plot / format plot ----------------------------------------------------------------------------------------------------- #
@@ -73,11 +58,11 @@ def plot_correlation(ax, x,y, position, fontsize):
     if res[1]<=0.05:
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=position, textcoords='axes fraction', fontsize = fontsize, color = 'r')
 
-def plot_one_scatter(switch, dataset, options, metric_0, metric_1):
+def plot_one_scatter(switch, metric_0, metric_1):
     fig, ax = mF.create_figure(width = 8, height = 5.5)
-    x = calc_metric(switch, dataset, options, metric_0)
-    y = calc_metric(switch, dataset, options, metric_1)
-    x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] else x
+    x = calc_metric(switch, mV.datasets[0], metric_0)
+    y = calc_metric(switch, mV.datasets[0], metric_1)
+    x = x.assign_coords(time=y.time) if mV.timescales[0] == 'monthly' and switch['rome'] else x
 
     pcm = plot_ax_scatter(switch, ax, x, y, metric_1)
     plot_correlation(ax, x,y, position = (0.8, 0.9), fontsize = 12)
@@ -88,24 +73,24 @@ def plot_one_scatter(switch, dataset, options, metric_0, metric_1):
     mF.scale_ax_y(ax, 1)
     mF.plot_xlabel(fig, ax, metric_0.label, pad=0.1, fontsize = 12)
     mF.plot_ylabel(fig, ax, metric_1.label, pad = 0.075, fontsize = 12)
-    mF.plot_axtitle(fig, ax, dataset, xpad = 0, ypad = 0.0075, fontsize = 12)
+    mF.plot_axtitle(fig, ax, mV.datasets[0], xpad = 0, ypad = 0.0075, fontsize = 12)
 
     if switch['bins']:
         mF.cbar_right_of_axis(fig, ax, pcm[3], width_frac= 0.05, height_frac=1, pad=0.015, numbersize = 9, cbar_label = 'months [Nb]', text_pad = 0.05)
 
 
-def plot_multiple_scatter(switch, datasets, options, metric_0, metric_1):
+def plot_multiple_scatter(switch, metric_0, metric_1):
     nrows, ncols = 5, 4
     fig, axes = mF.create_figure(width = 12, height = 8, nrows=nrows, ncols=ncols)
-    num_subplots = len(datasets)
-    for i, dataset in enumerate(datasets):
+    num_subplots = len(mV.datasets)
+    for i, dataset in enumerate(mV.datasets):
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
 
-        x = calc_metric(switch, dataset, options, metric_0)
-        y = calc_metric(switch, dataset, options, metric_1)
-        x = x.assign_coords(time=y.time) if options.timescale == 'monthly' and switch['rome'] or switch['rome_equal_area'] else x
+        y = calc_metric(switch, dataset, metric_1)
+        x = calc_metric(switch, dataset, metric_0)
+        x = x.assign_coords(time=y.time) #if mV.timescales[0] == 'monthly' and metric_0.option in ['rome', 'rome_equal_area'] else x
             
         pcm = plot_ax_scatter(switch, ax, x, y, metric_1)
         plot_correlation(ax, x,y, position = (0.675, 0.85), fontsize = 8)
@@ -144,35 +129,33 @@ def plot_multiple_scatter(switch, datasets, options, metric_0, metric_1):
 
 # ---------------------------------------------------------------------------------- Find metric / labels and run ----------------------------------------------------------------------------------------------------- #
 
+def save_the_plot(switch, fig, metric_0, metric_1):
+    source = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    with_obs = mF.find_ifWithObs(mV.datasets, mV.observations)
+
+    folder = f'{mV.folder_save[0]}/corr/{metric_0.option}_and_{metric_1.option}'
+    filename = f'{metric_0.option}_and_{metric_1.option}'
+    filename = f'{mV.datasets[0]}_{filename}' if switch['one dataset'] else f'{source}_{filename}{with_obs}'
+
+    mF.save_figure(fig, folder, f'{filename}.pdf') if switch['save'] else None
+    mF.save_figure(fig, f'{home}/Desktop', f'{filename}.pdf') if switch['save to desktop'] else None
+
 @mF.timing_decorator
 def run_scatter_plot(switch):
-    if not switch['run']:
-        return
-    options = mF.dataset_class(mV.timescales[0], mV.experiments[0], mV.resolutions[0])
     keys = [k for k, v in switch.items() if v]  # list of True keys
     switch_0, switch_1 = switch.copy(), switch.copy() 
     switch_0[keys[1]] = False # sets second variable to False
     switch_1[keys[0]] = False # sets first variable to False
     metric_0, metric_1 = mF.get_metric_object(switch_0), mF.get_metric_object(switch_1)
     if not switch['xy']:
-        metric_0, metric_1 = metric_1, metric_0 # plotting the reverse relationship
+        metric_0, metric_1 = metric_1, metric_0 # if plotting the reverse relationship
 
     print(f'switch: {[key for key, value in switch.items() if value]}')
-    print(f'Plotting {keys[0]} and {keys[1]} correlation with {options.resolution} data')
+    print(f'Plotting {keys[0]} and {keys[1]} correlation with {mV.resolutions[0]} data')
 
-    fig = plot_multiple_scatter(switch, mV.datasets, options, metric_0, metric_1) if not switch['one dataset'] else plot_one_scatter(switch, mV.datasets[0], options, metric_0, metric_1)
+    fig = plot_multiple_scatter(switch, metric_0, metric_1) if not switch['one dataset'] else plot_one_scatter(switch, metric_0, metric_1)
 
-    if switch['save'] or switch['save to desktop']:
-        source = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        with_obs = mF.find_ifWithObs(mV.datasets, mV.observations)
-
-        folder = f'{mV.folder_save[0]}/corr/{metric_0.option}_and_{metric_1.option}'
-        filename = f'{metric_0.option}_and_{metric_1.option}'
-        filename = f'{mV.datasets[0]}_{filename}' if switch['one dataset'] else f'{source}_{filename}{with_obs}'
-
-        mF.save_figure(fig, folder, f'{filename}.pdf') if switch['save'] else None
-        mF.save_figure(fig, f'{home}/Desktop', f'{filename}.pdf') if switch['save to desktop'] else None
-
+    save_the_plot(switch, fig, metric_0, metric_1) if switch['save'] or switch['save to desktop'] else None
     plt.show() if switch['show'] else None
 
 
@@ -181,7 +164,7 @@ if __name__ == '__main__':
         # metrics
             # organization
             'rome':                True,
-            'rome_equal_area':     False,
+            'rome_fixed_area':     False,
 
             # other
             'pr':                  False,
@@ -212,7 +195,6 @@ if __name__ == '__main__':
 
         # run/show/save
         'one dataset':         False,
-        'run':                 True,
         'show':                True,
         'save':                False,
         'save to desktop':     True
