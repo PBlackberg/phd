@@ -28,28 +28,28 @@ def plot_ax_scene(frame, fig, switch, da_0, da_1, timesteps, variable_0, variabl
     ax.add_feature(cfeat.COASTLINE)
     ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
     timestep = timesteps[frame]
-    pcm = ax.pcolormesh(lonm,latm, da_0.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Blues', vmin=0, vmax=20)
-    pcm = ax.pcolormesh(lonm,latm, da_1.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Reds', vmin=0, vmax=80) if switch['field ontop'] else None
+    pcm_0 = ax.pcolormesh(lonm,latm, da_0.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap = variable_0.cmap, vmin=0, vmax=80)
+    pcm_1 = ax.pcolormesh(lonm,latm, da_1.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap = variable_1.cmap, vmin=0, vmax=80) if switch['field ontop'] else None
     mF.scale_ax(ax, scaleby = 1.15)
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
-    mF.plot_xlabel(fig, ax, xlabel='Lon', pad = 0.1, fontsize = 12)
-    mF.plot_ylabel(fig, ax, ylabel='Lat', pad = 0.055, fontsize = 12)
-    mF.format_ticks(ax, labelsize = 11)
-    mF.plot_axtitle(fig, ax, title, xpad = 0.005, ypad = 0.035, fontsize=15)
 
-    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_1.label, text_pad = 0.125) if switch['field ontop'] \
-        else mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_0.label, text_pad = 0.125) 
+    if frame == 0:
+        mF.plot_axtitle(fig, ax, title, xpad = 0.005, ypad = 0.035, fontsize=15)
+        mF.plot_xlabel(fig, ax, xlabel='Lon', pad = 0.1, fontsize = 12)
+        mF.plot_ylabel(fig, ax, ylabel='Lat', pad = 0.055, fontsize = 12)
+        mF.format_ticks(ax, labelsize = 11)
+        mF.cbar_below_axis(fig, ax, pcm_1, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_1.label, text_pad = 0.125) if switch['field ontop'] \
+            else mF.cbar_below_axis(fig, ax, pcm_0, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_0.label, text_pad = 0.125) 
     plt.close()
-    return fig, ax
 
 def animate(switch, da_0, da_1, timesteps, variable_0, variable_1, title):
     fig= plt.figure(figsize=(12, 4))
     ani = animation.FuncAnimation(
         fig,                          
-        plot_ax_scene,                                                          # name of the function
-        frames = len(timesteps),                                                # can also be iterable or list
-        interval = 500,                                                         # ms between frames
+        plot_ax_scene,                                                               # name of the function
+        frames = len(timesteps),                                                     # can also be iterable or list
+        interval = 500,                                                              # ms between frames
         fargs=(fig, switch, da_0, da_1, timesteps, variable_0, variable_1, title)    # additional function arguments
         )
     return ani
@@ -70,6 +70,10 @@ def load_data(switch, variable):
     da = gD.get_pr(source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])                      if switch['gadi_data'] else da
     return da
 
+def calc_vertical_mean(da):
+    da = da.sel(plev=slice(850e2, 0)) # free troposphere (most values at 1000 hPa over land are NaN)
+    return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
+
 def get_da(switch, variable):
     if variable.ref == 'obj':
         da = load_data(switch, variable)
@@ -81,8 +85,12 @@ def get_da(switch, variable):
         conv_threshold = calc_conv_threshold(da, conv_percentile = 0.99, fixed_area = True)
         da = da.where(da >= conv_threshold)
 
-    if variable.ref in ['pr', 'rlut', 'hur']:
+    if variable.ref in ['rlut']:
         da = load_data(switch, variable)
+
+    if variable.ref == 'hur':
+        da = load_data(switch, variable)
+        da = calc_vertical_mean(da)
     return da
 
 def load_array(metric_t):
@@ -94,7 +102,8 @@ def load_array(metric_t):
     
 def get_timesteps(switch, metric_t):
     array = load_array(metric_t)
-    low, mid_1, mid_2, high = 0.01, 49.95, 50.05, 0.99
+    low, mid_1, mid_2, high = 0.5, 49.975, 50.025, 99.5     # for daily
+    low, mid_1, mid_2, high = 5, 47.5, 52.5, 95             # for monthly
     timesteps_low  = np.squeeze(np.argwhere(array.data  <= np.percentile(array, low)))
     timesteps_mid  = np.squeeze(np.argwhere((array.data >= np.percentile(array, mid_1)) & (array.data <= np.percentile(array, mid_2))))
     timesteps_high = np.squeeze(np.argwhere(array.data  >= np.percentile(array, high)))
@@ -120,14 +129,15 @@ def run_animation(switch):
     variable_1 = mF.get_variable_object(switch_1)
     metric_t   = mF.get_metric_object(switch_t)
 
-    print(f'Creating animation of {variable_0.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data') if not switch['ontop'] \
+    print(f'Creating animation of {variable_0.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data') if not switch['field ontop'] \
         else print(f'Creating animation of {variable_1.name} ontop of {variable_1.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     da_0 = get_da(switch, variable_0)
     da_1 = get_da(switch, variable_1)
     timesteps, title = get_timesteps(switch, metric_t)
-    title = f'{metric_t.option}{title}_and_{variable_1.ref}_with_{variable_0.ref}' if switch['field ontop'] else f'{metric_t.ref}{title}_and_{variable_0.ref}'
+    print('number of timesteps for animation:', len(timesteps))
+    title = f'{mV.datasets[0]}_{metric_t.option}{title}_and_{variable_1.ref}_with_{variable_0.ref}_{mV.timescales[0]}' if switch['field ontop'] else f'{mV.datasets[0]}_{metric_t.option}{title}_and_{variable_0.ref}_{mV.timescales[0]}'
 
     ani = animate(switch, da_0, da_1, timesteps, variable_0, variable_1, title)
 
@@ -147,14 +157,14 @@ if __name__ == '__main__':
         # fields to animate (background + field ontop possible)
         # -----------------
             # daily
-            'obj':                 True,
+            'obj':                 False,
             'pr':                  False,
-            'pr99':                True,
+            'pr99':                False,
             'mse':                 False,
 
             # monthly
-            'hur':                 False,
-            'rlut':                False,
+            'hur':                 True,
+            'rlut':                True,
 
         # timesteps derived from
         'rome':                True,
@@ -170,10 +180,10 @@ if __name__ == '__main__':
         'descent':             False,
 
         # type of animation
-        'field ontop':         True,
+        'field ontop':         False,
         'low extremes':        False,
-        'high extremes':       True,
-        'transition':          False,
+        'high extremes':       False,
+        'transition':          True,
 
         # save
         'save to cwd':         False,

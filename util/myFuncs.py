@@ -307,7 +307,7 @@ def get_metric_object(switch):
     ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color
         Used for plots of metrics
     '''
-    variable_type, name, option, label, cmap, color = [None, None, None, 'Greys', None, 'k']
+    variable_type, name, option, label, cmap, color = [None, None, None, None, 'Greys', 'k']
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
         # -------------
@@ -380,14 +380,16 @@ def get_variable_object(switch):
     ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color
         Used for animation of fields
     '''
-    ref, variable_type, name, label, cmap = [None, None, None, 'Greys']
+    ref, variable_type, name, label, cmap = [None, None, None, None, None]
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
-        ref, variable_type, name, label, cmap = [key, 'pr','pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues']     if key in ['obj']  else [variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']     if key in ['pr']   else [variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'pr','pr', 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr99'] else [variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key, 'rel. humiid. [%]',                      'Greens']    if key in ['hur']  else [variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'lw', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]  if key in ['rlut'] else [variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Greys']     if key in ['obj']  else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']      if key in ['pr']   else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr99'] else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key, 'rel. humiid. [%]',                      'Greens']     if key in ['hur']  else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'lw', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]   if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
+
+        # ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues']  
     return variable_class(ref, variable_type, name, cmap, label)
 
 

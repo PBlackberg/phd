@@ -75,7 +75,7 @@ def get_scene(switch, dataset, metric):
         title = f'{metric.option}_snapshot'
         axtitle = dataset
         metric_name, metric_option = f'{metric.name}_snapshot', f'{metric.option}_snapshot'
-        ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.conv_percentile[0]}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') if metric.variable_type == 'org' else None      
+        ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') if metric.variable_type == 'org' else None      
         ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') if not metric.variable_type == 'org' else ds     
         scene = ds[metric_option]
         
@@ -148,8 +148,7 @@ if __name__ == '__main__':
         # metric
         # ------
             # organization
-            'obj':                 False,
-
+            'obj':                 True,
 
             # precipitation
             'pr':                  False,
@@ -161,7 +160,7 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
-            'wap':                 True,
+            'wap':                 False,
 
 
             # radiation
@@ -189,15 +188,15 @@ if __name__ == '__main__':
         'fixed area':          False,
         'descent':             False,
         'ascent':              False,
-        'per kelvin':          True,
+        'per kelvin':          False,
         'per kelvin (ecs)':    False,
         
         # show/save
         'one scene':           True,
         'multiple_scenes':     False,
-        'show':                False,
+        'show':                True,
         'save':                False,
-        'save to cwd':         True,
+        'save to cwd':         False,
         'save to desktop':     False
         }
     )

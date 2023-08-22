@@ -61,8 +61,8 @@ datasets = models_cmip5 + models_cmip6 + observations
 
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     # 'annual'
     ]
 

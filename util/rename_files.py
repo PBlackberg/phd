@@ -126,14 +126,11 @@ def rename_files(folder_path, word_before='', word_to_add='', word_to_remove='',
     remove_word(folder_path, word_to_remove) if word_to_remove else None
 
 
-
 if __name__ == '__main__':
     folder_path = '/Users/cbla0002/Documents/data/org/metrics'
-    word_next_to = ''
-    word_to_add = ''
+    word_next_to, word_to_add = '', '' # if this is '', the function won't add anything
     put_before = False
-    word_to_remove = '97thPrctile'
-
+    word_to_remove = '' # if this is '', the function won't remove anything
     rename_files(folder_path, word_next_to, word_to_add, word_to_remove, put_before)
 
 
