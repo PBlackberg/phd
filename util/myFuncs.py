@@ -369,7 +369,8 @@ class variable_class():
     ''' Gives variable details (name, option, label, cmap)
         (Used for animation of fields)
     '''
-    def __init__(self, variable_type, name, cmap, label):
+    def __init__(self, ref, variable_type, name, cmap, label):
+        self.ref   = ref
         self.variable_type = variable_type
         self.name   = name
         self.label  = label
@@ -379,14 +380,15 @@ def get_variable_object(switch):
     ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color
         Used for animation of fields
     '''
-    variable_type, name, label, cmap = [None, None, 'Greys']
+    ref, variable_type, name, label, cmap = [None, None, None, 'Greys']
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
-        variable_type, name, label, cmap = [key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']     if key in ['pr']   else [variable_type, name, label, cmap] 
-        variable_type, name, label, cmap = [key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr']   else [variable_type, name, label, cmap] 
-        variable_type, name, label, cmap = [key,  key, 'rel. humiid. [%]',                      'Greens']    if key in ['hur']  else [variable_type, name, label, cmap] 
-        variable_type, name, label, cmap = ['lw', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]  if key in ['rlut'] else [variable_type, name, label, cmap] 
-
+        ref, variable_type, name, label, cmap = [key, 'pr','pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues']     if key in ['obj']  else [variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']     if key in ['pr']   else [variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'pr','pr', 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr99'] else [variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key, 'rel. humiid. [%]',                      'Greens']    if key in ['hur']  else [variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'lw', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]  if key in ['rlut'] else [variable_type, name, label, cmap] 
+    return variable_class(ref, variable_type, name, cmap, label)
 
 
 

@@ -31,6 +31,7 @@ def calc_conv_threshold(switch, da, conv_percentile): # conv_threshold is number
         conv_threshold = xr.DataArray(data = conv_threshold.mean(dim='time').data * np.ones(shape = len(da.time)), dims = 'time', coords = {'time': da.time.data}) 
     return conv_threshold
 
+@mF.timing_decorator
 def get_obj_snapshot(da, conv_threshold):
     ''' Connected components (objects) of convection (precipiation rate exceeding threshold) '''
     pr_day = da.isel(time=0) 
@@ -204,7 +205,7 @@ def run_metrics(switch, da, dim, conv_threshold, source, dataset, experiment):
 
 def load_data(switch, source, dataset, experiment):
     da = cF.var2d                                                                                                   if switch['constructed_fields'] else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['pr'] if switch['sample_data'] else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['precip'] if switch['sample_data'] else da
     da = gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                if switch['gadi_data'] else da
     return da
 

@@ -21,38 +21,36 @@ import get_data as gD           # imports functions to get data from gadi
 
 # -------------------------------------------------------------------------------------- animate / format plot ----------------------------------------------------------------------------------------------------- #
 
-def plot_ax_scene(switch, fig, da_0, da_1, timesteps, frame):
+def plot_ax_scene(frame, fig, switch, da_0, da_1, timesteps, variable_0, variable_1, title):
     lat, lon = da_0.lat, da_0.lon
     lonm,latm = np.meshgrid(lon,lat)
     ax = fig.add_subplot(projection=ccrs.PlateCarree(central_longitude=180))
     ax.add_feature(cfeat.COASTLINE)
     ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
     timestep = timesteps[frame]
-
-    ax.pcolormesh(lonm,latm, da_0.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Blues', vmin=0, vmax=80)
-    pcm = ax.pcolormesh(lonm,latm, da_0.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Reds', vmin=0, vmax=80)
-
+    pcm = ax.pcolormesh(lonm,latm, da_0.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Blues', vmin=0, vmax=20)
+    pcm = ax.pcolormesh(lonm,latm, da_1.isel(time = timestep), transform=ccrs.PlateCarree(),zorder=0, cmap='Reds', vmin=0, vmax=80) if switch['field ontop'] else None
     mF.scale_ax(ax, scaleby = 1.15)
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
     mF.plot_xlabel(fig, ax, xlabel='Lon', pad = 0.1, fontsize = 12)
     mF.plot_ylabel(fig, ax, ylabel='Lat', pad = 0.055, fontsize = 12)
     mF.format_ticks(ax, labelsize = 11)
-    mF.plot_axtitle(fig, ax, f'{mV.datasets[0]}  gradually increasing DOC {mV.experiments[0]}', xpad = 0.005, ypad = 0.035, fontsize=15)
-    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = cbar_label, text_pad = 0.125)
+    mF.plot_axtitle(fig, ax, title, xpad = 0.005, ypad = 0.035, fontsize=15)
+
+    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_1.label, text_pad = 0.125) if switch['field ontop'] \
+        else mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = variable_0.label, text_pad = 0.125) 
     plt.close()
     return fig, ax
 
-def animate(da, threshold, array, dataset, metric):
-    chosen_timesteps = get_timesteps(array)
-
+def animate(switch, da_0, da_1, timesteps, variable_0, variable_1, title):
     fig= plt.figure(figsize=(12, 4))
     ani = animation.FuncAnimation(
         fig,                          
-        plot_ax_scene,                                                                    # name of the function
-        frames = len(chosen_timesteps),                                                   # Could also be iterable or list
-        interval = 500,                                                                   # ms between frames
-        fargs=(fig, da, chosen_timesteps, metric.cmap, metric.label, threshold, dataset)  # Pass the additional parameters here
+        plot_ax_scene,                                                          # name of the function
+        frames = len(timesteps),                                                # can also be iterable or list
+        interval = 500,                                                         # ms between frames
+        fargs=(fig, switch, da_0, da_1, timesteps, variable_0, variable_1, title)    # additional function arguments
         )
     return ani
 
@@ -68,50 +66,50 @@ def calc_conv_threshold(da, conv_percentile, fixed_area): # conv_threshold is nu
 def load_data(switch, variable):
     source = mF.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
     da = cF.var2d                                                                                                       if switch['constructed_fields'] else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/{variable.variable_type}/sample_data/{source}/ \
-        {mV.datasets[0]}_{variable.name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')[variable.name] if switch['sample_data'] else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/{variable.variable_type}/sample_data/{source}/{mV.datasets[0]}_{variable.name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')[variable.name] if switch['sample_data'] else da
     da = gD.get_pr(source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])                      if switch['gadi_data'] else da
     return da
 
 def get_da(switch, variable):
-    if variable.name == 'obj':
+    if variable.ref == 'obj':
         da = load_data(switch, variable)
-        conv_threshold = calc_conv_threshold(da, conv_percentile = int(mV.conv_percentiles[0]) * 0.01, fixed_area = switch['fixed_area'])
+        conv_threshold = calc_conv_threshold(da, conv_percentile = int(mV.conv_percentiles[0]) * 0.01, fixed_area = switch['fixed area'])
         da = da.where(da >= conv_threshold)
 
-    if variable.name == 'pr99':
+    if variable.ref == 'pr99':
         da = load_data(switch, variable)
         conv_threshold = calc_conv_threshold(da, conv_percentile = 0.99, fixed_area = True)
         da = da.where(da >= conv_threshold)
 
-    if variable.name in ['pr', 'rlut', 'hur']:
+    if variable.ref in ['pr', 'rlut', 'hur']:
         da = load_data(switch, variable)
-    
+    return da
 
-def get_timesteps(switch, array):
+def load_array(metric_t):
+    timescale = 'daily'
     source = mF.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
-    array = xr.open_dataset(f'{mV.folder_save[0]}/org/metrics/rome/{source}/{mV.datasets[0]}_rome_daily_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['rome']
+    array = xr.open_dataset(f'{mV.folder_save[0]}/{metric_t.variable_type}/metrics/{metric_t.name}/{source}/{mV.datasets[0]}_{metric_t.name}_{mV.conv_percentiles[0]}thPrctile_{timescale}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')[metric_t.option]
+    array = mF.resample_timeMean(array, mV.timescales[0])
+    return array
+    
+def get_timesteps(switch, metric_t):
+    array = load_array(metric_t)
+    low, mid_1, mid_2, high = 0.01, 49.95, 50.05, 0.99
+    timesteps_low  = np.squeeze(np.argwhere(array.data  <= np.percentile(array, low)))
+    timesteps_mid  = np.squeeze(np.argwhere((array.data >= np.percentile(array, mid_1)) & (array.data <= np.percentile(array, mid_2))))
+    timesteps_high = np.squeeze(np.argwhere(array.data  >= np.percentile(array, high)))
+    if switch['low extremes']:
+        title = '_low_extremes'
+        return timesteps_low, title
+    if switch['high extremes']:
+        title = '_high_extremes'
+        return timesteps_high, title
     if switch['transition']:
-        threshold_low = 0.1
-        array_prctile = np.percentile(array, threshold_low)
-        chosen_timesteps_low= np.squeeze(np.argwhere(array.data<=array_prctile))
-
-        threshold_mid1 = 49.95
-        threshold_mid2 = 50.05
-        array_prctile_mid1 = np.percentile(array, threshold_mid1)
-        array_prctile_mid2 = np.percentile(array, threshold_mid2)
-        chosen_timesteps_mid = np.squeeze(np.argwhere((array.data >= array_prctile_mid1) & (array.data <= array_prctile_mid2)))
-
-        threshold_high = 99.9
-        threshold_high = 99.5
-        rome_prctile = np.percentile(array, threshold_high)
-        chosen_timesteps_high= np.squeeze(np.argwhere(array.data>=rome_prctile))
-
-        chosen_timesteps = np.concatenate((chosen_timesteps_low, chosen_timesteps_mid, chosen_timesteps_high))
-        chosen_timesteps = chosen_timesteps_high
-    return chosen_timesteps
+        title = '_transition'
+        return np.concatenate((timesteps_low, timesteps_mid, timesteps_high)), title
 
 
+@mF.timing_decorator
 def run_animation(switch):
     keys = [k for k, v in switch.items() if v]                                          # list of True keys
     switch_0, switch_1, switch_t = switch.copy(), switch.copy(), switch.copy() 
@@ -122,15 +120,16 @@ def run_animation(switch):
     variable_1 = mF.get_variable_object(switch_1)
     metric_t   = mF.get_metric_object(switch_t)
 
-    print(f'Creating animation of {variable_1.name} ontop {variable_0.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data')
+    print(f'Creating animation of {variable_0.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data') if not switch['ontop'] \
+        else print(f'Creating animation of {variable_1.name} ontop of {variable_1.name} on days picked by threshold on {metric_t.option} \n from {mV.resolutions[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
 
     da_0 = get_da(switch, variable_0)
     da_1 = get_da(switch, variable_1)
-    timesteps = get_timesteps(switch, metric_t)
+    timesteps, title = get_timesteps(switch, metric_t)
+    title = f'{metric_t.option}{title}_and_{variable_1.ref}_with_{variable_0.ref}' if switch['field ontop'] else f'{metric_t.ref}{title}_and_{variable_0.ref}'
 
-    title = f'{metric_t.option}_and_{variable_1.name}_on_{variable_0.name}'
-    ani = animate(da_0, da_1, timesteps, variable_0, variable_1, metric_t, title)
+    ani = animate(switch, da_0, da_1, timesteps, variable_0, variable_1, title)
 
     source = mF.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
     folder = f'{mV.folder_save[0]}/{metric_t.variable_type}/animations/{source}'
@@ -171,87 +170,17 @@ if __name__ == '__main__':
         'descent':             False,
 
         # type of animation
-        'high extremes':       False,
+        'field ontop':         True,
         'low extremes':        False,
-        'transition':          False
+        'high extremes':       True,
+        'transition':          False,
 
         # save
-        'save':                False,
         'save to cwd':         False,
-        'save to desktop':     True
+        'save to desktop':     True,
+        'save':                False
         }
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

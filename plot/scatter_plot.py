@@ -167,9 +167,9 @@ if __name__ == '__main__':
 
         # show/save
         'show':                False,
-        'save':                False,
+        'save to cwd':         False,
         'save to desktop':     True,
-        'save to cwd':         False
+        'save':                False
         }
     )
 

@@ -28,7 +28,7 @@ models_cmip5 = [
 # 14 models used in Schiro
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    'INM-CM5-0',         # 1 # no cloud (not in schiro)
+    # 'INM-CM5-0',         # 1 # no cloud (not in schiro)
     # 'IITM-ESM',          # 2 # no cloud (not in schiro)
     # 'FGOALS-g3',         # 3
     # 'MIROC6',            # 4
@@ -43,13 +43,12 @@ models_cmip6 = [
     # 'EC-Earth3',         # 13 # no cloud (not in shiro)
     # 'CNRM-CM6-1',        # 14
     # 'IPSL-CM6A-LR',      # 15 # no cloud (not in schiro)
-    # 'TaiESM1',           # 16
+    'TaiESM1',           # 16
     # 'CESM2-WACCM',       # 17    
     # 'CanESM5',           # 18
     # 'UKESM1-0-LL',       # 19 # clouds not right
     # 'random_field'
     ]
-
 
 observations = [
     # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
@@ -70,7 +69,7 @@ timescales = [
 experiments = [
     'historical',     
     # 'rcp85',             # warm scenario for cmip5
-    'ssp585',            # warm scenario for cmip6
+    # 'ssp585',            # warm scenario for cmip6
     # ''                   # observations
     ]
 
