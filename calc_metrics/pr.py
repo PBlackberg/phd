@@ -86,84 +86,84 @@ def calc_o_pr(da, conv_threshold):
     
 def calc_metrics(switch, da, source, dataset, experiment):
     if switch['pr_snapshot']:
-        ds_pr_snapshot = xr.Dataset({f'pr_snapshot' : da.isel(time=0)})
-        folder = f'{mV.folder_save[0]}/pr/metrics/pr_snapshot/{source}'
-        filename = f'{dataset}_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        metric_name = 'pr_snapshot'
+        ds_pr_snapshot = xr.Dataset({metric_name : da.isel(time=0)})
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_pr_snapshot, folder, filename) if switch['save'] else None
 
-    if switch['rxday_sMean']:
-        rx1day_sMean, rx5day_sMean = calc_rxday_sMean(da)
-        ds_rxday_sMean = xr.Dataset({'rx1day_sMean_pr': rx1day_sMean , 'rx5day_sMean_pr': rx5day_sMean})         
-        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_sMean_pr/{source}'
-        filename = f'{dataset}_rxday_sMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_rxday_sMean, folder, filename) if switch['save'] else None
-
-    if switch['rxday_tMean']:
-        rx1day_tMean, rx5day_tMean = calc_rxday_tMean(da)
-        ds_rxday_tMean = xr.Dataset({'rx1day_tMean_pr': rx1day_tMean , 'rx5day_tMean_pr': rx5day_tMean})
-        folder = f'{mV.folder_save[0]}/pr/metrics/rxday_tMean_pr/{source}'
-        filename = f'{dataset}_rxday_tMean_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_rxday_tMean, folder, filename) if switch['save'] else None
-
-    if switch['percentiles']:
-        percentiles = [0.95, 0.97, 0.99]
-        ds_percentile_value = xr.Dataset()
-        for percentile in percentiles:
-            ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
-        folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr/{source}'
-        filename = f'{dataset}_percentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
-        
     if switch['percentiles_snapshot']:
+        metric_name = 'percentiles_pr_snapshot'
+        percentiles = [0.95, 0.97, 0.99]
         ds_percentile_snapshot = xr.Dataset()
         for percentile in percentiles:
             percentile_snapshot= calc_percentile_snapshot(da, percentile)
             ds_percentile_snapshot[f'pr{int(percentile*100)}_snapshot'] = percentile_snapshot
-        folder = f'{mV.folder_save[0]}/pr/metrics/percentiles_pr_snapshot/{source}'
-        filename = f'{dataset}_percentiles_pr_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        mF.save_file(ds_percentile_snapshot, folder, filename) if switch['save'] else None
 
-    if switch['meanInPercentiles']:
+    if switch['percentiles']:
+        metric_name = 'percentiles_pr'
         percentiles = [0.95, 0.97, 0.99]
-        ds_meanInPercentiles = xr.Dataset()
+        ds_percentile_value = xr.Dataset()
+        for percentile in percentiles:
+            ds_percentile_value[f'pr{int(percentile*100)}'] = find_percentile(da, percentile)
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        mF.save_file(ds_percentile_value, folder, filename) if switch['save'] else None
+        
+    if switch['percentiles_sMean']:
+        metric_name = 'percentiles_pr_sMean'
+        percentiles = [0.95, 0.97, 0.99]
+        ds_percentiles_sMean = xr.Dataset()
         for percentile in percentiles:
             meanInPercentile = calc_meanInPercentile(da, percentile)
-            ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn'] = meanInPercentile
-        folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_pr/{source}'
-        filename = f'{dataset}_meanInPercentiles_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
+            ds_percentiles_sMean[f'pr{int(percentile*100)}_sMean'] = meanInPercentile
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}_pr/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        mF.save_file(ds_percentiles_sMean, folder, filename) if switch['save'] else None
 
-    if switch['meanInPercentiles_fixedArea']:
-        percentiles = [0.95, 0.97, 0.99]
-        ds_meanInPercentiles = xr.Dataset()
-        for percentile in percentiles:
-            meanInPercentile = calc_meanInPercentile_fixedArea(da, percentile)
-            ds_meanInPercentiles[f'pr{int(percentile*100)}_meanIn_fixedArea'] = meanInPercentile
-        folder = f'{mV.folder_save[0]}/pr/metrics/meanInPercentiles_fixedArea_pr/{source}'
-        filename = f'{dataset}_meanInPercentiles_fixedArea_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        mF.save_file(ds_meanInPercentiles, folder, filename) if switch['save'] else None
+    if switch['rxday_sMean']:
+        metric_name = 'rxday_pr_sMean'
+        rx1day_sMean, rx5day_sMean = calc_rxday_sMean(da)
+        ds_rxday_sMean = xr.Dataset({'rx1day_pr_sMean': rx1day_sMean , 'rx5day_pr_sMean': rx5day_sMean})         
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        mF.save_file(ds_rxday_sMean, folder, filename) if switch['save'] else None
+
+    if switch['rxday_tMean']:
+        metric_name = 'rxday_pr_tMean'
+        rx1day_tMean, rx5day_tMean = calc_rxday_tMean(da)
+        ds_rxday_tMean = xr.Dataset({'rx1day_pr_tMean': rx1day_tMean , 'rx5day_pr_tMean': rx5day_tMean})
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        mF.save_file(ds_rxday_tMean, folder, filename) if switch['save'] else None
 
     if switch['F_pr10_snapshot']:
-        ds_F_pr10_snapshot = xr.Dataset({'F_pr10_snapshot': calc_F_pr10_snapshot(da)})
-        folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10_snapshot/{source}'
-        filename = f'{dataset}_F_pr10_snapshot_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        metric_name = 'F_pr10_snapshot'
+        ds_F_pr10_snapshot = xr.Dataset({metric_name: calc_F_pr10_snapshot(da)})
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_F_pr10_snapshot, folder, filename) if switch['save'] else None
 
     if switch['F_pr10']:
-        ds_F_pr10 = xr.Dataset({'F_pr10': calc_F_pr10(da)})
-        folder = f'{mV.folder_save[0]}/pr/metrics/F_pr10/{source}'
-        filename = f'{dataset}_F_pr10_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        metric_name = 'F_pr10'
+        ds_F_pr10 = xr.Dataset({metric_name: calc_F_pr10(da)})
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_F_pr10, folder, filename) if switch['save'] else None
 
     if switch['o_pr']:
+        metric_name = 'o_pr'
         conv_percentile = 0.97
         conv_threshold = find_percentile(da, conv_percentile).mean(dim='time')
         o_pr = xr.DataArray(data = calc_o_pr(da, conv_threshold), dims = 'object',
                                 attrs = {'units':'mm day' + mF.get_super('-1'),
                                          'descrption': 'area weighted mean precipitation in contiguous convective region (object)'})
-        ds_o_pr = xr.Dataset({'o_pr': o_pr})
-        folder = f'{mV.folder_save[0]}/pr/metrics/o_pr/{source}'
-        filename = f'{dataset}_o_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        ds_o_pr = xr.Dataset({metric_name: o_pr})
+        folder = f'{mV.folder_save[0]}/pr/metrics/{metric_name}/{source}'
+        filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         mF.save_file(ds_o_pr, folder, filename) if switch['save'] else None
 
 
@@ -173,8 +173,7 @@ def load_data(switch, source, dataset, experiment):
     if switch['constructed_fields']:
         return cF.var2D
     if switch['sample_data']:
-        path = f'/Users/cbla0002/Documents/data/pr/sample_data/{source}/{dataset}_pr_daily_{experiment}_{mV.resolutions[0]}.nc'
-        return xr.open_dataset(path)['pr']
+        return xr.open_dataset(f'/Users/cbla0002/Documents/data/pr/sample_data/{source}/{dataset}_pr_daily_{experiment}_{mV.resolutions[0]}.nc')['pr']
     else:
         return gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])
 
@@ -205,23 +204,27 @@ def run_pr_metrics(switch):
 if __name__ == '__main__':
     run_pr_metrics(switch = {
         # choose data to calculate metric on
-        'constructed_fields': False, 
-        'sample_data':        True,
+        'constructed_fields':             False, 
+        'sample_data':                    True,
 
-        # choose metrics to calculate
-        'snapshot_pr':                    False,
+        # visuzalization
+        'pr_snapshot':                    False,
+        'percentiles_snapshot':           True, 
+        'F_pr10_snapshot':                False,
+
+        # metrics to calculate
+        'percentiles':                    False, 
+        'percentiles_sMean':              False, 
         'rxday_sMean':                    False, 
         'rxday_tMean':                    False, 
-        'percentiles':                    False, 
-        'snapshot_percentiles':           False, 
-        'meanInPercentiles':              False, 
-        'meanInPercentiles_fixedArea':    False,
         'F_pr10':                         False,
-        'snapshot_F_pr10':                False,
         'o_pr':                           False,
-        
+
+        # threshold
+        'fixed_area':                     False, 
+
         # save
-        'save':               False
+        'save':                           False
         }
     )
     

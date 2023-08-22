@@ -3,10 +3,10 @@ import numpy as np
 import pandas as pd
 
 # ------------------------------------------------------------------------------------- For 2D variables, like surface pr ----------------------------------------------------------------------------------------------------- #
-var2d = np.random.rand(10961, 22, 128)
-time_range = pd.date_range("1970/01/01","2000/01/05",freq='D',inclusive='left')
+var2d = np.random.rand(10957, 22, 128)
+time_range = pd.date_range("1970/01/01","2000/01/01",freq='D',inclusive='left')
 lat = np.linspace(-30, 30, 22)
-lon = np.linspace(0, 360, 128)
+lon = np.linspace(0, 359, 128)
 var2d = xr.DataArray(
     data = var2d,
     dims=['time','lat','lon'],

@@ -1,8 +1,7 @@
 import os
 import sys
 home = os.path.expanduser("~")
-folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/calc_metrics')
+sys.path.insert(0, f'{os.getcwd()}/calc_metrics')
 
 # --------------------------------------------------------------------------------------- Precipiration metrics ----------------------------------------------------------------------------------------------------- #
 run = False
@@ -31,7 +30,7 @@ if run:
         )
     
 # -------------------------------------------------------------------------------------- Organization metrics ----------------------------------------------------------------------------------------------------- #
-run = False
+run = True
 if run:
     import org_met as oM
     oM.run_org_metrics(switch = {
@@ -39,15 +38,17 @@ if run:
         'constructed_fields': False, 
         'sample_data':        True,
 
-        # choose metrics to calculate
+        # visualization
+        'obj_snapshot':       False,
+
+        # metrics to calculate
         'rome':               True, 
         'rome_n':             True, 
         'ni':                 True, 
         'o_area':             True,
-        'snapshot_obj':       False,
-        
+
         # threshold
-        'fixed_area':         False,
+        'fixed_area':         True,
 
         # save
         'save':               True
@@ -110,7 +111,7 @@ if run:
 # ----------------------------------------
 # Vertical pressure velocity (wap)
 # ----------------------------------------
-run = True
+run = False
 if run:
     import large_scale_state.wap as wM
     wM.run_wap_metrics(switch = {

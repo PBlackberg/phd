@@ -1,8 +1,7 @@
 import os
 import sys
 home = os.path.expanduser("~")
-folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/plot')
+sys.path.insert(0, f'{os.getcwd()}/plot')
 
 # -------------------------------------------------------------------------------------------- Map plot ----------------------------------------------------------------------------------------------------- #
 plot = False
@@ -11,37 +10,41 @@ if plot:
     mP.run_map_plot(switch = {
         # metrics
         'pr':                  False,
+        'pr97':                False,
         'pr99':                False,
         'rx1day_pr':           False,
         'rx5day_pr':           False,
 
         'obj':                 False,
 
-        'wap':                 False,
-        'tas':                 True,
-
-        'hus':                 False,
         'hur':                 False,
-        'rlut':                False,
+        'wap':                 False,
+        'tas':                 False,
 
         'lcf':                 False,
         'hcf':                 False,
 
+        'rlut':                False,
+        'hus':                 False,
+
 
         # metric calculation
-        'snapshot':            False,
-        'climatology':         True,
+        'snapshot':            True,
+        'climatology':         False,
         'change with warming': False,
+
 
         # masked by
         'descent':             False,
         'ascent':              False,
+        'fixed_area':          False,
         'per_kelvin':          False,
         
+
         # show/save
         'one dataset':         False,
         'show':                True,
-        'save':                False,
+        'save':                True,
         'save to desktop':     False
         }
     )
@@ -55,25 +58,30 @@ if plot:
         # metrics
             # organization
             'rome':                False,
-            'rome_fixed_area':     True,
+            'areafraction':        True,
+            'ni':                  True,
 
             # other
             'pr':                  False,
+            'pr97':                False,
             'pr99':                False,
             'rx1day_pr':           False,
             'rx5day_pr':           False,
 
-            'wap':                 False,
-            'tas':                 True,
-
-            'hus':                 False,
             'hur':                 False,
-            'rlut':                False,
+            'wap':                 False,
+            'tas':                 False,
 
             'lcf':                 False,
             'hcf':                 False,
 
-        # masked by
+            'rlut':                False,
+            'hus':                 False,
+
+        # organization masked by
+        'fixed_area':          False,
+
+        # other variable masked by
         'descent':             False,
         'ascent':              False,
 
@@ -87,41 +95,46 @@ if plot:
         # run/show/save
         'one dataset':         False,
         'show':                True,
-        'save':                False,
+        'save':                True,
         'save to desktop':     False
         }
     )
 
+
+
 # ----------------------------------------------------------------------------------------- inter-model scatter ----------------------------------------------------------------------------------------------------- #
-plot = False
+plot = True
 if plot:
     import scatter2_plot as s2P    
     s2P.run_scatter_plot(switch = {
         # metrics
             # organization
-            'rome':                True,
+            'rome':                False,
+            'ni':                  False,
+            'areafraction':        False,
 
             # other
-            'ecs':                 False,
             'pr':                  False,
             'pr99':                False,
             'pr99_sMean':          False,
             'rx1day_pr':           False,
             'rx5day_pr':           False,
 
+            'hur':                 True,
             'wap':                 False,
-            'tas':                 True,
-
-            'hus':                 False,
-            'hur':                 False,
-            'rlut':                False,
+            'tas':                 False,
+            'ecs':                 False,
 
             'lcf':                 False,
             'hcf':                 False,
 
+            'rlut':                True,
+            'hus':                 False,
+
         # masked by
         'descent':             False,
         'ascent':              False,
+        'fixed_area':          False,
         'per_kelvin':          False,
 
         # metric calculation
@@ -137,39 +150,6 @@ if plot:
         'save to desktop':     False
         }
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

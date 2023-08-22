@@ -22,29 +22,32 @@ models_cmip5 = [
     # 'HadGEM2-CC',        # 17
     # 'MRI-CGCM3',         # 18
     # 'CESM1-BGC'          # 19
+    # 'random_field'
     ]
 
-# first 14/26 models as used in schiro paper
+# 14 models used in Schiro
+# Models ordered by change in temperature with warming
 models_cmip6 = [
-    'TaiESM1',           # 1
-    'BCC-CSM2-MR',       # 2
-    'FGOALS-g3',         # 3
-    'CNRM-CM6-1',        # 4
-    'MIROC6',            # 5
-    'MPI-ESM1-2-LR',     # 6
-    'NorESM2-MM',        # 7
-    'GFDL-CM4',          # 8
-    'CanESM5',           # 9
-    'CMCC-ESM2',         # 10
-    'UKESM1-0-LL',       # 11
-    'MRI-ESM2-0',        # 12
-    # 'CESM2-WACCM',       # 13          
-    'NESM3',             # 14
-    'IITM-ESM',          # 15 
-    'EC-Earth3',         # 16 
-    'INM-CM5-0',         # 17 
-    'IPSL-CM6A-LR',      # 18
-    'KIOST-ESM',         # 19
+    'INM-CM5-0',         # 1 # no cloud (not in schiro)
+    # 'IITM-ESM',          # 2 # no cloud (not in schiro)
+    # 'FGOALS-g3',         # 3
+    # 'MIROC6',            # 4
+    # 'MPI-ESM1-2-LR',     # 5
+    # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
+    # 'BCC-CSM2-MR',       # 7
+    # 'NorESM2-MM',        # 8
+    # 'MRI-ESM2-0',        # 9
+    # 'GFDL-CM4',          # 10
+    # 'CMCC-ESM2',         # 11
+    # 'NESM3',             # 12
+    # 'EC-Earth3',         # 13 # no cloud (not in shiro)
+    # 'CNRM-CM6-1',        # 14
+    # 'IPSL-CM6A-LR',      # 15 # no cloud (not in schiro)
+    # 'TaiESM1',           # 16
+    # 'CESM2-WACCM',       # 17    
+    # 'CanESM5',           # 18
+    # 'UKESM1-0-LL',       # 19 # clouds not right
+    # 'random_field'
     ]
 
 
@@ -57,9 +60,11 @@ observations = [
 
 datasets = models_cmip5 + models_cmip6 + observations
 
+
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
+    # 'annual'
     ]
 
 experiments = [
@@ -74,12 +79,16 @@ resolutions = [
     'regridded'
     ]
 
+conv_percentiles = [
+    # '90',
+    '95',
+    # '97'
+    ]
+
 folder_save = [
     os.path.expanduser("~") + '/Documents/data',
     # '/g/data/k10/cb4968/data'
     ]
-
-
 
 
 # ---------------------------------------------------------------------------------------- other variables ----------------------------------------------------------------------------------------------------- #
