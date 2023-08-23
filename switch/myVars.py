@@ -3,25 +3,25 @@ import os
 # -------------------------------------------------------------------------------------- For choosing dataset / model----------------------------------------------------------------------------------------------------- #
 
 models_cmip5 = [
-    # 'IPSL-CM5A-MR',      # 1
-    # 'GFDL-CM3',          # 2
-    # 'GISS-E2-H',         # 3
-    # 'bcc-csm1-1',        # 4
-    # 'CNRM-CM5',          # 5
-    # 'CCSM4',             # 6
-    # 'HadGEM2-AO',        # 7
-    # 'BNU-ESM',           # 8
-    # 'EC-EARTH',          # 9
-    # 'FGOALS-g2',         # 10
-    # 'MPI-ESM-MR',        # 11
-    # 'CMCC-CM',           # 12
-    # 'inmcm4',            # 13
-    # 'NorESM1-M',         # 14
-    # 'CanESM2',           # 15
-    # 'MIROC5',            # 16
-    # 'HadGEM2-CC',        # 17
-    # 'MRI-CGCM3',         # 18
-    # 'CESM1-BGC'          # 19
+    'IPSL-CM5A-MR',      # 1
+    'GFDL-CM3',          # 2
+    'GISS-E2-H',         # 3
+    'bcc-csm1-1',        # 4
+    'CNRM-CM5',          # 5
+    'CCSM4',             # 6
+    'HadGEM2-AO',        # 7
+    'BNU-ESM',           # 8
+    'EC-EARTH',          # 9
+    'FGOALS-g2',         # 10
+    'MPI-ESM-MR',        # 11
+    'CMCC-CM',           # 12
+    'inmcm4',            # 13
+    'NorESM1-M',         # 14
+    'CanESM2',           # 15
+    'MIROC5',            # 16
+    'HadGEM2-CC',        # 17
+    'MRI-CGCM3',         # 18
+    'CESM1-BGC'          # 19
     # 'random_field'
     ]
 
@@ -43,7 +43,7 @@ models_cmip6 = [
     # 'EC-Earth3',         # 13 # no cloud (not in shiro)
     # 'CNRM-CM6-1',        # 14
     # 'IPSL-CM6A-LR',      # 15 # no cloud (not in schiro)
-    'TaiESM1',           # 16
+    # 'TaiESM1',           # 16
     # 'CESM2-WACCM',       # 17    
     # 'CanESM5',           # 18
     # 'UKESM1-0-LL',       # 19 # clouds not right
@@ -61,13 +61,13 @@ datasets = models_cmip5 + models_cmip6 + observations
 
 
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
     ]
 
 experiments = [
     'historical',     
-    # 'rcp85',             # warm scenario for cmip5
+    'rcp85',             # warm scenario for cmip5
     # 'ssp585',            # warm scenario for cmip6
     # ''                   # observations
     ]

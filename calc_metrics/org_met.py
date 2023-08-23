@@ -205,7 +205,7 @@ def run_metrics(switch, da, dim, conv_threshold, source, dataset, experiment):
 
 def load_data(switch, source, dataset, experiment):
     da = cF.var2d                                                                                                   if switch['constructed_fields'] else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['precip'] if switch['sample_data'] else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['pr'] if switch['sample_data'] else da
     da = gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                if switch['gadi_data'] else da
     return da
 
@@ -219,14 +219,19 @@ def run_experiment(switch, source, dataset):
         conv_threshold = calc_conv_threshold(switch, da, conv_percentile=int(mV.conv_percentiles[0]) * 0.01)
         run_metrics(switch, da, dim, conv_threshold, source, dataset, experiment)
 
+def run_dataset(switch):
+    for dataset in mV.datasets:
+        source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+        print(source)
+        print(f'{dataset} ({source})')
+        run_experiment(switch, source, dataset)
+
 @mF.timing_decorator
 def run_org_metrics(switch):
     print(f'Running {os.path.basename(__file__)} on {mV.resolutions[0]} {mV.timescales[0]} data with {mV.conv_percentiles[0]}th percentile precipitation threshold')
     print(f'switch: {[key for key, value in switch.items() if value]}')
-    for dataset in mV.datasets:
-        source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(f'{dataset} ({source})')
-        run_experiment(switch, source, dataset)
+    run_dataset(switch)
+
 
 
 if __name__ == '__main__':
