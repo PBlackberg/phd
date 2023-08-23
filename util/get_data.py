@@ -1,266 +1,142 @@
+import xarray as xr
 import os
 import sys
 home = os.path.expanduser("~")
-folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/util')
+sys.path.insert(0, f'{os.getcwd()}/util')
 import myFuncs as mF # imports common operator
-import myVars as mV # imports common variables
 import concat_files as cfiles
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV # imports common variables
 
 
-
-# ------------------
+# -----------------
 # Loading variable 
-# ------------------
+# -----------------
 
-# ------------------------------------------------------------------------------------ Surface precipitation ----------------------------------------------------------------------------------------------------- #
-
-def get_pr(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Surface precipitation '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('pr', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['pr']*60*60*24 # convert to mm/day
-        da.attrs['units']= 'mm day' + mF.get_super('-1')
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('pr', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['pr']*60*60*24 # convert to mm/day
-        da.attrs['units']= 'mm day' + mF.get_super('-1')
-
-    if dataset == 'GPCP':
-        ds = cfiles.get_gpcp(resolution)
-        da = ds['pr'] # already units of mm/day
-        da.attrs['units']= 'mm day' + mF.get_super('-1')
-    return da
-
-# ----------------------------------------------------------------------------------- Vertical pressure velocity ----------------------------------------------------------------------------------------------------- #
-
-def get_wap(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Vertical pressure velocity '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('wap', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['wap']*60*60*24/100 # convert to hPa/day   
-        da.attrs['units']= 'hPa day' + mF.get_super('-1')
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('wap', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['wap']*60*60*24/100 # convert to hPa/day   
-        da.attrs['units']= 'hPa day' + mF.get_super('-1')
-    return da
-
-# -------------------------------------------------------------------------------------- Surface temperature ----------------------------------------------------------------------------------------------------- #
-
-def get_tas(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Surface temperature '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('tas', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['tas']-273.15 # convert to degrees Celsius
-        da.attrs['units']= mF.get_super('o') + 'C'
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('tas', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['tas']-273.15 # convert to degrees Celsius
-        da.attrs['units']= mF.get_super('o') + 'C'
-    return da
-
-# ----------------------------------------------------------------------------------------- temperature ----------------------------------------------------------------------------------------------------- #
-
-def get_ta(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' temperature '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('tas', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['tas']-273.15 # convert to degrees Celsius
-        da.attrs['units']= mF.get_super('o') + 'C'
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('tas', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['tas']-273.15 # convert to degrees Celsius
-        da.attrs['units']= mF.get_super('o') + 'C'
-
-    if dataset == 'ERA5':
-        ds = cfiles.get_era5_monthly('t', resolution)
-        da = ds['t']-273.15 # convert to degrees Celsius
-        da.attrs['units']= mF.get_super('o') + 'C'
-    return da
-
-# ---------------------------------------------------------------------------------------- Cloud fraction ----------------------------------------------------------------------------------------------------- #
-
-def get_cl(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
-        return None
-    ''' Cloud fraction '''
-    if source == 'cmip5':
-        ds, _ = cfiles.get_cmip5_cl('cl', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['cl'] # units in % on sigma pressure coordinates
-        da.attrs['units']= '%'
-
-    if source == 'cmip6':
-        ds, _ = cfiles.get_cmip6_cl('cl', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['cl'] # units in % on sigma pressure coordinates
-        da.attrs['units']= '%'
-    return da
-
-# ---------------------------------------------------------------------------------- Hybrid-sgima pressure coordinates ----------------------------------------------------------------------------------------------------- #
-
-def get_p_hybridsigma(source, dataset, experiment,  timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
-        return None
-    ''' Pressure values on hybrid-sigma pressure coordinates '''
-    if source == 'cmip5':
-        _, ds = cfiles.get_cmip5_cl('cl', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['p_hybridsigma'] # units in hPa/day
-
-    if source == 'cmip6':
-        _, ds = cfiles.get_cmip6_cl('cl', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['p_hybridsigma'] # units in hPa/day
-    return da
-
-# ------------------------------------------------------------------------------------------ Relative humidity ----------------------------------------------------------------------------------------------------- #
-
-def get_hur(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Relative humidity '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('hur', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['hur'] # units in %
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('hur', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['hur'] # units in %
-    return da
-
-# ------------------------------------------------------------------------------------------- Specific humidity ----------------------------------------------------------------------------------------------------- #
-
-def get_hus(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Specific humidity '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('hus', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['hus'] # unitless kg/kg
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('hus', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['hus'] # unitless kg/kg
-
-    if dataset == 'ERA5':
-        ds = cfiles.get_era5_monthly('q', resolution)
-        da = ds['q'] # unitless kg/kg
-    return da
-
-# --------------------------------------------------------------------------------------- Outgoing longwave radiation ----------------------------------------------------------------------------------------------------- #
-
-def get_rlut(source, dataset, experiment, timescale = mV.timescales[0], resolution = mV.resolutions[0]):
-    ''' Outgoing longwave radiation '''
-    if source == 'cmip5':
-        ds = cfiles.get_cmip5_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['rlut'] # W/m^2
-
-    if source == 'cmip6':
-        ds = cfiles.get_cmip6_data('rlut', mV.institutes[dataset], dataset, timescale, experiment, resolution)
-        da = ds['rlut'] # W/m^2
-    return da
-
-
-# ---------------------------------------
-# Calling function and saving sample data
-# ---------------------------------------
-
-def get_var_data(switch, source, dataset, experiment):
+def get_var_data(source, dataset, experiment, var_name):
     da = None
+# ------------------------------------------------------------------------------- For precipitation and organization----------------------------------------------------------------------------------------------------- #
+    if var_name == 'pr':
+        da = cfiles.get_cmip5_data('pr', dataset, experiment)['pr']*60*60*24 if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('pr', dataset, experiment)['pr']*60*60*24 if source == 'cmip6' else da
+        da = cfiles.get_gpcp()['pr']                                         if dataset == 'GPCP' else da
+        da.attrs['units'] = 'mm day' + mF.get_super('-1')
 
-    if switch['pr']:
-        da = get_pr(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/pr/sample_data/{source}'
-        filename = f'{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
 
-    if switch['wap']:
-        da = get_wap(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/wap/sample_data/{source}'
-        filename = f'{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
+# -------------------------------------------------------------------------------- Large-scale environmental state ----------------------------------------------------------------------------------------------------- #
+    if var_name == 'tas':
+        da = cfiles.get_cmip5_data('tas', dataset, experiment)['tas']-273.15  if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('tas', dataset, experiment)['tas']-273.15  if source == 'cmip6' else da
+        da.attrs['units'] = mF.get_super('o') + 'C'
 
-    if switch['tas']:
-        da = get_tas(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/tas/sample_data/{source}'
-        filename = f'{dataset}_tas_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
+    if var_name == 'hur':
+        da = cfiles.get_cmip5_data('hur', dataset, experiment)['hur']  if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('hur', dataset, experiment)['hur']  if source == 'cmip6' else da
+        da.attrs['units'] = '%'
 
-    if switch['ta']:
-        da = get_ta(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/ta/sample_data/{source}'
-        filename = f'{dataset}_ta_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
+    if var_name == 'wap':
+        da = cfiles.get_cmip5_data('wap', dataset, experiment)['wap']*60*60*24/100 if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('wap', dataset, experiment)['wap']*60*60*24/100 if source == 'cmip6' else da
+        da.attrs['units'] = 'hPa day' + mF.get_super('-1')
 
-    if switch['cl']:
-        da = get_cl(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/cl/sample_data/{source}'
-        filename = f'{dataset}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
 
-    if switch['p_hybridsigma']:
-        da = get_p_hybridsigma(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/cl/sample_data/{source}'
-        filename = f'{dataset}_p_hybridsigma_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
+# ---------------------------------------------------------------------------------------------- Radation ----------------------------------------------------------------------------------------------------- #
+    if var_name == 'rlut':
+        da = cfiles.get_cmip5_data('rlut', dataset, experiment)['rlut'] if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('rlut', dataset, experiment)['rlut'] if source == 'cmip6' else da
+        da.attrs['units'] = 'W m' + mF.get_super('-2')
 
-    if switch['hur']:
-        da = get_hur(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/hur/sample_data/{source}'
-        filename = f'{dataset}_hur_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
 
-    if switch['hus']:
-        da = get_hus(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/hus/sample_data/{source}'
-        filename = f'{dataset}_hus_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
+# ----------------------------------------------------------------------------------------------- Clouds ----------------------------------------------------------------------------------------------------- #
+    if var_name == 'cl':
+        if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
+            return da
+        da, _ = cfiles.get_cmip5_cl('cl', dataset, experiment)['cl'] if source == 'cmip5' else da
+        da, _ = cfiles.get_cmip6_cl('cl', dataset, experiment)['cl'] if source == 'cmip6' else da # hybrid-sigma coords
+        da.attrs['units'] = '%'
 
-    if switch['rlut']:
-        da = get_rlut(source, dataset, experiment)
-        folder = f'{mV.folder_save[0]}/lw/sample_data/{source}'
-        filename = f'{dataset}_rlut_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-        mF.save_file(da, folder, filename) if switch['save'] else None
-    return
+    if var_name == 'p_hybridsigma':
+        if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
+            return da
+        _, da = cfiles.get_cmip5_cl('p_hybridsigma', dataset, experiment)['p_hybridsigma'] if source == 'cmip5' else da
+        _, da = cfiles.get_cmip6_cl('p_hybridsigma', dataset, experiment)['p_hybridsigma'] if source == 'cmip6' else da # hybrid-sigma coords
+        da.attrs['units'] = '%'
+
+# -------------------------------------------------------------------------------------------- Moist static energy ----------------------------------------------------------------------------------------------------- #
+    if var_name == 'ta':
+        da = cfiles.get_cmip5_data('ta', dataset, experiment)['ta'] if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('ta', dataset, experiment)['ta'] if source == 'cmip6' else da
+        da = cfiles.get_era5_monthly('t')['t']                      if dataset == 'ERA5' else da
+        da.attrs['units'] = 'K'
+
+    if var_name == 'hus':
+        da = cfiles.get_cmip5_data('hus', dataset, experiment)['hus'] if source == 'cmip5' else da
+        da = cfiles.get_cmip6_data('hus', dataset, experiment)['hus'] if source == 'cmip6' else da
+        da = cfiles.get_era5_monthly('q')['q']                        if dataset == 'ERA5' else da
+        da.attrs['units'] = ' '
+
+    return da
         
 
+# ----------------------------------------
+# Loading variable from different datasets
+# ----------------------------------------
 
-# ------------------------------
-# Getting dataset and experiment
-# ------------------------------
+def save_sample(source, dataset, experiment, ds, var_name):
+    folder = f'{mV.folder_save[0]}/{var_name}/sample_data/{source}'
+    filename = f'{dataset}_{var_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
+    mF.save_file(ds, folder, filename)
+
+def run_var_data(switch, source, dataset, experiment):
+    for var_name in [k for k, v in switch.items() if v] : # loop over true keys
+        ds = xr.Dataset(data_vars = {var_name: get_var_data(source, dataset, experiment, var_name)})
+        save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] and ds[var_name].any() else None
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
-        if experiment and source in ['cmip5', 'cmip6']:
-            print(f'\t {experiment}') if mF.data_exist(dataset, experiment) else print(f'\t no {experiment} data')
-        print( '\t observational dataset') if not experiment and source == 'obs' else None
-
-        if mF.no_data(source, experiment, mF.data_exist(dataset, experiment)):
+        if not mF.data_available(source, dataset, experiment):
             continue
-        get_var_data(switch, source, dataset, experiment)
+        print(f'\t {experiment}') if experiment else print(f'\t observational dataset')
+        run_var_data(switch, source, dataset, experiment)
 
-@mF.timing_decorator
-def run_get_data(switch):
-    print(f'Getting variable from {mV.resolutions[0]} {mV.timescales[0]} data')
-    print(f'switch: {[key for key, value in switch.items() if value]}')
-
+def run_dataset(switch):
     for dataset in mV.datasets:
         source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
         run_experiment(switch, source, dataset)
 
+@mF.timing_decorator
+def run_get_data(switch):
+    print(f'Getting variable from {mV.resolutions[0]} {mV.timescales[0]} data')
+    print(f'switch: {[key for key, value in switch.items() if value]}')
+    run_dataset(switch)
+
 
 if __name__ == '__main__':
     run_get_data(switch = {
-        'pr'  :          True,
-        'wap' :          False,
-        'tas' :          False,
-        'ta' :           False,
-        'cl'  :          False,
-        'p_hybridsigma': False,
-        'hus' :          False,
-        'hur' :          False,
-        'rlut':          False,
+        # ---------
+        # Variables
+        # ---------
+            # for precipitation and organization
+            'pr'  :          False,
 
-        'save':          False
+            # large scale environemal state
+            'tas' :          False,
+            'hur' :          False,
+            'wap' :          False,
+
+            # radiation        
+            'rlut':          False,
+
+            # clouds
+            'cl'  :          False,
+            'p_hybridsigma': False,
+
+            # moist static energy
+            'ta' :           False,
+            'hus' :          False,
+
+        'save_sample':   False
         }
     )
 

@@ -1,7 +1,28 @@
 import xarray as xr
 import numpy as np
 import os
+import sys
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV # imports common variables
 
+# ------------------------------------------------------------------------------------ General ----------------------------------------------------------------------------------------------------------#
+
+def concat_files(path_folder, experiment):
+    ''' Concatenates files of monthly or daily data between specified years
+    (takes out a little bit wider range to not exclude data when interpolating grid) '''
+    files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
+    year1, year2 = (1970, 1999) if experiment == 'historical' else (2070, 2099) # range of years to concatenate files for
+    fileYear1_charStart, fileYear1_charEnd = (13, 9) if 'Amon' in path_folder else (17, 13) # indicates between which characters in the filename the first fileyear is described (count starting from the end)
+    fileYear2_charStart, fileYear2_charEnd = (6, 2) if 'Amon' in path_folder else (8, 4) # where the last fileyear is described
+    files = sorted(files, key=lambda x: x[x.index(".nc")-fileYear1_charStart:x.index(".nc")-fileYear1_charEnd])
+    files = [f for f in files if int(f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]) <= int(year2) and int(f[f.index(".nc")-fileYear2_charStart : f.index(".nc")-fileYear2_charEnd]) >= int(year1)]
+    # for f in files:  # one model from warming scenario from cmip5 have a file that needs to be removed (creates duplicate data otherwise)
+    #     files.remove(f) if f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]=='19790101' and f[f.index(".nc")-fileYear2_charStart : f.index(".nc")]=='20051231' else None
+    paths = []
+    for file in files:
+        paths = np.append(paths, os.path.join(path_folder, file))
+    ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
+    return ds
 
 def latestVersion(path):
     ''' Picks the latest version if there are multiple '''
@@ -9,110 +30,17 @@ def latestVersion(path):
     version = max(versions, key=lambda x: int(x[1:])) if len(versions)>1 else versions[0]
     return version
 
-def concat_files(path_folder, experiment):
-    ''' Concatenates files of monthly or daily data between specified years
-    (takes out a little bit wider range to not exclude data when interpolating grid) '''
-    files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
-    
-    year1, year2 = (1970, 1999) if experiment == 'historical' else (2070, 2099) # range of years to concatenate files for
-    fileYear1_charStart, fileYear1_charEnd = (13, 9) if 'Amon' in path_folder else (17, 13) # indicates between which characters in the filename the first fileyear is described (count starting from the end)
-    fileYear2_charStart, fileYear2_charEnd = (6, 2) if 'Amon' in path_folder else (8, 4) # where the last fileyear is described
-
-    files = sorted(files, key=lambda x: x[x.index(".nc")-fileYear1_charStart:x.index(".nc")-fileYear1_charEnd])
-    files = [f for f in files if int(f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]) <= int(year2) and int(f[f.index(".nc")-fileYear2_charStart : f.index(".nc")-fileYear2_charEnd]) >= int(year1)]
-
-    # for f in files:  # one model from warming scenario from cmip5 have a file that needs to be removed (creates duplicate data otherwise)
-    #     files.remove(f) if f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]=='19790101' and f[f.index(".nc")-fileYear2_charStart : f.index(".nc")]=='20051231' else None
-            
-    paths = []
-    for file in files:
-        paths = np.append(paths, os.path.join(path_folder, file))
-    
-    ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
-    return ds
-
-
-# ----------------------------------------------------------------------------------------- for cmip5 data ----------------------------------------------------------------------------------------------------------#
-
 def choose_cmip5_ensemble(model, experiment):
     ''' Some models don't have the ensemble most common amongst other models 
     and some experiments don't have the same ensemble as the historical simulation'''
     ensemble = 'r6i1p1' if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
-
     ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
     ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
     return ensemble
 
-def get_cmip5_data(variable, institute, model, experiment, timescale, resolution, data_exists=True):
-    ''' concatenates file data and interpolates grid to common grid if needed '''
-    if not data_exists:
-        print(f'there is no {variable} data for experiment: {experiment} for model: {model}')
-        return
-    
-    ensemble = choose_cmip5_ensemble(model, experiment)
-    timeInterval = ('day', 'day') if timescale == 'daily' else ('mon', 'Amon')
-    path_gen = f'/g/data/al33/replicas/CMIP5/combined/{institute}/{model}/{experiment}/{timeInterval[0]}/atmos/{timeInterval[1]}/{ensemble}'
-    version = latestVersion(path_gen)
-    path_folder = f'{path_gen}/{version}/{variable}'
-
-    ds = concat_files(path_folder, variable, model, experiment)
-    da= ds[variable]
-
-    if resolution == 'regridded':
-        import xesmf_regrid as regrid
-        regridder = regrid.regrid_conserv_xesmf(ds)
-        da = regridder(da)
-
-    ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
-    return ds
-
-def get_cmip5_cl(variable, institute, model, experiment, timescale, resolution, data_exists=True):
-    ''' Cloud pressure on hybrid-sigma vertical levels '''
-    if not data_exists:
-        print(f'there is no {variable} data for experiment: {experiment} for model: {model}')
-        return
-    
-    ensemble = choose_cmip5_ensemble(model, experiment)
-    timeInterval = ('day', 'day') if timescale == 'daily' else ('mon', 'Amon')
-    path_gen = f'/g/data/al33/replicas/CMIP5/combined/{institute}/{model}/{experiment}/{timeInterval[0]}/atmos/{timeInterval[1]}/{ensemble}'
-    version = latestVersion(path_gen)
-       
-    path_folder = f'{path_gen}/{version}/{variable}'
-
-    ds = concat_files(path_folder, variable, model, experiment)
-        
-    if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2': # different models have different conversions from height coordinate to pressure coordinate.
-        p_hybridsigma = ds.ap + ds.b*ds.ps
-    elif model == 'FGOALS-g2':
-        p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-    elif model == 'HadGEM2-CC':
-        p_hybridsigma = ds.lev+ds.b*ds.orog
-    else:
-        p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
-    
-    if resolution == 'orig':
-        ds_cl = ds # units in % on sigma pressure coordinates
-        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
-
-    if resolution == 'regridded':
-        import xesmf_regrid as regrid
-        cl = ds['cl'] # units in % on sigma pressure coordinates
-        regridder = regrid.regrid_conserv_xesmf(ds)
-        cl = regridder(cl)
-        p_hybridsigma_n = regridder(p_hybridsigma)
-
-        ds_cl = xr.Dataset(data_vars = {'cl': cl}, attrs = ds.attrs)
-        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma_n}, attrs = ds.lev.attrs)
-    return ds_cl, ds_p_hybridsigma
-
-
-
-# ---------------------------------------------------------------------------------------- for cmip6 data ----------------------------------------------------------------------------------------------------------#
-
 def choose_cmip6_ensemble(model, experiment):
     ''' Some models don't have the ensemble most common amongst other models 
-    and some experiments don't have the same ensemble as the historical simulation
-    '''
+    and some experiments don't have the same ensemble as the historical simulation'''
     ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL'] else 'r1i1p1f1'
     ensemble = 'r11i1p1f1' if model == 'CESM2' and not experiment == 'historical' else ensemble
     return ensemble
@@ -124,47 +52,87 @@ def grid_folder(model):
     folder = 'gr1' if model in ['GFDL-CM4', 'INM-CM5-0', 'KIOST-ESM'] else folder           
     return folder
 
-def get_cmip6_data(variable, institute, model, timescale, experiment, resolution, data_exists = True):
-    ''' concatenates file data and interpolates grid to common grid if needed
-    '''
-    if not data_exists:
-        print(f'there is no {variable} data for experiment: {experiment} for model: {model}')
-        return
+
+# ---------------------------------------------------------------------------------------- CMIP5 ----------------------------------------------------------------------------------------------------------#
+
+def get_cmip5_data(variable, model, experiment):
+    ''' concatenates file data and interpolates grid to common grid if needed '''    
+    ensemble = choose_cmip5_ensemble(model, experiment)
+    timeInterval = ('day', 'day') if mV.timescales[0] == 'daily' else ('mon', 'Amon')
+    path_gen = f'/g/data/al33/replicas/CMIP5/combined/{mV.institutes[model]}/{model}/{experiment}/{timeInterval[0]}/atmos/{timeInterval[1]}/{ensemble}'
+    version = latestVersion(path_gen)
+    path_folder = f'{path_gen}/{version}/{variable}'
+    ds = concat_files(path_folder, variable, model, experiment)
+    da= ds[variable]
+    if mV.resolutions[0] == 'regridded':
+        import xesmf_regrid as regrid
+        regridder = regrid.regrid_conserv_xesmf(ds)
+        da = regridder(da)
+    ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
+    return ds
+
+def get_cmip5_cl(variable, model, experiment):
+    ''' Cloud pressure on hybrid-sigma vertical levels '''    
+    ensemble = choose_cmip5_ensemble(model, experiment)
+    timeInterval = ('day', 'day') if mV.timescales[0] == 'daily' else ('mon', 'Amon')
+    path_gen = f'/g/data/al33/replicas/CMIP5/combined/{mV.institutes[model]}/{model}/{experiment}/{timeInterval[0]}/atmos/{timeInterval[1]}/{ensemble}'
+    version = latestVersion(path_gen)
+    path_folder = f'{path_gen}/{version}/{variable}'
+    ds = concat_files(path_folder, variable, model, experiment)
+        
+    if model == 'IPSL-CM5A-MR' or model == 'MPI-ESM-MR' or model=='CanESM2': # different models have different conversions from height coordinate to pressure coordinate.
+        p_hybridsigma = ds.ap + ds.b*ds.ps
+    elif model == 'FGOALS-g2':
+        p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
+    elif model == 'HadGEM2-CC':
+        p_hybridsigma = ds.lev+ds.b*ds.orog
+    else:
+        p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
+    
+    if mV.resolutions[0] == 'orig':
+        ds_cl = ds # units in % on sigma pressure coordinates
+        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
+    if mV.resolutions[0] == 'regridded':
+        import xesmf_regrid as regrid
+        cl = ds['cl'] # units in % on sigma pressure coordinates
+        regridder = regrid.regrid_conserv_xesmf(ds)
+        cl = regridder(cl)
+        p_hybridsigma_n = regridder(p_hybridsigma)
+        ds_cl = xr.Dataset(data_vars = {'cl': cl}, attrs = ds.attrs)
+        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma_n}, attrs = ds.lev.attrs)
+    return ds_cl, ds_p_hybridsigma
+
+
+# -------------------------------------------------------------------------------------- CMIP6 ----------------------------------------------------------------------------------------------------------#
+
+def get_cmip6_data(variable, model, experiment):
+    ''' concatenates file data and interpolates grid to common grid if needed'''
     ensemble = choose_cmip6_ensemble(model, experiment)
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
-    timeInterval = 'day' if timescale == 'daily' else 'Amon'
-    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{institute}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+    timeInterval = 'day' if mV.timescales[0] == 'daily' else 'Amon'
+    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
     folder_grid = grid_folder(model)
     version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
-
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     da = ds[variable]
-
-    if resolution == 'regridded': # conservatively interpolate
+    if mV.resolutions[0] == 'regridded': # conservatively interpolate
         import xesmf_regrid as regrid
         regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
         da = regridder(da) # conservatively interpolate data onto grid from other model
-
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
     return ds
     
-def get_cmip6_cl(variable, institute, model, timescale, experiment, resolution, data_exists=True):
+def get_cmip6_cl(variable, model, experiment):
     ''' Cloud pressure on hybrid-sigma vertical levels '''
-    if not data_exists:
-        print(f'there is no {variable} data for experiment: {experiment} for model: {model}')
-        return
-    
     ensemble = choose_cmip6_ensemble(model, experiment)
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
-    timeInterval = 'day' if timescale == 'daily' else 'Amon'
-    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{institute}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+    timeInterval = 'day' if mV.timescales[0] == 'daily' else 'Amon'
+    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[0]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
     folder_grid = grid_folder(model)
     version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
-    
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
-
     if model == 'IITM-ESM': # different models have different conversions from height coordinate to pressure coordinate.
         p_hybridsigma = None
         ds = ds.rename({'plev':'lev'}) 
@@ -177,26 +145,27 @@ def get_cmip6_cl(variable, institute, model, timescale, experiment, resolution, 
         p_hybridsigma = ds.lev+ds.b*ds.orog
     else:
         p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
-    
-    if resolution == 'orig':
+
+    if mV.resolutions[0] == 'orig':
         ds_cl = ds # units in % on sigma pressure coordinates
         ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
-
-    if resolution == 'regridded':
+    if mV.resolutions[0] == 'regridded':
         import xesmf_regrid as regrid
         cl = ds['cl'] # units in % on sigma pressure coordinates
         regridder = regrid.regrid_conserv_xesmf(ds)
         cl = regridder(cl)
         ds_cl = xr.Dataset(data_vars = {'cl': cl}, attrs = ds.attrs)
-
         p_hybridsigma_n = None if model == 'IITM-ESM' else regridder(p_hybridsigma)
         ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma_n}, attrs = ds.lev.attrs)
     return ds_cl, ds_p_hybridsigma
 
 
-# ----------------------------------------------------------------------------------------- OBS: GPCP data ----------------------------------------------------------------------------------------------------------#
 
-def get_gpcp(resolution):
+# ------------------------------------------------------------------------------------- OBS ----------------------------------------------------------------------------------------------------------#
+# --------
+#   GPCP
+# --------
+def get_gpcp():
     ''' Observations from the Global Precipitation Climatology Project (GPCP) '''
     path_gen = '/g/data/ia39/aus-ref-clim-data-nci/gpcp/data/day/v1-3'
     years = range(1997,2022) # there is a constant shift in high percentile precipitation rate trend from around (2009-01-2009-06) forward
@@ -219,7 +188,7 @@ def get_gpcp(resolution):
     da = da.where((da >= valid_range[0]) & (da <= valid_range[1]), np.nan)
     da = da.dropna('time', how='all') # drop days where all values are NaN (one day)
 
-    if resolution == 'regridded':
+    if mV.resolutions[0] == 'regridded':
         import xesmf_regrid as regrid
         regridder = regrid.regrid_conserv_xesmf(ds)
         da = regridder(da)
@@ -227,10 +196,10 @@ def get_gpcp(resolution):
     ds = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
     return ds
 
-
-# ----------------------------------------------------------------------------------------- OBS: ERA5 data ----------------------------------------------------------------------------------------------------------#
-
-def get_era5_monthly(variable, resolution):
+# --------
+#   ERA5
+# --------
+def get_era5_monthly(variable):
     ''' Reanalysis data from ERA5 '''
     path_gen = f'/g/data/rt52/era5/pressure-levels/monthly-averaged/{variable}'
     years = range(1998,2022)
@@ -253,65 +222,13 @@ def get_era5_monthly(variable, resolution):
     da['level'] = da['level']*100 # convert from millibar to Pa
     da = da.rename({'level': 'plev'})
 
-    if resolution == 'regridded':
+    if mV.resolutions[0] == 'regridded':
         import xesmf_regrid as rD
         regridder = rD.regrid_conserv_xesmf(ds)
         da = regridder(da)
     
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
     return ds
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

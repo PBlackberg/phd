@@ -186,7 +186,7 @@ if __name__ == '__main__':
     folder_code = f'{home}/Documents/code/phd'
     sys.path.insert(0, f'{folder_code}/functions')
     import myFuncs as mF # imports common operators
-    import myVars as mV # imports common variables
+    import switch.myVars as mV # imports common variables
 
     # Chose observation to regrid
     switch = {
