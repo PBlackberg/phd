@@ -7,8 +7,10 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF # imports common operators
-import myVars as mV # imports common variables
+import myFuncs as mF                                # imports common operators
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV                                 # imports common variables
+
 
 
 # ---------------------------------------------------------------------------------------- Plot / format plot ----------------------------------------------------------------------------------------------------- #
@@ -203,11 +205,11 @@ if __name__ == '__main__':
             'wap':                 False,
 
             # radiation
-            'rlut':                False,
+            'rlut':                True,
 
             # clouds
             'lcf':                 False,
-            'hcf':                 True,
+            'hcf':                 False,
 
             # moist static energy
             'hus':                 False,

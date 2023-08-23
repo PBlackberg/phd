@@ -13,10 +13,13 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF            # imports common operators
-import myVars as mV             # imports common variables
-import constructed_fields as cF # imports fields for testing
-import get_data as gD           # imports functions to get data from gadi
+import myFuncs as mF                                # imports common operators
+import get_data as gD                               # imports functions to get data from gadi
+import constructed_fields as cF                     # imports fields for testing
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV                                 # imports common variables
+
+
 
 
 # -------------------------------------------------------------------------------------- animate / format plot ----------------------------------------------------------------------------------------------------- #

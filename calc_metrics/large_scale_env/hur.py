@@ -5,11 +5,11 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF # imports common operators
-import constructed_fields as cF # imports fields for testing
-import get_data as gD # imports functions to get data from gadi
+import myFuncs as mF                            # imports common operators
+import constructed_fields as cF                 # imports fields for testing
+import get_data as gD                           # imports functions to get data from gadi
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV # imports common variables
+import myVars as mV                             # imports common variables
 
 # ------------------------------------------------------------------------------------ Calculate metric ----------------------------------------------------------------------------------------------------- #
 
@@ -98,10 +98,10 @@ def get_metric(da, region, metric):
 
 # --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
 
-def save_metric(switch, source, dataset, experiment, ds, metric_name):
+def save_metric(source, dataset, experiment, ds, metric_name):
     folder = f'{mV.folder_save[0]}/hur/metrics/{metric_name}/{source}'
     filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-    mF.save_file(ds, folder, filename) if switch['save'] else None
+    mF.save_file(ds, folder, filename)
 
 def run_metric(switch, source, dataset, experiment):
     da = load_data(switch, source, dataset, experiment)

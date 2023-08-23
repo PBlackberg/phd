@@ -6,9 +6,9 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF # imports common operators / functions
-import myVars as mV # imports common variables
-import constructed_fields as cF # imports fields for testing
+import myFuncs as mF                                # imports common operators
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV                                 # imports common variables
 
 import warnings
 from shapely.errors import ShapelyDeprecationWarning
@@ -148,7 +148,7 @@ if __name__ == '__main__':
         # metric
         # ------
             # organization
-            'obj':                 True,
+            'obj':                 False,
 
             # precipitation
             'pr':                  False,
@@ -156,21 +156,15 @@ if __name__ == '__main__':
             'rx1day_pr':           False,
             'rx5day_pr':           False,
 
-
             # Large scale state
             'tas':                 False,
             'hur':                 False,
+            'rlut':                True,
             'wap':                 False,
-
-
-            # radiation
-            'rlut':                False,
-
 
             # clouds
             'lcf':                 False,
             'hcf':                 False,
-
 
             # moist static energy
             'hus':                 False,
@@ -180,8 +174,8 @@ if __name__ == '__main__':
         # settings
         # --------
         # scene type
-        'snapshot':            True,
-        'climatology':         False,
+        'snapshot':            False,
+        'climatology':         True,
         'change with warming': False,
 
         # masked by

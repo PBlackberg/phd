@@ -53,8 +53,8 @@ models_cmip6 = [
 observations = [
     # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
     # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
-    # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
-    'ERA5'               # humidity (from project rt52 on gadi)
+    'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
+    # 'ERA5'               # humidity (from project rt52 on gadi)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations
@@ -79,13 +79,13 @@ resolutions = [
 
 conv_percentiles = [
     # '90',
-    # '95',
+    '95',
     # '97'
     ]
 
 folder_save = [
-    # os.path.expanduser("~") + '/Documents/data',
-    '/g/data/k10/cb4968/data'
+    os.path.expanduser("~") + '/Documents/data',
+    # '/g/data/k10/cb4968/data'
     ]
 
 

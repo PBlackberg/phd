@@ -338,7 +338,7 @@ def get_metric_object(switch):
         # ----------
         # Radiation
         # ----------
-        variable_type, name, option, label, cmap, color = ['lw', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'OLR [W m{}]'.format(get_super('-2')), 'Purples', 'purple'] if key in ['rlut'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['rad', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'OLR [W m{}]'.format(get_super('-2')), 'Purples', 'purple'] if key in ['rlut'] else [variable_type, name, option, label, cmap, color]
                     
         # ---------
         #  clouds
@@ -387,7 +387,7 @@ def get_variable_object(switch):
         ref, variable_type, name, label, cmap = [key, key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']      if key in ['pr']   else [ref, variable_type, name, label, cmap] 
         ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr99'] else [ref, variable_type, name, label, cmap] 
         ref, variable_type, name, label, cmap = [key, key,  key, 'rel. humiid. [%]',                      'Greens']     if key in ['hur']  else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'lw', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]   if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'rad', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]   if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
 
         # ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues']  
     return variable_class(ref, variable_type, name, cmap, label)
