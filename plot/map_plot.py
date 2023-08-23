@@ -159,28 +159,27 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
-            'rlut':                True,
+            'rlut':                False,
             'wap':                 False,
 
             # clouds
-            'lcf':                 False,
+            'lcf':                 True,
             'hcf':                 False,
 
             # moist static energy
             'hus':                 False,
 
-
         # --------
         # settings
         # --------
         # scene type
-        'snapshot':            False,
-        'climatology':         True,
+        'snapshot':            True,
+        'climatology':         False,
         'change with warming': False,
 
         # masked by
         'fixed area':          False,
-        'descent':             False,
+        'descent':             True,
         'ascent':              False,
         'per kelvin':          False,
         'per kelvin (ecs)':    False,

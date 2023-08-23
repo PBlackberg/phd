@@ -26,17 +26,13 @@ def calc_vertical_mean(da):
     da = da.sel(plev=slice(850e2, 0)) # free troposphere (most values at 1000 hPa over land are NaN)
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
-
 # ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
 
 def load_wap_data(switch, source, dataset, experiment):
-    if  switch['constructed fields']:
-        return cF.var3D
-    if switch['sample data']:
-        path = f'/Users/cbla0002/Documents/data/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-        return xr.open_dataset(path)['wap']
-    if switch['gadi data']:
-        return gD.get_wap(source, dataset, experiment, mV.timescales[0], mV.resolutions[0]) 
+    da = cF.var3D if switch['constructed fields'] else None
+    da = xr.open_dataset(f'{mV.folder_save[0]}/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['wap'] if switch['sample data'] else da
+    da = gD.get_var_data(source, dataset, experiment, 'wap') if switch['gadi data'] else da
+    return da
     
 def pick_wap_region(switch, source, dataset, experiment, da):
     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
@@ -56,7 +52,7 @@ def load_data(switch, source, dataset, experiment):
     if  switch['constructed fields']:
         return cF.var3D
     if switch['sample data']:
-        path = f'/Users/cbla0002/Documents/data/hur/sample_data/{source}/{dataset}_hur_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+        path = f'{mV.folder_save[0]}/hur/sample_data/{source}/{dataset}_hur_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         return xr.open_dataset(path)['hur']
     if switch['gadi data']:
         if dataset == 'ERA5': # the relative humidity needs to be calculated for ERA
@@ -110,7 +106,7 @@ def run_metric(switch, source, dataset, experiment):
 
     for metric in [k for k, v in switch.items() if v] : # loop over true keys
         ds, metric_name = get_metric(da, region, metric)
-        save_metric(switch, source, dataset, experiment, ds, metric_name) if switch['save'] and ds[metric_name].any() else None
+        save_metric(source, dataset, experiment, ds, metric_name) if switch['save'] and ds[metric_name].any() else None
 
 
 def run_experiment(switch, source, dataset):
@@ -139,8 +135,8 @@ if __name__ == '__main__':
     run_hur_metrics(switch = {
         # choose data to calculate metric on
         'constructed fields': False, 
-        'sample data':        False,
-        'gadi data':          True,
+        'sample data':        True,
+        'gadi data':          False,
 
         # choose metrics to calculate
         'sMean':              True, 
@@ -149,15 +145,12 @@ if __name__ == '__main__':
         
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True
         }
     )
     
-
-
-
 
 

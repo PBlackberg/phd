@@ -155,7 +155,7 @@ def run_scatter_trend_plot(switch):
                                  quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high=1, # if calculating limits (set lims to '', or comment out)
                                  vmin = None, vmax = None                                                                              # if manually setting limits
                                  )    
-        fig = plot_one_dataset(switch, metric_x, metric_y, title, xmin, xmax, ymin, ymax)
+        fig = plot_one_dataset(switch, x, y, metric_x, metric_y, title, xmin, xmax, ymin, ymax)
 
 
     elif switch['multiple datasets']:
@@ -202,13 +202,11 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
+            'rlut':                False,
             'wap':                 False,
 
-            # radiation
-            'rlut':                True,
-
             # clouds
-            'lcf':                 False,
+            'lcf':                 True,
             'hcf':                 False,
 
             # moist static energy
@@ -223,17 +221,17 @@ if __name__ == '__main__':
         'bins':                True,
 
         # masked by
-        'descent':             False,
+        'descent':             True,
         'ascent':              False,
         'fixed area':          False,
         'anomalies':           True,
 
         # show/save
-        'one dataset':         False,
-        'multiple datasets':   True,
-        'show':                False,
+        'one dataset':         True,
+        'multiple datasets':   False,
+        'show':                True,
         'save':                False,
-        'save to desktop':     True,
+        'save to desktop':     False,
         'save to cwd':         False
         }
     )

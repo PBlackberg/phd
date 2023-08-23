@@ -12,14 +12,20 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV                                 # imports common variables
 
 
-# ------------------------------------------------------------------------------------ Calculate metric ----------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- Calculate metric ----------------------------------------------------------------------------------------------------- #
 
 def calc_sMean(da):
     ''' Calculate area-weighted spatial mean '''
     aWeights = np.cos(np.deg2rad(da.lat))
     return da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
-# ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
+
+def load_wap_data(switch, source, dataset, experiment):
+    da = cF.var3D if  switch['constructed_fields'] else None
+    da = xr.open_dataset(f'{mV.folder_save[0]}/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['wap'] if switch['sample_data'] else da
+    da = gD.get_var_data(source, dataset, experiment, 'wap') if switch['gadi_data'] else da
+    return da
 
 def pick_wap_region(switch, source, dataset, experiment, da):
     ''' Pick out data in regions of ascent/descent based on 500 hPa vertical pressure velocity (wap)'''
@@ -30,22 +36,16 @@ def pick_wap_region(switch, source, dataset, experiment, da):
         return da.where(wap500>0), '_d'
     if switch['ascent']:
         return da.where(wap500<0), '_a'
-        
-def load_wap_data(switch, source, dataset, experiment):
-    da = cF.var3D if  switch['constructed_fields'] else None
-    da = xr.open_dataset(f'/Users/cbla0002/Documents/data/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['wap'] if switch['sample_data'] else da
-    da = gD.get_wap(source, dataset, experiment, mV.timescales[0], mV.resolutions[0]) if switch['gadi_data'] else da
-    return da
-    
+
 def load_data(switch, source, dataset, experiment):
     da = cF.var3D if  switch['constructed_fields'] else None
     if switch['sample_data']:
-        da = xr.open_dataset(f'/Users/cbla0002/Documents/data/rad/sample_data/{source}/{dataset}_rlut_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')
+        da = xr.open_dataset(f'{mV.folder_save[0]}/rad/sample_data/{source}/{dataset}_rlut_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')
         da = da['rlut'] if not dataset == 'CERES' else da['toa_lw_all_mon']
     da = gD.get_var_data(source, dataset, experiment, 'rlut') if switch['gadi_data'] else da
     return da
 
-# ------------------------------------------------------------------------------------ Calculate metrics and save ----------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- put metric in dataset ----------------------------------------------------------------------------------------------------- #
 
 def get_metric(da, region, metric):
     da_calc, metric_name = None, None
@@ -62,7 +62,7 @@ def get_metric(da, region, metric):
         da_calc = da.mean(dim='time', keep_attrs=True)
     return xr.Dataset(data_vars = {metric_name: da_calc}), metric_name
 
-# ---------------------------------------------------------------------------------- Get the data, pick regions, and run ----------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
 
 def save_metric(source, dataset, experiment, ds, metric_name):
     folder = f'{mV.folder_save[0]}/rad/metrics/{metric_name}/{source}'
@@ -98,7 +98,7 @@ def run_rlut_metrics(switch):
     run_dataset(switch)
 
 
-# -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 
 if __name__ == '__main__':
     run_rlut_metrics(switch = {
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True

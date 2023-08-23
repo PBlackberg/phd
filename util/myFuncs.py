@@ -331,8 +331,8 @@ def get_metric_object(switch):
         # large-scale environment state
         # -----------------------------
         variable_type, name, option, label, cmap, color = [None, key,                   key,                   'ECS [K]',                                 'Reds',     'r']   if key in ['ecs'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'temp. [\u00B0C]',                         'coolwarm', 'r'] if key in ['tas'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humiid. [%]',                        'Greens',   'g'] if key in ['hur'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'temp. [\u00B0C]',                         'coolwarm', 'r']   if key in ['tas'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humiid. [%]',                        'Greens',   'g']   if key in ['hur'] else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'wap [hPa day{}]'.format(get_super('-1')), 'RdBu_r',   color] if key in ['wap'] else [variable_type, name, option, label, cmap, color]
 
         # ----------
@@ -343,8 +343,8 @@ def get_metric_object(switch):
         # ---------
         #  clouds
         # ---------
-        variable_type, name, option, label, cmap, color = ['cl', f'cl{key}{reg(switch)}', f'cl{key}{reg(switch)}', 'cloud fraction [%]', 'Blues', 'b'] if key == 'lcf' else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['cl', f'cl{key}{reg(switch)}', f'cl{key}{reg(switch)}', 'cloud fraction [%]', 'Blues', 'b'] if key == 'hcf' else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'cloud fraction [%]', 'Blues', 'b'] if key == 'lcf' else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'cloud fraction [%]', 'Blues', 'b'] if key == 'hcf' else [variable_type, name, option, label, cmap, color]
 
         # -------------------
         # Moist static energy
