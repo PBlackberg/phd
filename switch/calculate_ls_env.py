@@ -34,7 +34,7 @@ if run:
 # ------------------
 run = True
 if run:
-    import large_scale_state.hur as hM 
+    import large_scale_env.hur as hM 
     hM.run_hur_metrics(switch = {
         # choose data to calculate metric on
         'constructed fields': False, 

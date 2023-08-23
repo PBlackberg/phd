@@ -16,23 +16,21 @@ python /home/565/cb4968/Documents/code/phd/switch/calculation_large_scale_env.py
 
 
 
-# submitting job: 
-# qsub /home/565/cb4968/Documents/code/phd/run_calc.sh 
-
-# in ipython, run scripts from: 
-# cd /g/data/k10/cb4968/phd/metrics/funcs/vars
-
-# check status: 
-# qstat -swx jobID (or qstat -s)
-
-# check utilisation rate (%gpu): 
-# nqstat_anu jobID
-
-# remove job from queue: 
-# qdel jobID  
+# -------------
+# submit script
+# -------------
+# qsub /home/565/cb4968/Documents/code/phd/run_calc.sh    # submit
+# qstat -swx jobID (or qstat -s)                          # check status
+# nqstat_anu jobID                                        # check utilisation rate (%gpu) 
+# qdel jobID                                              # remove from queue
 
 
-# interactive job
-# qsub -I -normal  -Pk10 -lwalltime=01:00:00,ncpus=1,mem=15GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/k10+gdata/hh5,wd
+# --------------------
+# interactive terminal
+# --------------------
+# qsub -I -qnormal  -Pw40 -lwalltime=01:00:00,ncpus=1,mem=50GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/rt52+gdata/k10+gdata/hh5,wd
+# module use /g/data/hh5/public/modules
+# module load conda/analysis3-unstable
+
 
 
