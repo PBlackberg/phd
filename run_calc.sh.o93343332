@@ -1,0 +1,14 @@
+python: can't open file '/home/565/cb4968/Documents/code/phd/switch/calculation_large_scale_env.py': [Errno 2] No such file or directory
+
+======================================================================================
+                  Resource Usage on 2023-08-23 21:05:23:
+   Job Id:             93343332.gadi-pbs
+   Project:            w40
+   Exit Status:        2
+   Service Units:      0.01
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:00:00        
+   Memory Requested:   50.0GB                Memory Used: 46.0MB          
+   Walltime requested: 00:30:00            Walltime Used: 00:00:01        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================
