@@ -12,7 +12,6 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV                             # imports common variables
 
 # ------------------------------------------------------------------------------------ Calculate metric ----------------------------------------------------------------------------------------------------- #
-
 def calc_sMean(da):
     ''' Calculate area-weighted spatial mean '''
     aWeights = np.cos(np.deg2rad(da.lat))
@@ -26,8 +25,8 @@ def calc_vertical_mean(da):
     da = da.sel(plev=slice(850e2, 0)) # free troposphere (most values at 1000 hPa over land are NaN)
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
-# ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
 
+# ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
 def load_wap_data(switch, source, dataset, experiment):
     da = cF.var3D if switch['constructed fields'] else None
     da = xr.open_dataset(f'{mV.folder_save[0]}/wap/sample_data/{source}/{dataset}_wap_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['wap'] if switch['sample data'] else da
@@ -45,7 +44,10 @@ def pick_wap_region(switch, source, dataset, experiment, da):
         return da.where(wap500<0), '_a'
     
 def pick_hur_region(switch, dataset, da):
-    da = calc_vertical_mean(da) if not dataset == 'ERA5' else calc_vertical_mean_era(da)
+    if switch['250hpa']:
+        da.sel(plev = 250e2)
+    else:
+        da = calc_vertical_mean(da) if not dataset == 'ERA5' else calc_vertical_mean_era(da)
     return da
 
 def load_data(switch, source, dataset, experiment):
@@ -73,9 +75,8 @@ def load_data(switch, source, dataset, experiment):
         # r_s = 0.622 * e_s/p
         # da = (r/r_s)*100 # relative humidity
         return  da
-    
-# ------------------------------------------------------------------------------------- Put metric in dataset ----------------------------------------------------------------------------------------------------- #
 
+# ------------------------------------------------------------------------------------- Put metric in dataset ----------------------------------------------------------------------------------------------------- #
 def get_metric(da, region, metric):
     da_calc, metric_name = None, None
     if metric == 'snapshot':
@@ -92,8 +93,8 @@ def get_metric(da, region, metric):
 
     return xr.Dataset(data_vars = {metric_name: da_calc}), metric_name
 
-# --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
 
+# --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
 def save_metric(source, dataset, experiment, ds, metric_name):
     folder = f'{mV.folder_save[0]}/hur/metrics/{metric_name}/{source}'
     filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
@@ -103,11 +104,9 @@ def run_metric(switch, source, dataset, experiment):
     da = load_data(switch, source, dataset, experiment)
     da = pick_hur_region(switch, dataset, da)
     da, region = pick_wap_region(switch, source, dataset, experiment, da)
-
     for metric in [k for k, v in switch.items() if v] : # loop over true keys
         ds, metric_name = get_metric(da, region, metric)
         save_metric(source, dataset, experiment, ds, metric_name) if switch['save'] and ds[metric_name].any() else None
-
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
@@ -130,7 +129,6 @@ def run_hur_metrics(switch):
 
 
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
-
 if __name__ == '__main__':
     run_hur_metrics(switch = {
         # choose data to calculate metric on

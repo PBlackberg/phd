@@ -20,8 +20,6 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV                                 # imports common variables
 
 
-
-
 # -------------------------------------------------------------------------------------- animate / format plot ----------------------------------------------------------------------------------------------------- #
 
 def plot_ax_scene(frame, fig, switch, da_0, da_1, timesteps, variable_0, variable_1, title):
@@ -167,7 +165,7 @@ if __name__ == '__main__':
             'mse':                 False,
 
             # monthly
-            'hur':                 False,
+            'hur':                 True,
             'rlut':                False,
 
         # timesteps derived from

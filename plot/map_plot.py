@@ -129,7 +129,7 @@ def run_map_plot(switch):
         title = f'{source_list}_{title}{ifWith_obs}'
         vmin, vmax = mF.find_limits(switch, mV.datasets, metric, get_scene, 
                                  quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high=1,
-                                 vmin = -200, vmax = 200                                                                        # Need fixed limits for common colorbar
+                                #  vmin = -200, vmax = 200                                                                        # Need fixed limits for common colorbar
                                  )  
         vmin = -vmax if switch['change with warming'] or switch['wap'] else vmin
         fig = plot_multiple_scenes(mV.datasets, metric, get_scene, title, vmin, vmax, switch)
@@ -159,11 +159,11 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
-            'rlut':                False,
+            'rlut':                True,
             'wap':                 False,
 
             # clouds
-            'lcf':                 True,
+            'lcf':                 False,
             'hcf':                 False,
 
             # moist static energy
@@ -185,12 +185,12 @@ if __name__ == '__main__':
         'per kelvin (ecs)':    False,
         
         # show/save
-        'one scene':           True,
-        'multiple_scenes':     False,
+        'one scene':           False,
+        'multiple_scenes':     True,
         'show':                True,
         'save':                False,
         'save to cwd':         False,
-        'save to desktop':     False
+        'save to desktop':     True
         }
     )
 
@@ -222,7 +222,7 @@ if __name__ == '__main__':
 
 
 
-
+# '/Users/cbla0002/Documents/data/rad/metrics/rlut_d_snapshot/cmip6/BCC-CSM2-MR_rlut_d_snapshot_monthly_historical_regridded.nc'
 
 
 

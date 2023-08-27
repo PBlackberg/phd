@@ -3,55 +3,55 @@ import os
 # -------------------------------------------------------------------------------------- For choosing dataset / model----------------------------------------------------------------------------------------------------- #
 
 models_cmip5 = [
-    'IPSL-CM5A-MR',      # 1
-    'GFDL-CM3',          # 2
-    'GISS-E2-H',         # 3
-    'bcc-csm1-1',        # 4
-    'CNRM-CM5',          # 5
-    'CCSM4',             # 6
-    'HadGEM2-AO',        # 7
-    'BNU-ESM',           # 8
-    'EC-EARTH',          # 9
-    'FGOALS-g2',         # 10
-    'MPI-ESM-MR',        # 11
-    'CMCC-CM',           # 12
-    'inmcm4',            # 13
-    'NorESM1-M',         # 14
-    'CanESM2',           # 15
-    'MIROC5',            # 16
-    'HadGEM2-CC',        # 17
-    'MRI-CGCM3',         # 18
-    'CESM1-BGC'          # 19
+    # 'IPSL-CM5A-MR',      # 1
+    # 'GFDL-CM3',          # 2
+    # 'GISS-E2-H',         # 3
+    # 'bcc-csm1-1',        # 4
+    # 'CNRM-CM5',          # 5
+    # 'CCSM4',             # 6
+    # 'HadGEM2-AO',        # 7
+    # 'BNU-ESM',           # 8
+    # 'EC-EARTH',          # 9
+    # 'FGOALS-g2',         # 10
+    # 'MPI-ESM-MR',        # 11
+    # 'CMCC-CM',           # 12
+    # 'inmcm4',            # 13
+    # 'NorESM1-M',         # 14
+    # 'CanESM2',           # 15
+    # 'MIROC5',            # 16
+    # 'HadGEM2-CC',        # 17
+    # 'MRI-CGCM3',         # 18
+    # 'CESM1-BGC'          # 19
     # 'random_field'
     ]
 
 # 14 models used in Schiro
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    # 'INM-CM5-0',         # 1 # no cloud (not in schiro)
-    # 'IITM-ESM',          # 2 # no cloud (not in schiro)
-    # 'FGOALS-g3',         # 3
-    # 'MIROC6',            # 4
-    # 'MPI-ESM1-2-LR',     # 5
-    # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
-    # 'BCC-CSM2-MR',       # 7
-    # 'NorESM2-MM',        # 8
-    # 'MRI-ESM2-0',        # 9
-    # 'GFDL-CM4',          # 10
-    # 'CMCC-ESM2',         # 11
-    # 'NESM3',             # 12
-    # 'EC-Earth3',         # 13 # no cloud (not in shiro)
-    # 'CNRM-CM6-1',        # 14
-    # 'IPSL-CM6A-LR',      # 15 # no cloud (not in schiro)
-    # 'TaiESM1',           # 16
-    # 'CESM2-WACCM',       # 17    
-    # 'CanESM5',           # 18
-    # 'UKESM1-0-LL',       # 19 # clouds not right
+    'INM-CM5-0',         # 1 # no cloud (not in schiro)
+    'IITM-ESM',          # 2 # no cloud (not in schiro)
+    'FGOALS-g3',         # 3
+    'MIROC6',            # 4
+    'MPI-ESM1-2-LR',     # 5
+    'KIOST-ESM',         # 6 # no cloud (not in schiro)
+    'BCC-CSM2-MR',       # 7
+    'NorESM2-MM',        # 8
+    'MRI-ESM2-0',        # 9
+    'GFDL-CM4',          # 10
+    'CMCC-ESM2',         # 11
+    'NESM3',             # 12
+    'EC-Earth3',         # 13 # no cloud (not in shiro)
+    'CNRM-CM6-1',        # 14
+    'IPSL-CM6A-LR',      # 15 # no cloud (not in schiro)
+    'TaiESM1',           # 16
+    'CESM2-WACCM',       # 17    
+    'CanESM5',           # 18
+    'UKESM1-0-LL',       # 19 # clouds not right
     # 'random_field'
     ]
 
 observations = [
-    # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
+    'GPCP',              # for precipitation and organization index (from project al33 on gadi)
     # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
     # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
     # 'ERA5'               # humidity (from project rt52 on gadi)
@@ -67,8 +67,8 @@ timescales = [
 
 experiments = [
     'historical',     
-    'rcp85',             # warm scenario for cmip5
-    # 'ssp585',            # warm scenario for cmip6
+    # 'rcp85',             # warm scenario for cmip5
+    # 'ssp585',              # warm scenario for cmip6
     # ''                   # observations
     ]
 
@@ -77,7 +77,7 @@ resolutions = [
     'regridded'
     ]
 
-conv_percentiles = [
+conv_percentiles = [       # for organization metrics
     # '90',
     '95',
     # '97'

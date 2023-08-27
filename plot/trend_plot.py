@@ -107,8 +107,9 @@ def get_array(switch, dataset, metric):
         metric_name = metric.name
         metric_option = metric.option
         dataset_alt = 'GPCP' if dataset in ['ERA5', 'CERES'] else dataset # GPCP is used as corresponding precipitation for these obs
-        path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset_alt}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{timescale}_{mV.experiments[0]}_{mV.resolutions[0]}.nc' if metric.variable_type == 'org' else path     
-        path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset_alt}_{metric_name}_{timescale}_{mV.experiments[0]}_{mV.resolutions[0]}.nc'                                   if metric.variable_type == 'pr' else path     
+        experiment_alt = '' if dataset_alt in ['GPCP'] else mV.experiments[0] # GPCP is used as corresponding precipitation for these obs
+        path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset_alt}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{timescale}_{experiment_alt}_{mV.resolutions[0]}.nc' if metric.variable_type == 'org' else path     
+        path = f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset_alt}_{metric_name}_{timescale}_{experiment_alt}_{mV.resolutions[0]}.nc'                                   if metric.variable_type == 'pr' else path     
 
     array = xr.open_dataset(path)[metric_option]
     array = xr.open_dataset(path)[metric_option].sel(time = slice('2000-03', '2021')) if dataset == 'CERES' else array # full data between
@@ -195,7 +196,7 @@ if __name__ == '__main__':
             'pr95':                False,
             'pr97':                False,
             'pr99':                False,
-            'pr99_sMean':          False,
+            'pr99_sMean':          True,
             'rx1day_pr_sMean':     False,
             'rx5day_pr_sMean':     False,
 
@@ -206,7 +207,7 @@ if __name__ == '__main__':
             'wap':                 False,
 
             # clouds
-            'lcf':                 True,
+            'lcf':                 False,
             'hcf':                 False,
 
             # moist static energy
@@ -221,14 +222,14 @@ if __name__ == '__main__':
         'bins':                True,
 
         # masked by
-        'descent':             True,
+        'descent':             False,
         'ascent':              False,
         'fixed area':          False,
         'anomalies':           True,
 
         # show/save
-        'one dataset':         True,
-        'multiple datasets':   False,
+        'one dataset':         False,
+        'multiple datasets':   True,
         'show':                True,
         'save':                False,
         'save to desktop':     False,

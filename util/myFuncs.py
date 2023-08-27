@@ -281,9 +281,7 @@ def data_available(source, dataset, experiment):
 # ------------------------------------------------------------ functions for getting available metric specs ----------------------------------------------------------------------------------------------------- #
 
 class metric_class():
-    ''' Gives metric: name (of saved dataset), option (data array in dataset), label, cmap, color
-        (used for plots of calculated metrics)
-    '''
+    ''' Gives metric: name (of saved dataset), option (data array in dataset), label, cmap, color (used for plots of calculated metrics) '''
     def __init__(self, variable_type, name, option, cmap, label, color='k'):
         self.variable_type = variable_type
         self.name   = name
@@ -293,20 +291,20 @@ class metric_class():
         self.color  = color
 
 def reg(switch):
+    ''' picks region of ascent / descent '''
     region = ''
     region = '_d' if switch['descent'] else region
     region = '_a' if switch['ascent']  else region
     return region
 
 def thres(switch):
+    ''' picks precipitation threshold for organization metrics '''
     threshold = ''
     threshold = '_fixed_area' if switch['fixed area'] else threshold
     return threshold
 
 def get_metric_object(switch):
-    ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color
-        Used for plots of metrics
-    '''
+    ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for plots of metrics '''
     variable_type, name, option, label, cmap, color = [None, None, None, None, 'Greys', 'k']
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
@@ -318,6 +316,7 @@ def get_metric_object(switch):
         variable_type, name, option, label, cmap, color = ['pr', 'rxday_pr_sMean',       key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['rx1day_pr_sMean','rx5day_pr_sMean']    else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = ['pr', 'percentiles_pr',       key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['pr95','pr97','pr99']                   else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = ['pr', 'percentiles_pr_sMean', key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['pr95_sMean','pr97_sMean','pr99_sMean'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['pr', 'F_pr10',               key, 'areafraction (%)',                       cmap, color] if key in ['F_pr10']                               else [variable_type, name, option, label, cmap, color]
 
         # ------------
         # organization
@@ -326,6 +325,7 @@ def get_metric_object(switch):
         variable_type, name, option, label, cmap, color = ['org', f'{key}{thres(switch)}', key, 'ROME [km{}]'.format(get_super('2')), cmap, color] if key in ['rome', 'rome_n'] else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = ['org', f'{key}{thres(switch)}', key, 'number index [Nb]',                  cmap, color] if key in ['ni']             else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = ['org', f'ni{thres(switch)}',    key, 'areafraction [%]',                   cmap, color] if key in ['areafraction']   else [variable_type, name, option, label, cmap, color]
+
 
         # -----------------------------
         # large-scale environment state
@@ -350,25 +350,18 @@ def get_metric_object(switch):
         # Moist static energy
         # -------------------
         variable_type, name, option, label, cmap, color = [key,  key, key, 'spec. humiid. [%]', 'Greens', 'g'] if key in ['hus'] else [variable_type, name, option, label, cmap, color]
-   
-    # ---------
-    # Settings
-    # ---------
     cmap = 'Reds'                                                      if switch['descent'] and switch['wap'] else cmap
     cmap = 'Blues'                                                     if switch['ascent']  and switch['wap'] else cmap
     # cmap = 'Reds'
     for key in keys: # loop over true keys
         cmap = 'RdBu_r'                                                    if key == 'change with warming' else cmap
         label = '{} K{}{}'.format(label[:-1], get_super('-1'), label[-1:]) if key == 'per kelvin' else label
-    
     # cmap, color = 'Reds', 'r'
     return metric_class(variable_type, name, option, cmap, label, color)
 
 
 class variable_class():
-    ''' Gives variable details (name, option, label, cmap)
-        (Used for animation of fields)
-    '''
+    ''' Gives variable details (name, option, label, cmap) (Used for animation of fields) '''
     def __init__(self, ref, variable_type, name, cmap, label):
         self.ref   = ref
         self.variable_type = variable_type
@@ -377,18 +370,15 @@ class variable_class():
         self.cmap   = cmap
 
 def get_variable_object(switch):
-    ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color
-        Used for animation of fields
-    '''
+    ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for animation of fields '''
     ref, variable_type, name, label, cmap = [None, None, None, None, None]
     keys = [k for k, v in switch.items() if v]  # list of True keys
     for key in keys: # loop over true keys
-        ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Greys']     if key in ['obj']  else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues']      if key in ['pr']   else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Reds']      if key in ['pr99'] else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key, 'rel. humiid. [%]',                      'Greens']     if key in ['hur']  else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'rad', key, 'OLR [W m{}]'.format(get_super('-2')),   'Purples',]   if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
-
+        ref, variable_type, name, label, cmap = [key, 'pr', 'pr',   'pr [mm day{}]'.format(get_super('-1')),  'Greys'] if key in ['obj']  else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key,    'pr [mm day{}]'.format(get_super('-1')),  'Blues'] if key in ['pr']   else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'pr', 'pr',   'pr [mm day{}]'.format(get_super('-1')),   'Reds'] if key in ['pr99'] else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, key,  key,    'rel. humiid. [%]',                      'Greens'] if key in ['hur']  else [ref, variable_type, name, label, cmap] 
+        ref, variable_type, name, label, cmap = [key, 'rad', key,   'OLR [W m{}]'.format(get_super('-2')), 'Purples',] if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
         # ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues']  
     return variable_class(ref, variable_type, name, cmap, label)
 

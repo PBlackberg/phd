@@ -8,9 +8,10 @@ import os
 import sys
 home = os.path.expanduser("~")
 folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/functions')
+sys.path.insert(0, f'{folder_code}/util')
 import myFuncs as mF # imports common operators
-import myVars as mV # imports common variables
+sys.path.insert(0, f'{os.getcwd()}/switch')
+import myVars as mV                                 # imports common variables
 
 # ------------------------------------------------------------------------------ Formatting axes for scatter plot ----------------------------------------------------------------------------------------------------- #
 
@@ -61,7 +62,7 @@ def calc_anomalies(array, timescale):
     return array
 
 def calc_plot_var(switch, variable_type, metric, metric_option, dataset, timescale, resolution, folder_load):
-    source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
     array = mV.load_metric(folder_load, variable_type, metric, source, dataset, timescale, experiment = mV.experiments[0], resolution=resolution)[metric_option]
     array = calc_anomalies(array, timescale) if switch['anomalies'] else array
     return array
@@ -200,8 +201,8 @@ def run_scatter_plot(switch, datasets, timescale, resolution, folder_save):
     title  = f'ROME and pr99'
     fig = plot_multiple_scatter(switch, var0, var1, title, datasets, timescale, resolution, folder_save)
 
-    source = mV.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    with_obs = mV.find_ifWithObs(datasets, mV.observations)
+    source = mF.find_list_source(datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    with_obs = mF.find_ifWithObs(datasets, mV.observations)
 
     folder = f'{home}/Desktop/GASS-CFMIP_poster'
     filename = f'{source}_rome_and_pr99{with_obs}'    
@@ -220,7 +221,7 @@ if __name__ == '__main__':
         'anomalies':           True,
         
         'show':                True,
-        'save':                True,
+        'save':                False,
         }
     
 

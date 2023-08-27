@@ -123,10 +123,11 @@ if __name__ == '__main__':
         # metrics
         # -------
             # organization
-            'rome':                True,
+            'rome':                False,
             'ni':                  False,
             'areafraction':        False,
-
+            'F_pr10':              True,
+            
             # precipitation
             'pr':                  False,
             'pr95':                False,
@@ -137,10 +138,10 @@ if __name__ == '__main__':
             'rx5day_pr_sMean':     False,
 
             # Large scale state
-            'ecs':                 False,
+            'ecs':                 True,
             'tas':                 False,
             'hur':                 False,
-            'wap':                 True,
+            'wap':                 False,
 
             # radiation
             'rlut':                False,
@@ -157,8 +158,8 @@ if __name__ == '__main__':
         # --------
         # plot type
         'xy':                  True,
-        'climatology':         True,
-        'change with warming': False,
+        'climatology':         False,
+        'change with warming': True,
 
         # masked by
         'descent':             False,
