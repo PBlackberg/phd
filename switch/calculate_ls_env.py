@@ -9,20 +9,21 @@ sys.path.insert(0, f'{os.getcwd()}/calc_metrics')
 # --------------------
 run = False
 if run:
-    import large_scale_state.tas as tM
+    import large_scale_env.tas as tM
     tM.run_tas_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        False,
+        'gadi_data':          True,
 
         # choose metrics to calculate
         'sMean':              True, 
-        'tMean':              True, 
+        'tMean':              False, 
         'snapshot':           True, 
         
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True
@@ -43,12 +44,12 @@ if run:
 
         # choose metrics to calculate
         'sMean':              True, 
-        'tMean':              True, 
+        'tMean':              False, 
         'snapshot':           True, 
         
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True
@@ -58,22 +59,23 @@ if run:
 # ----------------------------
 #  Outgoing Lonwave Radiation
 # ----------------------------
-run = False
+run = True
 if run:
-    import large_scale_state.rlut as rM 
+    import large_scale_env.rlut as rM 
     rM.run_rlut_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        False,
+        'gadi_data':          True,
 
         # choose metrics to calculate
-        'sMean':              True, 
-        'tMean':              True, 
         'snapshot':           True, 
+        'sMean':              True, 
+        'tMean':              False, 
 
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True
@@ -83,13 +85,14 @@ if run:
 # ---------------------------
 # Vertical pressure velocity
 # ---------------------------
-run = False
+run = True
 if run:
-    import large_scale_state.wap as wM
+    import large_scale_env.wap as wM
     wM.run_wap_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        False,
+        'gadi_data':          True,
 
         # choose metrics to calculate
         'sMean':              True, 
@@ -98,7 +101,7 @@ if run:
         
         # mask by
         'ascent':             False,
-        'descent':            False,
+        'descent':            True,
 
         # save
         'save':               True
