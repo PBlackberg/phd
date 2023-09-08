@@ -33,7 +33,7 @@ if run:
 # ------------------
 # relative humidity
 # ------------------
-run = True
+run = False
 if run:
     import large_scale_env.hur as hM 
     hM.run_hur_metrics(switch = {
@@ -44,12 +44,13 @@ if run:
 
         # choose metrics to calculate
         'sMean':              True, 
-        'tMean':              False, 
+        'tMean':              True, 
         'snapshot':           True, 
         
         # mask by
         'ascent':             False,
         'descent':            True,
+        '250hpa':             True,
 
         # save
         'save':               True
@@ -59,7 +60,7 @@ if run:
 # ----------------------------
 #  Outgoing Lonwave Radiation
 # ----------------------------
-run = True
+run = False
 if run:
     import large_scale_env.rlut as rM 
     rM.run_rlut_metrics(switch = {
@@ -101,7 +102,7 @@ if run:
         
         # mask by
         'ascent':             False,
-        'descent':            True,
+        'descent':            False,
 
         # save
         'save':               True

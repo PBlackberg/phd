@@ -333,7 +333,11 @@ def get_metric_object(switch):
         variable_type, name, option, label, cmap, color = [None, key,                   key,                   'ECS [K]',                                 'Reds',     'r']   if key in ['ecs'] else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'temp. [\u00B0C]',                         'coolwarm', 'r']   if key in ['tas'] else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humiid. [%]',                        'Greens',   'g']   if key in ['hur'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['hur',  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humiid. [%]',                        'Greens',   'g']   if key in ['hur_250hpa'] else [variable_type, name, option, label, cmap, color]
         variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'wap [hPa day{}]'.format(get_super('-1')), 'RdBu_r',   color] if key in ['wap'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'wap [hPa day{}]'.format(get_super('-1')), 'RdBu_r',   color] if key in ['wap'] else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'theta [K]'.format(get_super('-1')), 'Reds',   color] if key in ['stability'] else [variable_type, name, option, label, cmap, color]
+
 
         # ----------
         # Radiation

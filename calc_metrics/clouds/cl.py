@@ -52,7 +52,8 @@ def load_data(switch, source, dataset, experiment):
         da_cl = xr.open_dataset(f'{mV.folder_save[0]}/cl/sample_data/{source}/{dataset}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['cl']
         da_p = xr.open_dataset(f'{mV.folder_save[0]}/cl/sample_data/{source}/{dataset}_p_hybridsigma_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['p_hybridsigma']
     if switch['gadi_data']:
-        da_cl, da_p = gD.get_var_data(source, dataset, experiment, 'cl')
+        da_cl = gD.get_var_data(source, dataset, experiment, 'cl')
+        da_p = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma')
     return da_cl, da_p
 
 # ------------------------------------------------------------------------------------- Put metric in dataset ----------------------------------------------------------------------------------------------------- #
@@ -116,8 +117,8 @@ if __name__ == '__main__':
     run_cl_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
-        'gadi_data':          False,
+        'sample_data':        False,
+        'gadi_data':          True,
 
         # choose metrics to calculate
         'snapshot':           True, 

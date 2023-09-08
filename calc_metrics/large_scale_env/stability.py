@@ -19,13 +19,13 @@ def calc_sMean(da):
     return da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
 @mF.timing_decorator
-def calc_vertical_mean_era(da):
-    da = da.sel(plev=slice(0,850e2)) # free troposphere (most values at 1000 hPa over land are NaN)
+def calc_vertical_mean_era(da, plev2 = 0 , plev1 = 500e2):
+    da = da.sel(plev=slice(plev2, plev1))
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
 @mF.timing_decorator
-def calc_vertical_mean(da):
-    da = da.sel(plev=slice(850e2, 0)) # free troposphere (most values at 1000 hPa over land are NaN)
+def calc_vertical_mean(da, plev2 = 500e2, plev1 = 0):
+    da = da.sel(plev=slice(plev2, plev1))
     return (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev')
 
 
@@ -45,18 +45,6 @@ def pick_wap_region(switch, source, dataset, experiment, da):
         return da.where(wap500>0), '_d'
     if switch['ascent']:
         return da.where(wap500<0), '_a'
-    
-def pick_hur_region(switch, dataset, da):
-    if switch['250hpa']:
-        da = da.sel(plev = 250e2)
-        region = '_250hpa'
-    elif switch['700hpa']:
-        da = da.sel(plev = 700e2)
-        region = '_700hpa'
-    else:
-        da = calc_vertical_mean(da) if not dataset == 'ERA5' else calc_vertical_mean_era(da)
-        region = ''
-    return da, region
 
 def load_data(switch, source, dataset, experiment):
     if  switch['constructed fields']:
@@ -66,37 +54,35 @@ def load_data(switch, source, dataset, experiment):
         return xr.open_dataset(path)['hur']
     if switch['gadi data']:
         if dataset == 'ERA5': # the relative humidity needs to be calculated for ERA
-            r = gD.get_var_data(source, dataset, experiment, 'hus') # unitless (kg/kg)
-            T = gD.get_var_data(source, dataset, experiment, 'ta') # degrees Kelvin
-            p = T['plev'] # Pa
-            e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66)) # saturation water vapor pressure
-            r_s = 0.622 * e_s/p
-            da = (r/r_s)*100 # relative humidity
+            da = gD.get_var_data(source, dataset, experiment, 'ta')
+            theta =  da * (1000e2 / da.plev)**(287/1005) # theta = T (P_0/P)^(R_d/C_p)
+            da = calc_vertical_mean_era(theta, 250e2, 400e2) - calc_vertical_mean(theta, 700e2, 925e2) 
         else:
-            da = gD.get_var_data(source, dataset, experiment, 'hur')
-        # could calculate humidity for better comparison with ERA5
-        # r = gD.get_hus(source, dataset, experiment, mV.timescales[0], mV.resolutions[0]) # unitless (kg/kg)
-        # t = gD.get_ta(source, dataset, experiment, mV.timescales[0], mV.resolutions[0]) + 273.15 # convert to degrees Kelvin
-        # print(t.height)
-        # p = t['plev'] # Pa
-        # e_s = 611.2 * np.exp(17.67*(t-273.15)/(t-29.66)) # saturation water vapor pressure
-        # r_s = 0.622 * e_s/p
-        # da = (r/r_s)*100 # relative humidity
+            da = gD.get_var_data(source, dataset, experiment, 'ta')
+            theta =  da * (1000e2 / da.plev)**(287/1005) 
+            da = calc_vertical_mean(theta, 400e2, 250e2) - calc_vertical_mean(theta, 925e2, 700e2)
+            # import matplotlib.pyplot as plt
+            # fig, ax = plt.subplots()
+            # da_upper.isel(time=0).sel(plev = 500e2).plot(ax = ax)
+            # mF.save_figure(fig, os.getcwd(), 'test.png') 
+            # theta = T (P_0/P)^(R_d/C_p)
+            # da_upper = calc_vertical_mean(theta, 400e2, 250e2) 
+            # da_lower = calc_vertical_mean(theta, 925e2, 700e2)
         return  da
 
 # ------------------------------------------------------------------------------------- Put metric in dataset ----------------------------------------------------------------------------------------------------- #
-def get_metric(da, hur_region, wap_region, metric):
+def get_metric(da, wap_region, metric):
     da_calc, metric_name = None, None
     if metric == 'snapshot':
-        metric_name =f'hur{hur_region}{wap_region}_snapshot' 
+        metric_name =f'stability{wap_region}_snapshot' 
         da_calc = da.isel(time=0)
 
     if metric == 'sMean':
-        metric_name =f'hur{hur_region}{wap_region}_sMean' 
+        metric_name =f'stability{wap_region}_sMean' 
         da_calc = calc_sMean(da)
 
     if metric == 'tMean':
-        metric_name =f'hur{hur_region}{wap_region}_tMean'
+        metric_name =f'stability{wap_region}_tMean'
         da_calc = da.mean(dim='time', keep_attrs=True)
 
     return xr.Dataset(data_vars = {metric_name: da_calc}), metric_name
@@ -104,16 +90,15 @@ def get_metric(da, hur_region, wap_region, metric):
 
 # --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
 def save_metric(source, dataset, experiment, ds, metric_name):
-    folder = f'{mV.folder_save[0]}/hur/metrics/{metric_name}/{source}'
+    folder = f'{mV.folder_save[0]}/stability/metrics/{metric_name}/{source}'
     filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
     mF.save_file(ds, folder, filename)
 
 def run_metric(switch, source, dataset, experiment):
     da = load_data(switch, source, dataset, experiment)
-    da, hur_region = pick_hur_region(switch, dataset, da)
     da, wap_region = pick_wap_region(switch, source, dataset, experiment, da)
     for metric in [k for k, v in switch.items() if v] : # loop over true keys
-        ds, metric_name = get_metric(da, hur_region, wap_region, metric)
+        ds, metric_name = get_metric(da, wap_region, metric)
         save_metric(source, dataset, experiment, ds, metric_name) if switch['save'] and ds[metric_name].any() else None
 
 def run_experiment(switch, source, dataset):
@@ -130,7 +115,7 @@ def run_dataset(switch):
         run_experiment(switch, source, dataset)
 
 @mF.timing_decorator
-def run_hur_metrics(switch):
+def run_stability_metrics(switch):
     print(f'Running {os.path.basename(__file__)} with {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
     run_dataset(switch)
@@ -138,7 +123,7 @@ def run_hur_metrics(switch):
 
 # -------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    run_hur_metrics(switch = {
+    run_stability_metrics(switch = {
         # choose data to calculate metric on
         'constructed fields': False, 
         'sample data':        False,
@@ -150,15 +135,32 @@ if __name__ == '__main__':
         'snapshot':           True, 
         
         # mask by
-        '250hpa':             False,
-        '700hpa':             True,
         'ascent':             False,
-        'descent':            True,
+        'descent':            False,
 
         # save
         'save':               True
         }
     )
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

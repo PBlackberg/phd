@@ -159,8 +159,10 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
-            'rlut':                True,
+            'hur_250hpa':          False,
+            'rlut':                False,
             'wap':                 False,
+            'stability':           True,
 
             # clouds
             'lcf':                 False,
@@ -185,12 +187,12 @@ if __name__ == '__main__':
         'per kelvin (ecs)':    False,
         
         # show/save
-        'one scene':           False,
-        'multiple_scenes':     True,
-        'show':                True,
+        'one scene':           True,
+        'multiple_scenes':     False,
+        'show':                False,
         'save':                False,
-        'save to cwd':         False,
-        'save to desktop':     True
+        'save to cwd':         True,
+        'save to desktop':     False
         }
     )
 

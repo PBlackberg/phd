@@ -72,6 +72,7 @@ def get_cmip5_data(variable, model, experiment):
     return ds
 
 def get_cmip5_cl(variable, model, experiment):
+    ds_cl, ds_p_hybridsigma = None, None
     ''' Cloud pressure on hybrid-sigma vertical levels '''    
     ensemble = choose_cmip5_ensemble(model, experiment)
     timeInterval = ('day', 'day') if mV.timescales[0] == 'daily' else ('mon', 'Amon')
@@ -114,6 +115,7 @@ def get_cmip6_data(variable, model, experiment):
     folder_grid = grid_folder(model)
     version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
+    # print(path_folder)
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     da = ds[variable]
     if mV.resolutions[0] == 'regridded': # conservatively interpolate
@@ -128,21 +130,24 @@ def get_cmip6_cl(variable, model, experiment):
     ensemble = choose_cmip6_ensemble(model, experiment)
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
     timeInterval = 'day' if mV.timescales[0] == 'daily' else 'Amon'
-    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[0]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
     folder_grid = grid_folder(model)
     version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     if model == 'IITM-ESM': # different models have different conversions from height coordinate to pressure coordinate.
-        p_hybridsigma = None
-        ds = ds.rename({'plev':'lev'}) 
-    elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4', 'IPSL-CM6A-LR']: 
+        ds = ds.rename({'plev':'lev'})
+        p_hybridsigma = ds['lev'] # already on pressure levels
+    elif model == 'IPSL-CM6A-LR':
+        ds = ds.rename({'presnivs':'lev'})
+        p_hybridsigma = ds['lev'] # already on pressure levels
+    elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4']: 
         p_hybridsigma = ds.ap + ds.b*ds.ps
-        ds = ds.rename({'klevp1':'lev'}) if model == 'IPSL-CM6A-LR' else ds
     elif model == 'FGOALS-g3':
         p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
     elif model == 'UKESM1-0-LL':
-        p_hybridsigma = ds.lev+ds.b*ds.orog
+        p_hybridsigma = ds.lev+ds.b*ds.orog # in meters
+        p_hybridsigma = 1000e2 * (1 -  0.0065*p_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065) # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula
     else:
         p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
 
@@ -155,10 +160,9 @@ def get_cmip6_cl(variable, model, experiment):
         regridder = regrid.regrid_conserv_xesmf(ds)
         cl = regridder(cl)
         ds_cl = xr.Dataset(data_vars = {'cl': cl}, attrs = ds.attrs)
-        p_hybridsigma_n = None if model == 'IITM-ESM' else regridder(p_hybridsigma)
-        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma_n}, attrs = ds.lev.attrs)
+        p_hybridsigma = regridder(p_hybridsigma) if not model in ['IITM-ESM', 'IPSL-CM6A-LR'] else p_hybridsigma
+        ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
     return ds_cl, ds_p_hybridsigma
-
 
 
 # ------------------------------------------------------------------------------------- OBS ----------------------------------------------------------------------------------------------------------#
@@ -219,7 +223,7 @@ def get_era5_monthly(variable):
     ds = ds.sortby('lat').sel(lat = slice(-35,35))
     da = ds[variable]
 
-    da['level'] = da['level']*100 # convert from millibar to Pa
+    da['level'] = da['level']*100 # convert from millibar (hPa) to Pa
     da = da.rename({'level': 'plev'})
 
     if mV.resolutions[0] == 'regridded':
