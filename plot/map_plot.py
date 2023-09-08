@@ -162,9 +162,9 @@ if __name__ == '__main__':
             'tas':                 False,
             'hur':                 False,
             'hur_250hpa':          False,
-            'rlut':                True,
+            'rlut':                False,
             'wap':                 False,
-            'stability':           False,
+            'stability':           True,
 
             # clouds
             'lcf':                 False,
@@ -193,8 +193,8 @@ if __name__ == '__main__':
         'multiple_scenes':     False,
         'show':                False,
         'save':                False,
-        'save to cwd':         False,
-        'save to desktop':     True
+        'save to cwd':         True,
+        'save to desktop':     False
         }
     )
 

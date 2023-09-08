@@ -37,6 +37,7 @@ def get_var_data(source, dataset, experiment, var_name):
     if var_name == 'wap':
         da = cfiles.get_cmip5_data('wap', dataset, experiment)['wap']*60*60*24/100 if source == 'cmip5' else da
         da = cfiles.get_cmip6_data('wap', dataset, experiment)['wap']*60*60*24/100 if source == 'cmip6' else da
+        da = da * 1000 if dataset == 'IITM-ESM' else da
         da.attrs['units'] = 'hPa day' + mF.get_super('-1')
 
 
@@ -49,17 +50,19 @@ def get_var_data(source, dataset, experiment, var_name):
 
 # ----------------------------------------------------------------------------------------------- Clouds ----------------------------------------------------------------------------------------------------- #
     if var_name == 'cl':
-        if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
-            return da
-        da, _ = cfiles.get_cmip5_cl('cl', dataset, experiment)['cl'] if source == 'cmip5' else da
-        da, _ = cfiles.get_cmip6_cl('cl', dataset, experiment)['cl'] if source == 'cmip6' else da # hybrid-sigma coords
+        # if dataset in ['INM-CM5-0', 'EC-Earth3', 'KIOST-ESM']:
+        #     return da
+        # da, _ = cfiles.get_cmip5_cl('cl', dataset, experiment) if source == 'cmip5' else da
+        da, _ = cfiles.get_cmip6_cl('cl', dataset, experiment) #if source == 'cmip6' else da # hybrid-sigma coords
+        da = da['cl'] 
         da.attrs['units'] = '%'
 
     if var_name == 'p_hybridsigma':
-        if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
-            return da
-        _, da = cfiles.get_cmip5_cl('p_hybridsigma', dataset, experiment)['p_hybridsigma'] if source == 'cmip5' else da
-        _, da = cfiles.get_cmip6_cl('p_hybridsigma', dataset, experiment)['p_hybridsigma'] if source == 'cmip6' else da # hybrid-sigma coords
+        # if dataset in ['EC-Earth3', 'INM-CM5-0', 'KIOST-ESM']:
+        #     return da
+        # _, da = cfiles.get_cmip5_cl('p_hybridsigma', dataset, experiment) if source == 'cmip5' else da
+        _, da = cfiles.get_cmip6_cl('cl', dataset, experiment) #if source == 'cmip6' else da # hybrid-sigma coords
+        da = da['p_hybridsigma']
         da.attrs['units'] = '%'
 
 # -------------------------------------------------------------------------------------------- Moist static energy ----------------------------------------------------------------------------------------------------- #
@@ -74,7 +77,6 @@ def get_var_data(source, dataset, experiment, var_name):
         da = cfiles.get_cmip6_data('hus', dataset, experiment)['hus'] if source == 'cmip6' else da
         da = cfiles.get_era5_monthly('q')['q']                        if dataset == 'ERA5' else da
         da.attrs['units'] = ' '
-
     return da
         
 
@@ -133,7 +135,7 @@ if __name__ == '__main__':
             'p_hybridsigma': False,
 
             # moist static energy
-            'ta' :           False,
+            'ta' :           True,
             'hus' :          False,
 
         'save_sample':   False

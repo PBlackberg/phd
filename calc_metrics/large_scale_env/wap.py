@@ -18,6 +18,11 @@ def calc_sMean(da):
     aWeights = np.cos(np.deg2rad(da.lat))
     return da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
 
+def calc_wap_area(da):
+    ''' Frequency of gridboxes exceeding 10 mm/day on monthly'''
+    mask = xr.where(da<0,1,0)
+    return mask.sum(dim=('lat','lon')) * 100 / (len(da['lat']) * len(da['lon']))
+
 # ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
 
 def pick_wap_region(switch, source, dataset, experiment, da):
@@ -52,6 +57,10 @@ def get_metric(da, region, metric):
         metric_name =f'wap{region}_tMean'
         da_calc = da.mean(dim='time', keep_attrs=True)
 
+    if metric == 'wap_area':
+        metric_name =f'wap_area{region}_sMean'
+        da_calc = calc_wap_area(da)
+
     return xr.Dataset(data_vars = {metric_name: da_calc}), metric_name
 
 # --------------------------------------------------------------------------------------- run metric and save ----------------------------------------------------------------------------------------------------- #
@@ -68,7 +77,6 @@ def run_metric(switch, source, dataset, experiment):
     for metric in [k for k, v in switch.items() if v] : # loop over true keys
         ds, metric_name = get_metric(da, region, metric)
         save_metric(source, dataset, experiment, ds, metric_name) if switch['save'] and ds[metric_name].any() else None
-
 
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
@@ -96,13 +104,14 @@ if __name__ == '__main__':
     run_wap_metrics(switch = {
         # choose data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
-        'gadi_data':          False,
+        'sample_data':        False,
+        'gadi_data':          True,
 
         # choose metrics to calculate
         'sMean':              True, 
         'tMean':              True, 
         'snapshot':           True, 
+        'wap_area':           False,
         
         # mask by
         'ascent':             False,
