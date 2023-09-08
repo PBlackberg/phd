@@ -11,8 +11,8 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 import os
 home = os.path.expanduser("~")
-import myFuncs as mF                                
-import myVars as mV                                 
+import myFuncs_alt as mF                                
+import myVars_alt as mV                                 
 
 # -------------------------------------------------------------------------------------------- Get data ----------------------------------------------------------------------------------------------------- #
 # pr
@@ -46,6 +46,7 @@ class variable():
 variable_0 = variable('Greys', r'pr [mm day$^{-1}$]')
 variable_1 = variable('Reds', r'pr [mm day$^{-1}$]')
 title = 'transition of DOC'
+
 
 # -------------------------------------------------------------------------------------- animate / format plot ----------------------------------------------------------------------------------------------------- #
 def plot_ax_scene(frame, fig, da_0, da_1, timesteps, variable_0, variable_1, title):
@@ -83,7 +84,6 @@ def animate(da_0, da_1, timesteps, variable_0, variable_1, title):
 
 
 # ----------------------------------------------------------------------------------- Run animation and save ----------------------------------------------------------------------------------------------------- #
-
 ani = animate(da, da99, timesteps, variable_0, variable_1, title)
 ani.save(f'{home}/Desktop/test.mp4')
 
