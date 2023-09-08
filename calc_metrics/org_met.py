@@ -195,7 +195,7 @@ def calc_metrics(da, dim, conv_threshold, metric):
 def save_metric(switch, ds, metric, source, dataset, experiment):
     metric_name = metric if not switch['fixed_area'] else f'{metric}_fixed_area'
     folder = f'{mV.folder_save[0]}/org/metrics/{metric_name}/{source}'
-    filename = f'{dataset}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+    filename = f'{dataset}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}_short.nc'
     mF.save_file(ds, folder, filename) if switch['save'] else None
 
 def run_metrics(switch, da, dim, conv_threshold, source, dataset, experiment):
@@ -205,7 +205,8 @@ def run_metrics(switch, da, dim, conv_threshold, source, dataset, experiment):
 
 def load_data(switch, source, dataset, experiment):
     da = cF.var2d                                                                                                   if switch['constructed_fields'] else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['pr'] if switch['sample_data'] else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{dataset}_pr_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['pr'].sel(time= slice('2010', '2022')) if switch['sample_data'] else da
+
     da = gD.get_pr(source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                if switch['gadi_data'] else da
     return da
 
@@ -222,7 +223,6 @@ def run_experiment(switch, source, dataset):
 def run_dataset(switch):
     for dataset in mV.datasets:
         source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(source)
         print(f'{dataset} ({source})')
         run_experiment(switch, source, dataset)
 
@@ -246,9 +246,9 @@ if __name__ == '__main__':
 
         # metrics to calculate
         'rome':               True, 
-        'rome_n':             True, 
+        'rome_n':             False, 
         'ni':                 True, 
-        'o_area':             True,
+        'o_area':             False,
         'mean_area':          False,
 
         # threshold
@@ -259,6 +259,7 @@ if __name__ == '__main__':
         }
     )
     
+
 
 
 

@@ -26,10 +26,10 @@ if plot:
 
 
 # model: rome and areafraction
-plot = False
+plot = True
 if plot:
-    x = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_historical_regridded.nc')['rome']
-    y = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/ni/cmip6/TaiESM1_ni_daily_historical_regridded.nc')['areafraction']
+    x = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_95thprctile_daily_historical_regridded.nc')['rome']
+    y = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/ni/cmip6/TaiESM1_ni_95thprctile_daily_historical_regridded.nc')['areafraction']
     fig, ax = plt.subplots(1, 1)
     plt.scatter(x, y)
     plot_correlation(ax, x,y, position = (0.8, 0.9), fontsize = 12)
@@ -56,7 +56,7 @@ if plot:
 
 
 # random field: rome and areafraction
-plot = True
+plot = False
 if plot:
     x = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/random_fields_rome_daily_historical_regridded.nc')['rome']
     y = xr.open_dataset('/Users/cbla0002/Documents/data/org/metrics/ni/cmip6/random_fields_ni_daily_historical_regridded.nc')['areafraction']
@@ -73,6 +73,9 @@ if plot:
 
 
 
+
+
+'/Users/cbla0002/Documents/data/org/metrics/rome/cmip6/TaiESM1_rome_daily_historical_regridded.nc'
 
 
 

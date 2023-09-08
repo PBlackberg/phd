@@ -30,23 +30,23 @@ models_cmip5 = [
 models_cmip6 = [
     # 'INM-CM5-0',         # 1 # no cloud (not in schiro)
     # 'IITM-ESM',          # 2 (not in schiro)
-    # 'FGOALS-g3',         # 3                                      *
-    # 'MIROC6',            # 4                                      *
-    # 'MPI-ESM1-2-LR',     # 5                                      *
+    # 'FGOALS-g3',         # 3
+    # 'MIROC6',            # 4
+    # 'MPI-ESM1-2-LR',     # 5
     # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
-    # 'BCC-CSM2-MR',       # 7                                      *
-    # 'NorESM2-MM',        # 8                                      *
-    # 'MRI-ESM2-0',        # 9                                      *
-    # 'GFDL-CM4',          # 10                                     *
-    # 'CMCC-ESM2',         # 11                                     *
-    # 'NESM3',             # 12                                     *
+    # 'BCC-CSM2-MR',       # 7
+    # 'NorESM2-MM',        # 8
+    # 'MRI-ESM2-0',        # 9
+    # 'GFDL-CM4',          # 10
+    # 'CMCC-ESM2',         # 11
+    # 'NESM3',             # 12
     # 'EC-Earth3',         # 13 # no cloud (not in shiro)
-    # 'CNRM-CM6-1',        # 14                                     *
+    # 'CNRM-CM6-1',        # 14
     # 'IPSL-CM6A-LR',      # 15 (not in schiro)
-    # 'TaiESM1',           # 16                                       *
+    # 'TaiESM1',           # 16
     # 'CESM2-WACCM',       # 17    
     # 'CanESM5',           # 18
-    # 'UKESM1-0-LL',       # 19 # clouds not right                  *
+    # 'UKESM1-0-LL',       # 19 # clouds not right
     # 'random_field'
     ]
 

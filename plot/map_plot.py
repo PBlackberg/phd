@@ -92,17 +92,17 @@ def get_scene(switch, dataset, metric):
         metric_name, metric_option = f'{metric.name}_tMean', f'{metric.option}_tMean'
         scene_historical = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')[metric_option]
         scene_warm = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[1]}_{mV.resolutions[0]}.nc')[metric_option]
-        scene_change = scene_warm - scene_historical
+        scene = scene_warm - scene_historical
         if switch['per kelvin']:
                 tas_historical = xr.open_dataset(f'{mV.folder_save[0]}/tas/metrics/tas_sMean/{source}/{dataset}_tas_sMean_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['tas_sMean'].mean(dim='time')
                 tas_warm = xr.open_dataset(f'{mV.folder_save[0]}/tas/metrics/tas_sMean/{source}/{dataset}_tas_sMean_{mV.timescales[0]}_{mV.experiments[1]}_{mV.resolutions[0]}.nc')['tas_sMean'].mean(dim='time')
                 tas_change = tas_warm - tas_historical
                 axtitle = f'{dataset:20} dT = {np.round(tas_change.data,2)} K'
-                scene_change = scene_change/tas_change
+                scene = scene/tas_change
         if switch['per kelvin (ecs)']:
             tas_change = mV.ecs_list[dataset] 
             axtitle = f'{dataset:20} ECS = {np.round(tas_change,2)} K'
-            scene = scene_change/tas_change
+            scene = scene/tas_change
     return scene, title, axtitle
 
 
@@ -130,6 +130,8 @@ def run_map_plot(switch):
         vmin, vmax = mF.find_limits(switch, mV.datasets, metric, get_scene, 
                                  quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high=1,
                                 #  vmin = -200, vmax = 200                                                                        # Need fixed limits for common colorbar
+                                #  vmin = -4, vmax = 4         
+                                #  vmin = 0, vmax = 150
                                  )  
         vmin = -vmax if switch['change with warming'] or switch['wap'] else vmin
         fig = plot_multiple_scenes(mV.datasets, metric, get_scene, title, vmin, vmax, switch)
@@ -159,8 +161,10 @@ if __name__ == '__main__':
             # Large scale state
             'tas':                 False,
             'hur':                 False,
+            'hur_250hpa':          False,
             'rlut':                True,
             'wap':                 False,
+            'stability':           False,
 
             # clouds
             'lcf':                 False,
@@ -179,15 +183,15 @@ if __name__ == '__main__':
 
         # masked by
         'fixed area':          False,
-        'descent':             True,
+        'descent':             False,
         'ascent':              False,
         'per kelvin':          False,
         'per kelvin (ecs)':    False,
         
         # show/save
-        'one scene':           False,
-        'multiple_scenes':     True,
-        'show':                True,
+        'one scene':           True,
+        'multiple_scenes':     False,
+        'show':                False,
         'save':                False,
         'save to cwd':         False,
         'save to desktop':     True

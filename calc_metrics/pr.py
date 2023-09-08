@@ -59,7 +59,7 @@ def calc_F_pr10(da):
     ''' Frequency of gridboxes exceeding 10 mm/day on monthly'''
     da = mF.resample_timeMean(da, 'M')
     mask = xr.where(da>10,1,0)
-    return mask.sum(dim=('lat','lon')) / (len(da['lat']) * len(da['lon']))
+    return mask.sum(dim=('lat','lon')) * 100 / (len(da['lat']) * len(da['lon']))
 
 
 
@@ -197,11 +197,11 @@ if __name__ == '__main__':
 
         # metrics
         'percentiles':                    False, 
-        'percentiles_sMean':              True, 
+        'percentiles_sMean':              False, 
         'rxday_sMean':                    False, 
         'rxday_tMean':                    False, 
         'F_pr10':                         True,
-        'o_pr':                           True,
+        'o_pr':                           False,
 
         # threshold
         'fixed_area':                     False,

@@ -57,13 +57,14 @@ def load_data(switch, source, dataset, experiment):
         path = f'{mV.folder_save[0]}/hur/sample_data/{source}/{dataset}_hur_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
         return xr.open_dataset(path)['hur']
     if switch['gadi data']:
-        if dataset == 'ERA5': # the relative humidity needs to be calculated for ERA
+        if dataset == 'ERA5': # the relative humidity needs to be calculated for ERA (Bolton's formula)
             r = gD.get_var_data(source, dataset, experiment, 'hus') # unitless (kg/kg)
             T = gD.get_var_data(source, dataset, experiment, 'ta') # degrees Kelvin
             p = T['plev'] # Pa
             e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66)) # saturation water vapor pressure
-            r_s = 0.622 * e_s/p
-            da = (r/r_s)*100 # relative humidity
+            r_s = 0.622 * e_s/p #
+            da = (r/r_s)*100 # relative humidity could do e/e_s   
+            # Look up formula from ERA for relative humidity
         else:
             da = gD.get_var_data(source, dataset, experiment, 'hur')
         # could calculate humidity for better comparison with ERA5
