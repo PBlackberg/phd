@@ -33,26 +33,26 @@ models_cmip6 = [
     # 'FGOALS-g3',         # 3
     # 'MIROC6',            # 4
     # 'MPI-ESM1-2-LR',     # 5
-    # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
+    # # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
     # 'BCC-CSM2-MR',       # 7
     # 'NorESM2-MM',        # 8
     # 'MRI-ESM2-0',        # 9
     # 'GFDL-CM4',          # 10
     # 'CMCC-ESM2',         # 11
     # 'NESM3',             # 12
-    # 'EC-Earth3',         # 13 # no cloud (not in shiro)
+    # # 'EC-Earth3',         # 13 # no cloud (not in shiro)
     # 'CNRM-CM6-1',        # 14
     # 'IPSL-CM6A-LR',      # 15 (not in schiro)
     # 'TaiESM1',           # 16
     # 'CESM2-WACCM',       # 17    
     # 'CanESM5',           # 18
-    # 'UKESM1-0-LL',       # 19 # clouds not right
-    # 'random_field'
+    # # 'UKESM1-0-LL',       # 19 # clouds not right
+    # # 'random_field'
     ]
 
 observations = [
-    'GPCP',              # for precipitation and organization index (from project al33 on gadi)
-    # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
+    # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
+    'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
     # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
     # 'ERA5'               # humidity (from project rt52 on gadi)
     ]
@@ -61,20 +61,20 @@ datasets = models_cmip5 + models_cmip6 + observations
 
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 experiments = [
     # 'historical',     
-    # 'rcp85',             # warm scenario for cmip5
+    # # 'rcp85',             # warm scenario for cmip5
     # 'ssp585',              # warm scenario for cmip6
     ''                   # observations
     ]
 
 resolutions = [
-    'orig',
-    # 'regridded'
+    # 'orig',
+    'regridded'
     ]
 
 conv_percentiles = [       # for organization metrics

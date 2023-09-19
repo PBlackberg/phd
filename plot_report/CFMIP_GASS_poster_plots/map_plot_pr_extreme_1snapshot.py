@@ -4,10 +4,7 @@ import skimage.measure as skm
 import matplotlib.pyplot as plt
 
 import os
-import sys
-home = os.path.expanduser("~")
-folder_code = f'{home}/Documents/code/phd'
-sys.path.insert(0, f'{folder_code}/functions')
+home = os.path.expanduser('~')
 import myVars as mV         # imports common variables
 import myFuncs as mF        # imports common operators and plotting
 sys.path.insert(0, f'{folder_code}/plotting')
@@ -84,9 +81,7 @@ ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = cbar_tex
 
 
 
-folder = f'{home}/Desktop/GASS-CFMIP_poster'
-filename = 'pr_extreme_snapshot'    
-mV.save_figure(fig, folder, f'{filename}.pdf')
+mV.save_figure(fig, folder, f'{home}/Desktop/test'.pdf')
 plt.show()
 
 

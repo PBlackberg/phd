@@ -1,7 +1,7 @@
 import os
+import numpy as np
 
 # -------------------------------------------------------------------------------------- For choosing dataset / model----------------------------------------------------------------------------------------------------- #
-
 models_cmip5 = [
     # 'IPSL-CM5A-MR',      # 1
     # 'GFDL-CM3',          # 2
@@ -22,42 +22,47 @@ models_cmip5 = [
     # 'HadGEM2-CC',        # 17
     # 'MRI-CGCM3',         # 18
     # 'CESM1-BGC'          # 19
-    # 'random_field'
     ]
 
-# 14 models used in Schiro
+# 14 models used in Schiro not [1, 2, 6, 13, 15]
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    # 'INM-CM5-0',         # 1 # no cloud (not in schiro)
-    # 'IITM-ESM',          # 2 (not in schiro)
-    # 'FGOALS-g3',         # 3                                      *
-    # 'MIROC6',            # 4                                      *
-    # 'MPI-ESM1-2-LR',     # 5                                      *
-    # 'KIOST-ESM',         # 6 # no cloud (not in schiro)
-    # 'BCC-CSM2-MR',       # 7                                      *
-    # 'NorESM2-MM',        # 8                                      *
-    # 'MRI-ESM2-0',        # 9                                      *
-    # 'GFDL-CM4',          # 10                                     *
-    # 'CMCC-ESM2',         # 11                                     *
-    # 'NESM3',             # 12                                     *
-    # 'EC-Earth3',         # 13 # no cloud (not in shiro)
-    # 'CNRM-CM6-1',        # 14                                     *
-    # 'IPSL-CM6A-LR',      # 15 (not in schiro)
-    # 'TaiESM1',           # 16                                       *
+    # 'INM-CM5-0',         # 1
+    # 'IITM-ESM',          # 2
+    # 'FGOALS-g3',         # 3                                      
+    # 'MIROC6',            # 4                                      
+    # 'MPI-ESM1-2-LR',     # 5                                      
+    # 'KIOST-ESM',         # 6
+    # 'BCC-CSM2-MR',       # 7                                      
+    # 'NorESM2-MM',        # 8                                      
+    # 'MRI-ESM2-0',        # 9                                      
+    # 'GFDL-CM4',          # 10                                     
+    # 'CMCC-ESM2',         # 11                                     
+    # 'NESM3',             # 12                                     
+    # 'EC-Earth3',         # 13
+    # 'CNRM-CM6-1',        # 14                                     
+    # 'IPSL-CM6A-LR',      # 15
+    # 'TaiESM1',           # 16                                       
     # 'CESM2-WACCM',       # 17    
     # 'CanESM5',           # 18
-    # 'UKESM1-0-LL',       # 19 # clouds not right                  *
-    # 'random_field'
+    # 'UKESM1-0-LL',       # 19              
+    ]
+
+other = [
+    # 'constructed'        # 1
+    # 'random'             # 2
     ]
 
 observations = [
-    'GPCP',              # for precipitation and organization index (from project al33 on gadi)
-    # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
+    # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
+    # 'GPCP_1998-2009',    # high offset in high percentile precipitation
+    # 'GPCP_2010-2022',    # low offset in high percentile precipitation
+    'ISCCP',               # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
     # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
     # 'ERA5'               # humidity (from project rt52 on gadi)
     ]
 
-datasets = models_cmip5 + models_cmip6 + observations
+datasets = models_cmip5 + models_cmip6 + observations + other
 
 
 timescales = [
@@ -73,8 +78,8 @@ experiments = [
     ]
 
 resolutions = [
-    'orig',
-    # 'regridded'
+    # 'orig',
+    'regridded'
     ]
 
 conv_percentiles = [       # for organization metrics
@@ -83,10 +88,17 @@ conv_percentiles = [       # for organization metrics
     # '97'
     ]
 
+timescales_plot = [
+    # 'daily',
+    # 'monthly',
+    # 'annual',
+    ]
+
 folder_save = [
     os.path.expanduser("~") + '/Documents/data',
     # '/g/data/k10/cb4968/data'
     ]
+
 
 
 # ---------------------------------------------------------------------------------------- other variables ----------------------------------------------------------------------------------------------------- #
@@ -201,6 +213,64 @@ institutes_cmip6 = {
 # 'SAM0-UNICON':     'SNU',                 (no future scenario)
 # *'CESM2':           'NCAR',               (regular CESM2 does not have monthly hur in ssp585, but does have it in CESM2-WACCM)
 institutes = {**institutes_cmip5, **institutes_cmip6}
+
+
+
+# -------------------------------------------------------------------- functions for checking available data ----------------------------------------------------------------------------------------------------- #
+def find_source(dataset, models_cmip5, models_cmip6, observations):
+    '''Determining source of dataset '''
+    source = 'cmip5' if np.isin(models_cmip5, dataset).any() else None      
+    source = 'cmip6' if np.isin(models_cmip6, dataset).any() else source         
+    source = 'test'  if np.isin(other, dataset).any()        else source     
+    source = 'obs'   if np.isin(observations, dataset).any() else source
+    return source
+
+def data_available(source = '', dataset = '', experiment = '', var = ''):
+    ''' Check if dataset has variable '''
+    # dataset experiment combination
+    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
+        return False
+    if not experiment and not source in ['obs', 'test']:                                          # only run obs or other for experiment == ''
+        return False
+    if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
+        return False
+    
+    # available variables
+    if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
+        return False
+    return True
+
+def find_list_source(datasets, models_cmip5, models_cmip6, observations):
+    ''' Determining source of dataset list (for figures) '''
+    sources = set()
+    for dataset in datasets:
+        sources.add('cmip5') if dataset in models_cmip5 else None
+        sources.add('cmip6') if dataset in models_cmip6 else None
+        sources.add('obs')   if dataset in observations else None
+    list_source = 'cmip5' if 'cmip5' in sources else 'test'
+    list_source = 'cmip6' if 'cmip6' in sources else list_source
+    list_source = 'obs'   if 'obs'   in sources else list_source
+    list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
+    return list_source
+
+def find_ifWithObs(datasets, observations):
+    ''' Indicate if there is observations in the dataset list (for figures) '''
+    for dataset in datasets:
+        if dataset in observations:
+            return '_withObs'
+    return ''
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

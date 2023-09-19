@@ -67,7 +67,7 @@ def calc_conv_threshold(da, conv_percentile, fixed_area): # conv_threshold is nu
 def load_data(switch, variable):
     source = mF.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
     da = cF.var2d                                                                                                       if switch['constructed_fields'] else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/{variable.variable_type}/sample_data/{source}/{mV.datasets[0]}_{variable.name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['precip'] if switch['sample_data'] else da #variable.name
+    da = xr.open_dataset(f'{mV.folder_save[0]}/{variable.variable_type}/sample_data/{source}/{mV.datasets[0]}_{variable.name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['pr'] if switch['sample_data'] else da #variable.name
     da = gD.get_pr(source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])                      if switch['gadi_data'] else da
     return da
 
@@ -104,8 +104,8 @@ def load_array(metric_t):
 def get_timesteps(switch, metric_t):
     array = load_array(metric_t)
     low, mid_1, mid_2, high = 0.5, 49.975, 50.025, 99.5     # for daily
-    low, mid_1, mid_2, high = 5, 47.5, 52.5, 95             # for monthly
-    low, mid_1, mid_2, high = 1, 49.5, 50.5, 99             # for daily obs
+    # low, mid_1, mid_2, high = 5, 47.5, 52.5, 95             # for monthly
+    # low, mid_1, mid_2, high = 1, 49.5, 50.5, 99             # for daily obs
     timesteps_low  = np.squeeze(np.argwhere(array.data  <= np.percentile(array, low)))
     timesteps_mid  = np.squeeze(np.argwhere((array.data >= np.percentile(array, mid_1)) & (array.data <= np.percentile(array, mid_2))))
     timesteps_high = np.squeeze(np.argwhere(array.data  >= np.percentile(array, high)))
@@ -165,7 +165,7 @@ if __name__ == '__main__':
             'mse':                 False,
 
             # monthly
-            'hur':                 True,
+            'hur':                 False,
             'rlut':                False,
 
         # timesteps derived from

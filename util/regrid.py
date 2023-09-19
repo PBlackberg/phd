@@ -7,17 +7,17 @@ def regrid_conserv(M_in):
     # dimensions of model to regrid to
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
     fileName = 'pr_day_FGOALS-g2_historical_r1i1p1_19970101-19971231.nc'
-    path1 = folder + '/' + fileName
+    path1 = folder + '/' + fileName # from gadi
 
-    folder = '/Users/cbla0002/Documents/data/pr/sample_data/cmip5'
+    folder = '/Users/cbla0002/Documents/data/sample_data/pr/cmip5'
     fileName = 'FGOALS-g2_pr_daily_historical_regridded.nc'
-    path2 = folder + '/' + fileName
+    path2 = folder + '/' + fileName # from sample data
     
     try:
         M_out = xr.open_dataset(path1)['pr'].sel(lat=slice(-30,30))
     except FileNotFoundError:
         try:
-            M_out = xr.open_dataset(path2)['precip'].sel(lat=slice(-30,30))
+            M_out = xr.open_dataset(path2)['pr'].sel(lat=slice(-30,30))
         except FileNotFoundError:
             print(f"Error: no file at {path1} or {path2}")
 

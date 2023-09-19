@@ -1,3 +1,4 @@
+import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -7,8 +8,7 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import time
 from functools import wraps
 
-# ------------------------------------------------------- functions for common calculation --------------------------------------------------------------------------------------------------- #
-
+# ------------------------------------------------------- Functions for common calculation --------------------------------------------------------------------------------------------------- #
 def connect_boundary(da):
     ''' Connect objects across boundary 
     Objects that touch across lon=0, lon=360 boundary are the same object.
@@ -82,14 +82,6 @@ def find_limits(switch, datasets, metric, func = resample_timeMean,
 
 
 # ------------------------------------------------------- functions for common operations --------------------------------------------------------------------------------------------------- #
-
-def get_super(x):
-    ''' For adding superscripts in strings (input is string) '''
-    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
-    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
-    res = x.maketrans(''.join(normal), ''.join(super_s))
-    return x.translate(res)
-
 def save_file(data, folder='', filename='', path = ''):
     ''' Saves file to specified folder and filename, or path '''
     if folder and filename:
@@ -97,6 +89,12 @@ def save_file(data, folder='', filename='', path = ''):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path)
+
+def save_in_structured_folders(da_calc, folder_save, var, metric_name, source, dataset, timescale, experiment, resolution):
+    ds_calc = xr.Dataset(data_vars = {metric_name: da_calc})
+    folder = f'{folder_save}/{var}/{metric_name}/{source}'
+    filename = f'{dataset}_{metric_name}_{timescale}_{experiment}_{resolution}.nc'
+    save_file(ds_calc, folder, filename)
 
 def save_figure(figure, folder = '', filename = '', path = ''):
     ''' Save figure to specified folder and filename, or path '''
@@ -114,12 +112,12 @@ def timing_decorator(func):
         result = func(*args, **kwargs)
         end_time = time.time()
         time_taken = end_time - start_time
-        print(f"Function '{func.__name__}' took {time_taken/60:.2f} minutes.")
+        print(f'{func.__name__} took {time_taken/60:.2f} minutes')
         return result
     return wrapper
 
-# ---------------------------------------------------------------- functions for plotting --------------------------------------------------------------------------------------------------- #
 
+# ---------------------------------------------------------------- functions for plotting --------------------------------------------------------------------------------------------------- #
 def create_figure(width, height, nrows = 1, ncols = 1):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height))
     return fig, axes
@@ -210,9 +208,10 @@ def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 
     ax.text(cbar_text_x, cbar_text_y, cbar_label, rotation = 'vertical', va = 'center', fontsize = 10, transform=fig.transFigure)
     return cbar
 
-# ------------------
-#    For cartopy
-# ------------------
+
+# -------------------------
+#   For cartopy map plots
+# -------------------------
 def create_map_figure(width, height, nrows = 1, ncols = 1, projection = ccrs.PlateCarree(central_longitude=180)):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height), subplot_kw=dict(projection=projection))
     return fig, axes
@@ -238,174 +237,6 @@ def format_ticks(ax, i = 0, num_subplots = 1, ncols = 1, col = 0, labelsize = 8,
         ax.yaxis.set_major_formatter(LatitudeFormatter())
         ax.yaxis.set_tick_params(labelsize=labelsize)
         ax.yaxis.set_ticks_position('both')
-
-# ------------------------------------------------------------ functions for checking available data ----------------------------------------------------------------------------------------------------- #
-
-def find_list_source(datasets, models_cmip5, models_cmip6, observations):
-    ''' Determining source of dataset list (for figures) '''
-    sources = set()
-    for dataset in datasets:
-        sources.add('cmip5') if dataset in models_cmip5 else None
-        sources.add('cmip6') if dataset in models_cmip6 else None
-        sources.add('obs')   if dataset in observations else None
-    list_source = 'cmip5' if 'cmip5' in sources else 'test'
-    list_source = 'cmip6' if 'cmip6' in sources else list_source
-    list_source = 'obs'   if 'obs'   in sources else list_source
-    list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
-    return list_source
-
-def find_ifWithObs(datasets, observations):
-    ''' Indicate if there is observations in the dataset list (for figures) '''
-    for dataset in datasets:
-        if dataset in observations:
-            return '_withObs'
-    return ''
-
-def find_source(dataset, models_cmip5, models_cmip6, observations):
-    '''Determining source of dataset '''
-    source = 'cmip5' if np.isin(models_cmip5, dataset).any() else 'test'      
-    source = 'cmip6' if np.isin(models_cmip6, dataset).any() else source         
-    source = 'obs' if np.isin(observations, dataset).any() else source
-    return source
-
-def data_available(source, dataset, experiment):
-    ''' Check if dataset has variable '''
-    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # different warm scenario names for cmip5, cmip6
-        return False
-    if not experiment and not source in ['obs']: # When looping 'no experiment', only run obs
-        return False
-    if experiment and source in ['obs']: # when looping experiment, only run models 
-        return False
-    return True
-
-# ------------------------------------------------------------ functions for getting available metric specs ----------------------------------------------------------------------------------------------------- #
-
-class metric_class():
-    ''' Gives metric: name (of saved dataset), option (data array in dataset), label, cmap, color (used for plots of calculated metrics) '''
-    def __init__(self, variable_type, name, option, cmap, label, color='k'):
-        self.variable_type = variable_type
-        self.name   = name
-        self.option = option
-        self.label  = label
-        self.cmap   = cmap
-        self.color  = color
-
-def reg(switch):
-    ''' picks region of ascent / descent '''
-    region = ''
-    region = '_d' if switch['descent'] else region
-    region = '_a' if switch['ascent']  else region
-    return region
-
-def thres(switch):
-    ''' picks precipitation threshold for organization metrics '''
-    threshold = ''
-    threshold = '_fixed_area' if switch['fixed area'] else threshold
-    return threshold
-
-def get_metric_object(switch):
-    ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for plots of metrics '''
-    variable_type, name, option, label, cmap, color = [None, None, None, None, 'Greys', 'k']
-    keys = [k for k, v in switch.items() if v]  # list of True keys
-    for key in keys: # loop over true keys
-        # -------------
-        # precipitation
-        # -------------
-        variable_type, name, option, label, cmap, color = ['pr', 'pr',                   key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['pr']                                   else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['pr', 'rxday_pr',             key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['rx1day_pr','rx5day_pr']                else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['pr', 'rxday_pr_sMean',       key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['rx1day_pr_sMean','rx5day_pr_sMean']    else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['pr', 'percentiles_pr',       key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['pr95','pr97','pr99']                   else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['pr', 'percentiles_pr_sMean', key, 'pr [mm day{}]'.format(get_super('-1')), 'Blues', 'b'] if key in ['pr95_sMean','pr97_sMean','pr99_sMean'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['pr', 'F_pr10',               key, 'F_pr10 [%]',                       cmap, color] if key in ['F_pr10']                               else [variable_type, name, option, label, cmap, color]
-
-        # ------------
-        # organization
-        # ------------
-        variable_type, name, option, label, cmap, color = ['org', f'{key}{thres(switch)}', key, 'obj [binary]',                       cmap, color] if key in ['obj']            else [variable_type, name, option, label, cmap, color]          
-        variable_type, name, option, label, cmap, color = ['org', f'{key}{thres(switch)}', key, 'ROME [km{}]'.format(get_super('2')), cmap, color] if key in ['rome', 'rome_n'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['org', f'{key}{thres(switch)}', key, 'number index [Nb]',                  cmap, color] if key in ['ni']             else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['org', f'ni{thres(switch)}',    key, 'areafraction [%]',                   cmap, color] if key in ['areafraction']   else [variable_type, name, option, label, cmap, color]
-
-
-        # -----------------------------
-        # large-scale environment state
-        # -----------------------------
-        variable_type, name, option, label, cmap, color = [None, key,                   key,                   'ECS [K]',                                 'Reds',     'r']   if key in ['ecs'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'temp. [\u00B0C]',                         'coolwarm', 'r']   if key in ['tas'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humid. [%]',                        'Greens',   'g']   if key in ['hur'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['hur',  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humid. [%]',                        'Greens',   'g']   if key in ['hur_250hpa'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['hur',  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'rel. humid. [%]',                        'Greens',   'g']   if key in ['hur_700hpa'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key,  f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'wap [hPa day{}]'.format(get_super('-1')), 'RdBu_r',   color] if key in ['wap'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['wap', f'{key}_a', f'{key}_a', 'ascent area [%]', 'Greys',   'k']                                              if key in ['wap_area'] else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = [key, f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'stability [K]', 'Reds',   color]                                              if key in ['stability'] else [variable_type, name, option, label, cmap, color]
-
-
-        # ----------
-        # Radiation
-        # ----------
-        variable_type, name, option, label, cmap, color = ['rad', f'{key}', f'{key}', 'OLR [W m{}]'.format(get_super('-2')), 'Purples', 'purple'] if key in ['rlut'] else [variable_type, name, option, label, cmap, color]
-                    
-        # ---------
-        #  clouds
-        # ---------
-        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'low cloud fraction [%]', 'Blues', 'b'] if key == 'lcf' else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'high cloud fraction [%]', 'Blues', 'b'] if key == 'hcf' else [variable_type, name, option, label, cmap, color]
-
-        # -------------------
-        # Moist static energy
-        # -------------------
-        variable_type, name, option, label, cmap, color = [key,  key, key, 'spec. humiid. [%]', 'Greens', 'g'] if key in ['hus'] else [variable_type, name, option, label, cmap, color]
-    cmap = 'Reds'                                                      if switch['descent'] and switch['wap'] else cmap
-    cmap = 'Blues'                                                     if switch['ascent']  and switch['wap'] else cmap
-    # cmap = 'Reds'
-    for key in keys: # loop over true keys
-        cmap = 'RdBu_r'                                                    if key == 'change with warming' else cmap
-        label = '{} K{}{}'.format(label[:-1], get_super('-1'), label[-1:]) if key == 'per kelvin' and not label == 'ECS [K]' else label
-    # cmap, color = 'Reds', 'r'
-    # label = 'clim stability [K]' if  variable_type == 'stability' else None
-    return metric_class(variable_type, name, option, cmap, label, color)
-
-
-class variable_class():
-    ''' Gives variable details (name, option, label, cmap) (Used for animation of fields) '''
-    def __init__(self, ref, variable_type, name, cmap, label):
-        self.ref   = ref
-        self.variable_type = variable_type
-        self.name   = name
-        self.label  = label
-        self.cmap   = cmap
-
-def get_variable_object(switch):
-    ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for animation of fields '''
-    ref, variable_type, name, label, cmap = [None, None, None, None, None]
-    keys = [k for k, v in switch.items() if v]  # list of True keys
-    for key in keys: # loop over true keys
-        ref, variable_type, name, label, cmap = [key, 'pr', 'pr',   'pr [mm day{}]'.format(get_super('-1')),  'Greys'] if key in ['obj']  else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key,    'pr [mm day{}]'.format(get_super('-1')),  'Blues'] if key in ['pr']   else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'pr', 'pr',   'pr [mm day{}]'.format(get_super('-1')),   'Reds'] if key in ['pr99'] else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, key,  key,    'rel. humiid. [%]',                      'Greens'] if key in ['hur']  else [ref, variable_type, name, label, cmap] 
-        ref, variable_type, name, label, cmap = [key, 'rad', key,   'OLR [W m{}]'.format(get_super('-2')), 'Purples',] if key in ['rlut'] else [ref, variable_type, name, label, cmap] 
-        # ref, variable_type, name, label, cmap = [key, 'pr', 'pr', 'pr [mm day{}]'.format(get_super('-1')), 'Blues'] 
-         
-    return variable_class(ref, variable_type, name, cmap, label)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

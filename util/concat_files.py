@@ -145,7 +145,7 @@ def get_cmip6_cl(variable, model, experiment):
         p_hybridsigma = ds.ap + ds.b*ds.ps
     elif model == 'FGOALS-g3':
         p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-    elif model == 'UKESM1-0-LL':
+    elif model == 'UKESM1-0-LL': # (not used)
         p_hybridsigma = ds.lev+ds.b*ds.orog # in meters
         p_hybridsigma = 1000e2 * (1 -  0.0065*p_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065) # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula
     else:

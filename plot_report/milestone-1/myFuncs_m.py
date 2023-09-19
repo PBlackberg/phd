@@ -179,7 +179,7 @@ def delete_remaining_axes(fig, axes, num_subplots, nrows, ncols):
     for i in range(num_subplots, nrows * ncols):
         fig.delaxes(axes.flatten()[i])
 
-def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1):
+def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1, text_fontsize = 12):
     # colorbar position
     ax_position = ax.get_position()
     cbar_bottom = ax_position.y0 - cbar_height - pad
@@ -191,7 +191,7 @@ def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label =
     # colobar label
     cbar_text_x = ax_position.x0 + (ax_position.x1 - ax_position.x0) / 2
     cbar_text_y = cbar_bottom - text_pad
-    ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = 12, transform=fig.transFigure)
+    ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = text_fontsize, transform=fig.transFigure)
     return cbar
 
 def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 8, cbar_label = '', text_pad = 0.1):
@@ -248,9 +248,9 @@ def find_list_source(datasets, models_cmip5, models_cmip6, observations):
         sources.add('cmip5') if dataset in models_cmip5 else None
         sources.add('cmip6') if dataset in models_cmip6 else None
         sources.add('obs')   if dataset in observations else None
-    list_source = 'cmip5' if 'cmip5' in sources else 'test'
+    list_source = 'obs'   if 'obs'   in sources else 'test'
+    list_source = 'cmip5' if 'cmip5' in sources else list_source
     list_source = 'cmip6' if 'cmip6' in sources else list_source
-    list_source = 'obs'   if 'obs'   in sources else list_source
     list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
     return list_source
 
@@ -278,7 +278,7 @@ def data_available(source, dataset, experiment):
         return False
     return True
 
-# ------------------------------------------------------------ functions for getting available metric specs ----------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------ functions for getting available metric/variable specs ----------------------------------------------------------------------------------------------------- #
 
 class metric_class():
     ''' Gives metric: name (of saved dataset), option (data array in dataset), label, cmap, color (used for plots of calculated metrics) '''
@@ -348,8 +348,8 @@ def get_metric_object(switch):
         # ---------
         #  clouds
         # ---------
-        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'low cloud fraction [%]', 'Blues', 'b'] if key == 'lcf' else [variable_type, name, option, label, cmap, color]
-        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'high cloud fraction [%]', 'Blues', 'b'] if key == 'hcf' else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'low cloud frac [%]', 'Blues', 'b'] if key == 'lcf' else [variable_type, name, option, label, cmap, color]
+        variable_type, name, option, label, cmap, color = ['cl', f'{key}{reg(switch)}', f'{key}{reg(switch)}', 'high cloud frac [%]', 'Blues', 'b'] if key == 'hcf' else [variable_type, name, option, label, cmap, color]
 
         # -------------------
         # Moist static energy
