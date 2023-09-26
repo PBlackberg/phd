@@ -5,12 +5,12 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF                            # imports common operators
-import constructed_fields as cF                 # imports fields for testing
-import get_data as gD                           # imports functions to get data from gadi
+import constructed_fields as cF
+import get_data as gD
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                             # import dataset list
+import myVars as mV
 import myClasses as mC
+import myFuncs as mF
 
 # ------------------------
 #       Get data

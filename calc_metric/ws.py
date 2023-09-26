@@ -10,11 +10,11 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF                          # imports common operators and plotting
-import regrid as rG                           # imports regridder
+import regrid as rG
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                           # imports datasets and calculation specs
+import myVars as mV
 import myClasses as mC
+import myFuncs as mF
 
 # ------------------------
 #       Get data
@@ -79,7 +79,7 @@ def calc_daily_freq(switch, da_month, month, year, ws_values):
         sMean_day = scene.weighted(np.cos(np.deg2rad(scene.lat))).mean(dim=('lat','lon'), keep_attrs=True)
         sMean = np.append(sMean, sMean_day)
         fig, _ = plot_scene(switch, scene, title = f'ws daily freq, day: {day}, month: {month}, year: {year}')
-        mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_daily{mC.cloud_type(switch)}.pdf') if switch['save_example'] and year == 2000 and month == 'january' and day == 0 else None
+        mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_daily{mC.c_type(switch)}.pdf') if switch['save_example'] and year == 2000 and month == 'january' and day == 0 else None
     return sMean
 
 
@@ -96,7 +96,7 @@ def calc_month_freq(switch, da_month, month, year, ws_values):
     scene = rG.regrid_conserv(scene.sel(lat = slice(35,-35))) if mV.resolutions[0] == 'regridded' else scene.sel(lat = slice(30,-30)) 
     sMean = scene.weighted(np.cos(np.deg2rad(scene.lat))).mean(dim=('lat','lon'), keep_attrs=True)
     fig, _ = plot_scene(switch, scene, title = f'ws month freq, month: {month}, year: {year}')
-    mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_monthly{mC.cloud_type(switch)}.pdf') if switch['save_example'] and year == 2000 and month == 'january' else None
+    mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_monthly{mC.c_type(switch)}.pdf') if switch['save_example'] and year == 2000 and month == 'january' else None
     return sMean
 
 
@@ -139,20 +139,21 @@ def get_metric(switch, metric):
             plot_scan(switch, da_month, month, year) if switch['scan'] else None
 
             if metric == 'sMean':
-                metric_name =f'ws{mC.cloud_type(switch)}_sMean' 
+                metric_name =f'ws{mC.c_type(switch)}_sMean' 
                 sMean = calc_daily_freq(switch, da_month, month, year, ws_values) if mV.timescales[0] == 'daily' else None    # sMean is a list here 
                 sMean = calc_month_freq(switch, da_month, month, year, ws_values) if mV.timescales[0] == 'monthly' else sMean # sMean is a number here
                 ws_freq_sMean = np.append(ws_freq_sMean, sMean)
                 da_calc = ws_freq_sMean
 
             if metric == 'tMean':
-                metric_name =f'ws{mC.cloud_type(switch)}_tMean' 
+                metric_name =f'ws{mC.c_type(switch)}_tMean' 
                 ws_freq_tMean = calc_tMean_freq(da_month, ws_freq_tMean, ws_values) if mV.timescales[0] == 'monthly' else None
                 da_calc = ws_freq_tMean / (len(years)*12)
 
         # plot_scene(switch, ws_freq_tMean,  title = f'ws year freq, year: {year}') if mV.timescales[0] == 'monthly' and switch['tMean'] else [None, None]
     fig, _ = plot_scene(switch, ws_freq_tMean,  title = f'ws freq time mean') if mV.timescales[0] == 'monthly' and switch['tMean'] else [None, None ]
-    mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_{mC.cloud_type(switch)}_tMean.pdf') if switch['save_example'] and year == 2000 and month == 'january' else None
+    # mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_{mC.c_type(switch)}_tMean.pdf') if switch['save_example'] and year == 2000 and month == 'january' else None
+    mF.save_figure(fig, f'{home}/Desktop/ws', f'ws_{mC.c_type(switch)}_tMean.pdf') if switch['save_example'] else None
     mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/ws/', f'{mV.datasets[0]}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')
 
 
@@ -181,17 +182,17 @@ if __name__ == '__main__':
         'scan':                        False, 
 
         # choose type (up to one)
-        'low_clouds':                  True,
-        'high_clouds':                 False,
+        'low_clouds':                  False,
+        'high_clouds':                 True,
 
         # choose metrics
         'sMean':                       True, 
-        'tMean':                       True, 
+        'tMean':                       False, 
 
         # show / save
-        'show':                        False, # plots all timesteps
+        'show':                        True, # plots all timesteps
         'save_example':                False, # plots all timesteps
-        'save_to_desktop':             True  # does not plot
+        'save_to_desktop':             False  # does not plot
         }
     )
 

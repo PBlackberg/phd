@@ -5,52 +5,130 @@ import numpy as np
 import os
 import sys
 home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF                                # imports common operators
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                                 # imports common variables
+import myVars as mV
+import myClasses as mC
+import myFuncs as mF
 
 import warnings
 from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
-# ----------------------------------------------------------------------------- plot / format plot ----------------------------------------------------------------------------------------------------- #
-    
-def plot_one_scene(scene, metric, title = '', vmin = None, vmax = None):
+
+# ------------------------
+#       Get scene
+# ------------------------
+# ---------------------------------------------------------------------------------------- get scene ----------------------------------------------------------------------------------------------------- #
+def get_scene(switch, dataset, metric_class):
+    ''' Gets the metric and calculates the scene from options in the switch '''
+    source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+    if any(switch[key] for key in ['snapshot', 'tMean']):
+        title = f'{metric_class.name}'
+        axtitle = dataset
+        scene = mF.load_metric(metric_class, mV.folder_save[0], source, dataset, mV.conv_percentiles[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])[metric_class.name]
+        
+    if switch['change with warming']:
+        title = f'{metric_class.name}_change_with_warming'
+        axtitle = dataset
+        scene_historical = mF.load_metric(metric_class, mV.folder_save[0], source, dataset, mV.conv_percentiles[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])[metric_class.name]
+        scene_warm       = mF.load_metric(metric_class, mV.folder_save[0], source, dataset, mV.conv_percentiles[0], mV.timescales[0], mV.experiments[1], mV.resolutions[0])[metric_class.name]
+        scene = scene_warm - scene_historical
+        if switch['per kelvin']:
+                tas_class      = mF.get_metric_class({'tas': True, 'sMean': True, 'ascent': False, 'descent': False})
+                tas_historical = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.conv_percentiles[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])[metric_class.name].mean(dim='time')
+                tas_warm       = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.conv_percentiles[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0])[metric_class.name].mean(dim='time')
+                tas_change = tas_warm - tas_historical
+                scene = scene/tas_change
+                title = f'{title}_per_K (dTas)'
+                axtitle = f'{dataset:20} dT = {np.round(tas_change.data,2)} K'
+        if switch['per kelvin (ecs)']:
+            tas_change = mV.ecs_list[dataset] 
+            scene = scene/tas_change
+            title = f'{title}_per_K (ECS)'
+            axtitle = f'{dataset:20} ECS = {np.round(tas_change,2)} K'
+    return scene, title, axtitle
+
+
+
+# ----------------------------------------------------------------------------------------- get limits ----------------------------------------------------------------------------------------------------- #
+def get_limits(switch, metric_class, datasets):
+    ''' Some models and some geographical locations stick out, such that it rest of the distribution is hard to see. 
+    This function gives pre-set quantile limits within models (limiting extreme geographical locations) of between models (limiting extreme models) 
+    The limits can be set manually here too '''
+    qWithin_low, qWithin_high, qBetween_low, qBetween_high = 0, 1, 0, 1 # quantiles
+    if switch['snapshot']:
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.9, 0, 1]     if metric_class.name in ['pr_snapshot']        else [qWithin_low, qWithin_high, qBetween_low, qBetween_high]
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.8, 0, 1]     if metric_class.name in ['pr_rx1day_snapshot'] else [qWithin_low, qWithin_high, qBetween_low, qBetween_high] 
+
+    if switch['tMean']:
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.98, 0, 1]    if metric_class.name in ['pr_tMean']           else [qWithin_low, qWithin_high, qBetween_low, qBetween_high]
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.8, 0, 1]     if metric_class.name in ['pr_rx1day_tMean']    else [qWithin_low, qWithin_high, qBetween_low, qBetween_high] 
+
+    if switch['change with warming']:
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0.05, 0.95, 0, 1] if metric_class.name in ['pr_tMean']           else [qWithin_low, qWithin_high, qBetween_low, qBetween_high]
+        qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.9, 0, 1]     if metric_class.name in ['pr_rx1day_tMean']    else [qWithin_low, qWithin_high, qBetween_low, qBetween_high] 
+
+
+
+    vmin, vmax = mF.find_limits(switch, datasets, metric_class, get_scene, 
+                                qWithin_low, qWithin_high, qBetween_low, qBetween_high, # if calculating limits (set lims to '', or comment out)
+                                vmin = '', vmax = ''                                                                # if manually setting limits
+                                )      
+    if metric_class.var_type in ['wap', 'tas'] or switch['change with warming']:
+        vabs_max = np.maximum(np.abs(vmin), np.abs(vmax))
+        vmin, vmax = -vabs_max, vabs_max 
+    return vmin, vmax
+
+
+
+# ------------------------
+#     Plot map plot
+# ------------------------
+# --------------------------------------------------------------------------------------- plot / format plot ----------------------------------------------------------------------------------------------------- #
+def plot_one_scene(scene, metric_class, figure_title = '', ax_title= '', vmin = None, vmax = None):
+    ''' Plotting singular scene, mainly for testing '''
+    source = mV.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
+    if not mV.data_available(source, mV.datasets[0], mV.experiments[0], var = metric_class.var_type):
+        print('No data for this')
     fig, ax = mF.create_map_figure(width = 12, height = 4)
-    pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
+    pcm = mF.plot_axScene(ax, scene, metric_class.cmap, vmin = vmin, vmax = vmax)
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
     mF.scale_ax(ax, scaleby = 1.15)
-    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = metric.label, text_pad = 0.125)
+    mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = f'{metric_class.label}', text_pad = 0.125)
     mF.plot_xlabel(fig, ax, 'Lon', pad = 0.1, fontsize = 12)
     mF.plot_ylabel(fig, ax, 'Lat', pad = 0.055, fontsize = 12)
-    mF.plot_axtitle(fig, ax, title, xpad = 0.005, ypad = 0.025, fontsize = 15)
+    mF.plot_axtitle(fig, ax, figure_title, xpad = 0.005, ypad = 0.025, fontsize = 15)
     mF.format_ticks(ax, labelsize = 11)
     return fig
 
-def plot_multiple_scenes(datasets, metric, func, title = '',  vmin = None, vmax = None, switch = {}):
+def plot_multiple_scenes(datasets, metric_class, func, title = '', vmin = None, vmax = None, switch = {}):
+    ''' Plotting multiple scenes. Can plot up to 20 here '''
     nrows, ncols = 5, 4                                                     
     fig, axes = mF.create_map_figure(width = 14, height = 6, nrows=nrows, ncols=ncols)
     num_subplots = len(datasets)
     for i, dataset in enumerate(datasets):
+        source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+        if not mV.data_available(source, dataset, mV.experiments[0], var = metric_class.var_type):
+            continue
+
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
-        scene, _, axtitle = func(switch, dataset, metric)
-        pcm = mF.plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
+        scene, _, axtitle = func(switch, dataset, metric_class)
+        pcm = mF.plot_axScene(ax, scene, metric_class.cmap, vmin = vmin, vmax = vmax)
 
         mF.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
         mF.move_col(ax, -0.0435 + 0.0025) if col == 1 else None
-        mF.move_col(ax, -0.005 + 0.0025) if col == 2 else None
-        mF.move_col(ax, 0.0325 + 0.0025) if col == 3 else None
+        mF.move_col(ax, -0.005 + 0.0025)  if col == 2 else None
+        mF.move_col(ax, 0.0325 + 0.0025)  if col == 3 else None
 
-        mF.move_row(ax, 0.025+0.005) if row == 0 else None
-        mF.move_row(ax, 0.04+0.005) if row == 1 else None
-        mF.move_row(ax, 0.045+0.01) if row == 2 else None
-        mF.move_row(ax, 0.05+0.01) if row == 3 else None
-        mF.move_row(ax, 0.05+0.01) if row == 4 else None
+        mF.move_row(ax, 0.025+0.005)      if row == 0 else None
+        mF.move_row(ax, 0.04+0.005)       if row == 1 else None
+        mF.move_row(ax, 0.045+0.01)       if row == 2 else None
+        mF.move_row(ax, 0.05+0.01)        if row == 3 else None
+        mF.move_row(ax, 0.05+0.01)        if row == 4 else None
 
         mF.scale_ax(ax, 1.3)
 
@@ -63,100 +141,56 @@ def plot_multiple_scenes(datasets, metric, func, title = '',  vmin = None, vmax 
     cbar_position = [0.225, 0.095, 0.60, 0.02] # [left, bottom, width, height]
     cbar_ax = fig.add_axes(cbar_position)
     fig.colorbar(pcm, cax=cbar_ax, orientation='horizontal')
-    ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, metric.label, ha = 'center', fontsize = 10, transform=fig.transFigure)
+    ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, metric_class.label, ha = 'center', fontsize = 10, transform=fig.transFigure)
     mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig
 
-# ---------------------------------------------------------------------------------- Get scene and run ----------------------------------------------------------------------------------------------------- #
-
-def get_scene(switch, dataset, metric):
-    source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    if switch['snapshot']:
-        title = f'{metric.option}_snapshot'
-        axtitle = dataset
-        metric_name, metric_option = f'{metric.name}_snapshot', f'{metric.option}_snapshot'
-        ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.conv_percentiles[0]}thPrctile_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') if metric.variable_type == 'org' else None      
-        ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') if not metric.variable_type == 'org' else ds     
-        scene = ds[metric_option]
-        
-    if switch['climatology']:
-        title = f'{metric.option}_clim'
-        metric_name, metric_option = f'{metric.name}_tMean', f'{metric.option}_tMean'
-        ds = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc') 
-        axtitle = dataset
-        scene = ds[metric_option]
-
-    if switch['change with warming']:
-        title = f'{metric.option}_change_with_warming'
-        axtitle = dataset
-        metric_name, metric_option = f'{metric.name}_tMean', f'{metric.option}_tMean'
-        scene_historical = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')[metric_option]
-        scene_warm = xr.open_dataset(f'{mV.folder_save[0]}/{metric.variable_type}/metrics/{metric_name}/{source}/{dataset}_{metric_name}_{mV.timescales[0]}_{mV.experiments[1]}_{mV.resolutions[0]}.nc')[metric_option]
-        scene = scene_warm - scene_historical
-        if switch['per kelvin']:
-                tas_historical = xr.open_dataset(f'{mV.folder_save[0]}/tas/metrics/tas_sMean/{source}/{dataset}_tas_sMean_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['tas_sMean'].mean(dim='time')
-                tas_warm = xr.open_dataset(f'{mV.folder_save[0]}/tas/metrics/tas_sMean/{source}/{dataset}_tas_sMean_{mV.timescales[0]}_{mV.experiments[1]}_{mV.resolutions[0]}.nc')['tas_sMean'].mean(dim='time')
-                tas_change = tas_warm - tas_historical
-                axtitle = f'{dataset:20} dT = {np.round(tas_change.data,2)} K'
-                scene = scene/tas_change
-        if switch['per kelvin (ecs)']:
-            tas_change = mV.ecs_list[dataset] 
-            axtitle = f'{dataset:20} ECS = {np.round(tas_change,2)} K'
-            scene = scene/tas_change
-    return scene, title, axtitle
 
 
-def run_map_plot(switch):
+# ------------------------
+#     Run / save plot
+# ------------------------
+# ----------------------------------------------------------------------------------------- get scene and run ----------------------------------------------------------------------------------------------------- #
+def plot_metric(switch, metric_class):
+    if switch['one_scene']:
+        scene, metric_title, ax_title = get_scene(switch, mV.datasets[0], metric_class)
+        figure_title = f'{mV.datasets[0]}_{metric_title}'
+        vmin, vmax = get_limits(switch, metric_class, [mV.datasets[0]])      
+        fig = plot_one_scene(scene, metric_class, figure_title = figure_title, ax_title = ax_title, vmin = vmin, vmax = vmax)
+        mF.save_plot(switch, fig, home, figure_title)
+        plt.show() if switch['show'] else None
+
+    if switch['multiple_scenes']:
+        _, metric_title, _ = get_scene(switch, mV.datasets[0], metric_class) # tests calculation of one scene, and gets metric_title
+        source_list = mV.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
+        ifWith_obs = mV.find_ifWithObs(mV.datasets, mV.observations)
+        figure_title = f'{source_list}_{metric_title}{ifWith_obs}'
+        vmin, vmax = get_limits(switch, metric_class, mV.datasets)
+        fig = plot_multiple_scenes(mV.datasets, metric_class, get_scene, figure_title, vmin, vmax, switch)
+        mF.save_plot(switch, fig, home, figure_title)
+        plt.show() if switch['show'] else None
+
+def run_map_plot(switch_metric, switch):
     print(f'Plotting map_plot from {mV.timescales[0]} {mV.resolutions[0]} data')
     print(f'switch: {[key for key, value in switch.items() if value]}')
-
-    metric = mF.get_metric_object(switch) # gets labels associated with metric (full name, colorbar, units etc.)
-    source_list = mF.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
-    ifWith_obs = mF.find_ifWithObs(mV.datasets, mV.observations)
-
-    if switch['one scene']:
-        scene, title, _ = get_scene(switch, mV.datasets[0], metric)
-        title = f'{mV.datasets[0]}_{title}'
-        vmin, vmax = mF.find_limits(switch, [mV.datasets[0]], metric, get_scene, 
-                                 quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high=1, # if calculating limits (set lims to '', or comment out)
-                                 vmin = '', vmax = ''                                                                              # if manually setting limits
-                                 )      
-        vmin = -vmax if switch['change with warming'] or switch['wap'] else vmin                                                           
-        fig = plot_one_scene(scene, metric, title = title, vmin = vmin, vmax = vmax)
-
-    elif switch['multiple_scenes']:
-        _, title, _ = get_scene(switch, mV.datasets[0], metric)
-        title = f'{source_list}_{title}{ifWith_obs}'
-        vmin, vmax = mF.find_limits(switch, mV.datasets, metric, get_scene, 
-                                 quantileWithin_low = 0, quantileWithin_high = 1, quantileBetween_low = 0, quantileBetween_high=1,
-                                #  vmin = -200, vmax = 200                                                                        # Need fixed limits for common colorbar
-                                #  vmin = -4, vmax = 4         
-                                #  vmin = 0, vmax = 150
-                                 )  
-        vmin = -vmax if switch['change with warming'] or switch['wap'] else vmin
-        fig = plot_multiple_scenes(mV.datasets, metric, get_scene, title, vmin, vmax, switch)
-
-    folder = f'{mV.folder_save[0]}/{metric.variable_type}/figures/{metric.name}'
-    filename = title
-    mF.save_figure(fig, os.getcwd(), 'test.png')       if switch['save to cwd'] else None
-    mF.save_figure(fig, f'{home}/Desktop', 'test.pdf') if switch['save to desktop'] else None
-    mF.save_figure(fig, folder, f'{filename}.pdf')            if switch['save'] else None
-    plt.show() if switch['show'] else None
+    for metric in [k for k, v in switch_metric.items() if v] : # loop over metrics
+        metric_class = mC.get_metric_class(metric, switch, prctile = mV.conv_percentiles[0])
+        plot_metric(switch, metric_class)
 
 
+
+
+# ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    run_map_plot(switch = {
-        # ------
-        # metric
-        # ------
+    switch_metric = {
             # organization
             'obj':                 False,
 
             # precipitation
             'pr':                  False,
             'pr99':                False,
-            'rx1day_pr':           False,
-            'rx5day_pr':           False,
+            'pr_rx1day':           True,
+            'pr_rx5day':           False,
 
             # Large scale state
             'tas':                 False,
@@ -164,7 +198,7 @@ if __name__ == '__main__':
             'hur_250hpa':          False,
             'rlut':                False,
             'wap':                 False,
-            'stability':           True,
+            'stability':           False,
 
             # clouds
             'lcf':                 False,
@@ -172,31 +206,33 @@ if __name__ == '__main__':
 
             # moist static energy
             'hus':                 False,
-
-        # --------
-        # settings
-        # --------
+        }
+    
+    switch = {
         # scene type
-        'snapshot':            True,
-        'climatology':         False,
+        'snapshot':            False,
+        'tMean':               True,
         'change with warming': False,
 
         # masked by
-        'fixed area':          False,
+        'fixed area':          False, # only applies to org_metrics
         'descent':             False,
         'ascent':              False,
         'per kelvin':          False,
         'per kelvin (ecs)':    False,
         
+        # type of plot
+        'one_scene':           False,
+        'multiple_scenes':     True,
+
         # show/save
-        'one scene':           True,
-        'multiple_scenes':     False,
-        'show':                False,
-        'save':                False,
-        'save to cwd':         True,
-        'save to desktop':     False
+        'show':                True,
+        'save_test':           False,
+        'save_to_desktop':     False,
+        'save to cwd':         False,
         }
-    )
+    
+    run_map_plot(switch_metric, switch)
 
 
 
@@ -207,26 +243,6 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# '/Users/cbla0002/Documents/data/rad/metrics/rlut_d_snapshot/cmip6/BCC-CSM2-MR_rlut_d_snapshot_monthly_historical_regridded.nc'
 
 
 

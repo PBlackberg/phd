@@ -185,7 +185,7 @@ if __name__ == '__main__':
     home = os.path.expanduser("~")
     folder_code = f'{home}/Documents/code/phd'
     sys.path.insert(0, f'{folder_code}/functions')
-    import myFuncs as mF # imports common operators
+    import switch.myFuncs as mF # imports common operators
     import switch.myVars as mV # imports common variables
 
     # Chose observation to regrid

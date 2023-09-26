@@ -6,12 +6,12 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF                                # imports common operators
 import constructed_fields as cF                     # imports fields for testing
 import get_data as gD                               # imports functions to get data from gadi
 sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV                                 # imports common variables
 import myClasses as mC
+import myFuncs as mF                                # imports common operators
 
 # --------------------------------------------------------------------------------------------- Load data ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
@@ -295,14 +295,14 @@ if __name__ == '__main__':
         'fixed_area':         False,
 
         # choose metric
-        'obj_snapshot':       True,
+        'obj_snapshot':       False,
         'rome':               True, 
-        'rome_n':             True, 
-        'ni':                 True, 
-        'areafraction':       True, 
-        'o_area':             True,
-        'mean_area':          True,
-        'F_pr10':             True,
+        'rome_n':             False, 
+        'ni':                 False, 
+        'areafraction':       False, 
+        'o_area':             False,
+        'mean_area':          False,
+        'F_pr10':             False,
 
         # save
         'save':               True,
