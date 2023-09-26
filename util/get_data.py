@@ -91,14 +91,14 @@ def run_var_data(switch, source, dataset, experiment):
 # --------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
 def run_experiment(switch, source, dataset):
     for experiment in mV.experiments:
-        if not mF.data_available(source, dataset, experiment):
+        if not mV.data_available(source, dataset, experiment):
             continue
         print(f'\t {experiment}') if experiment else print(f'\t observational dataset')
         run_var_data(switch, source, dataset, experiment)
 
 def run_dataset(switch):
     for dataset in mV.datasets:
-        source = mF.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+        source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
         print(f'{dataset} ({source})')
         run_experiment(switch, source, dataset)
 
@@ -113,27 +113,25 @@ def run_get_data(switch):
 # ------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     run_get_data(switch = {
-        # ---------
-        # Variables
-        # ---------
-            # for precipitation and organization
-            'pr'  :          False,
+        # for precipitation and organization
+        'pr'  :          False,
 
-            # large scale state variables
-            'tas' :          False,
-            'hur' :          False,
-            'wap' :          False,    
-            'rlut':          False,
+        # large scale state variables
+        'tas' :          False,
+        'hur' :          False,
+        'wap' :          False,    
+        'rlut':          False,
 
-            # clouds
-            'cl'  :          False,
-            'p_hybridsigma': False,
+        # clouds
+        'cl'  :          False,
+        'p_hybridsigma': False,
 
-            # moist static energy
-            'ta' :           True,
-            'hus' :          False,
+        # moist static energy
+        'ta' :           True,
+        'hus' :          False,
 
-        'save_sample':   False
+        # save
+        'save_sample':   True
         }
     )
 
