@@ -21,6 +21,7 @@ def concat_files(path_folder, experiment):
     paths = []
     for file in files:
         paths = np.append(paths, os.path.join(path_folder, file))
+    # print(paths[0])
     ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
     return ds
 
