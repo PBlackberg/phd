@@ -3,10 +3,10 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import myFuncs as mF # imports common operator
 import concat_files as cfiles
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV # imports common variables
+import myVars as mV
+import myFuncs as mF
 
 # ------------------------
 #     Load variable
@@ -45,14 +45,14 @@ def get_var_data(source, dataset, experiment, var_name):
 
 # --------------------------------------------------------------------------------------------- Clouds ----------------------------------------------------------------------------------------------------- #
     if var_name == 'cl':
-        da, _ = cfiles.get_cmip5_cl('cl', dataset, experiment) if source == 'cmip5' else da
-        da, _ = cfiles.get_cmip6_cl('cl', dataset, experiment) if source == 'cmip6' else da # hybrid-sigma coords
+        da, _ = cfiles.get_cmip5_cl('cl', dataset, experiment) if source == 'cmip5' else [da, None]
+        da, _ = cfiles.get_cmip6_cl('cl', dataset, experiment) if source == 'cmip6' else [da, None] # hybrid-sigma coords
         da = da['cl'] 
         da.attrs['units'] = '%'
 
     if var_name == 'p_hybridsigma':
-        _, da = cfiles.get_cmip5_cl('p_hybridsigma', dataset, experiment) if source == 'cmip5' else da
-        _, da = cfiles.get_cmip6_cl('cl', dataset, experiment) if source == 'cmip6' else da # hybrid-sigma coords
+        _, da = cfiles.get_cmip5_cl('p_hybridsigma', dataset, experiment) if source == 'cmip5' else [None, da]
+        _, da = cfiles.get_cmip6_cl('cl', dataset, experiment)            if source == 'cmip6' else [None, da] # hybrid-sigma coords
         da = da['p_hybridsigma']
         da.attrs['units'] = '%'
 

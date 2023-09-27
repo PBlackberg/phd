@@ -29,16 +29,19 @@ def load_data(switch, source, dataset, experiment, var):
             e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))              # saturation water vapor pressure
             r_s = 0.622 * e_s/p
             da = (r/r_s)*100                                              # relative humidity could do e/e_s
-        if var == 'stability':                                            # Calculated as differnece in potential temperature at two height slices
+        elif var == 'stability':                                            # Calculated as differnece in potential temperature at two height slices
             da = gD.get_var_data(source, dataset, experiment, 'ta')
             theta =  da * (1000e2 / da.plev)**(287/1005)                  # theta = T (P_0/P)^(R_d/C_p)
-            plevs1, plevs2 = [slice(400e2, 250e2), slice(250e2, 400e2)] if not dataset == 'ERA5' else [slice(925e2, 700e2), slice(700e2, 925e2)] # pressure levels in ERA are reversed to cmip
-            da1, da2 = theta.sel(plev=plevs1), theta.sel(plev=plevs2)
-            da = ((da1 * da1.plev).sum(dim='plev') / da1.plev.sum(dim='plev')) - ((da2 * da2.plev).sum(dim='plev') / da2.plev.sum(dim='plev'))        
-        if var in ['lcf', 'hcf']:
+            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]        # pressure levels in ERA are reversed to cmip
+            da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))] if not dataset == 'ERA5' else [theta.sel(plev=slice(plevs1[1], plevs1[0])), theta.sel(plev=slice(plevs2[1], plevs2[0]))] 
+            da = ((da1 * da1.plev).sum(dim='plev') / da1.plev.sum(dim='plev')) - ((da2 * da2.plev).sum(dim='plev') / da2.plev.sum(dim='plev'))   
+
+        elif var in ['lcf', 'hcf']:
             p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma')
-            da.where((p_hybridsigma <= 1500e2) & (p_hybridsigma >= 600e2), 0).max(dim='lev') if switch['lcf'] else None
-            da.where((p_hybridsigma <= 250e2) & (p_hybridsigma >= 0), 0).max(dim='lev')      if switch['hcf'] else None
+            da = gD.get_var_data(source, dataset, experiment, 'cl')
+            plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
+            da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if switch['hcf'] else da
+            da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if switch['lcf'] else da
         else:
             da = gD.get_var_data(source, dataset, experiment, f'{var}')
     return da
@@ -58,7 +61,8 @@ def pick_vert_reg(switch, dataset, da):
         da = da.sel(plev = 700e2)
         region = '_700hpa'
     if switch['vMean']:
-        plevs = slice(850e2, 0) if not dataset == 'ERA5' else slice(0, 850e2)
+        plevs = [850e2, 0]
+        plevs = slice(plevs[0], plevs[1]) if not dataset == 'ERA5' else slice(plevs[1], plevs[0])
         da = da.sel(plev=plevs)
         da = (da * da.plev).sum(dim='plev') / da.plev.sum(dim='plev') # free troposphere (most values at 1000 hPa over land are NaN)
         region = ''
@@ -142,10 +146,12 @@ def run_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_regio
 
 def run_variable(switch, source, dataset, experiment):
     for var in [k for k, v in switch.items() if v] : # loop over true keys
-        if var in ['hur', 'rlut', 'tas', 'wap', 'stability']:
+        if var in ['hur', 'rlut', 'tas', 'wap', 'stability', 'lcf', 'hcf']:
             print(f'{var}')
+            if not mV.data_available(source, dataset, experiment, var):
+                continue
             da =           load_data(switch, source, dataset, experiment, var)
-            da, vert_reg = pick_vert_reg(switch, dataset, da)
+            da, vert_reg = pick_vert_reg(switch, dataset, da) if var in ['hur', 'wap'] else [da, '']
             da, hor_reg =  pick_hor_reg(switch, source, dataset, experiment, da)
             run_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_reg)
 
@@ -175,23 +181,23 @@ if __name__ == '__main__':
     run_large_scale_state_metrics(switch = {
         # choose type of data to calculate metric on
         'constructed_fields': False, 
-        'sample_data':        True,
-        'gadi_data':          False,
+        'sample_data':        False,
+        'gadi_data':          True,
 
         # choose variable (can choose multiple)
-        'hur':                False,
-        'rlut':               False, 
-        'tas':                False,
+        'hur':                True,
+        'rlut':               True, 
+        'tas':                True,
         'wap':                False,
-        'stability':          False,
-        'lcf':                False,
-        'hcf':                False,
+        'stability':          True,
+        'lcf':                True,
+        'hcf':                True,
 
         # Choose vertical region (choose up to one)
         '250hpa':             False,
-        '500hpa':             True,
+        '500hpa':             False,
         '700hpa':             False,
-        'vMean':              False, 
+        'vMean':              True, 
 
         # Choose horizontal region (choose up to one)
         'ascent':             True,

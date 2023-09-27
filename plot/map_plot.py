@@ -172,6 +172,7 @@ def plot_metric(switch, metric_class):
 
 def run_map_plot(switch_metric, switch):
     print(f'Plotting map_plot from {mV.timescales[0]} {mV.resolutions[0]} data')
+    print(f'metric: {[key for key, value in switch_metric.items() if value]}')
     print(f'switch: {[key for key, value in switch.items() if value]}')
     for metric in [k for k, v in switch_metric.items() if v] : # loop over metrics
         metric_class = mC.get_metric_class(metric, switch, prctile = mV.conv_percentiles[0])
@@ -189,14 +190,13 @@ if __name__ == '__main__':
             # precipitation
             'pr':                  False,
             'pr99':                False,
-            'pr_rx1day':           True,
+            'pr_rx1day':           False,
             'pr_rx5day':           False,
 
             # Large scale state
             'tas':                 False,
             'hur':                 False,
-            'hur_250hpa':          False,
-            'rlut':                False,
+            'rlut':                True,
             'wap':                 False,
             'stability':           False,
 
@@ -210,26 +210,29 @@ if __name__ == '__main__':
     
     switch = {
         # scene type
-        'snapshot':            False,
-        'tMean':               True,
+        'snapshot':            True,
+        'tMean':               False,
         'change with warming': False,
 
         # masked by
         'fixed area':          False, # only applies to org_metrics
-        'descent':             False,
+        '250hpa':              False,
+        '500hpa':              False,
+        '700hpa':              False,
+        'descent':             True,
         'ascent':              False,
         'per kelvin':          False,
         'per kelvin (ecs)':    False,
         
         # type of plot
-        'one_scene':           False,
-        'multiple_scenes':     True,
+        'one_scene':           True,
+        'multiple_scenes':     False,
 
         # show/save
-        'show':                True,
+        'show':                False,
         'save_test':           False,
         'save_to_desktop':     False,
-        'save to cwd':         False,
+        'save to cwd':         True,
         }
     
     run_map_plot(switch_metric, switch)

@@ -134,7 +134,7 @@ def load_metric(metric_class, folder_save, source, dataset, conv_percentile = '9
 def save_plot(switch, fig, home, filename):
     save_figure(fig, f'{home}/Desktop',            'test.pdf')       if switch['save_test']      else None
     save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf') if switch['save_to_desktop'] else None
-    save_figure(fig, f'{os.getcwd()}/test_plots', f'{filename}.png') if switch['save to cwd']   else None
+    save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if switch['save to cwd']   else None
 
 
 

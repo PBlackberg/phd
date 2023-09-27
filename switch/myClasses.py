@@ -99,18 +99,18 @@ def get_metric_class(metric, switch, prctile = ''):
     # -----------------------------
     # large-scale environment state
     # -----------------------------
-    var_type, met_name, label, cmap, color = ['ecs', 'ecs',                                                        'ECS [K]',               'Reds',     'r']      if metric in ['ecs'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['tas',   f'tas{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       r'temp. [$\degree$C]',   'coolwarm', 'r']      if metric in ['tas'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['hur',   f'hur{h_reg(switch)}{m_type(switch)}',                      'rel. humid. [%]',       'Greens',   'g']      if metric in ['hur'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['wap',   f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       r'wap [hPa day$^{-1}$]', 'RdBu_r',   'k']      if metric in ['wap'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['ta',    f'stability{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', r'wap [hPa day$^{-1}$]', 'RdBu_r',   'k']      if metric in ['ta'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['rlut',  f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       r'OLR [W m${^-2}$]',     'Purples',  'purple'] if metric in ['rlut'] else [var_type, met_name, label, cmap, color]                    
+    var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                      'ECS [K]',                 'Reds',     'r']      if metric in ['ecs']       else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                      r'temp. [$\degree$C]',     'coolwarm', 'r']      if metric in ['tas']       else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['hur',       f'hur{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       'rel. humid. [%]',         'Greens',   'g']      if metric in [f'hur']      else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['wap',       f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       r'wap [hPa day$^{-1}$]',   'RdBu_r',   'k']      if metric in ['wap']       else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                r'temp. [hPa day$^{-1}$]', 'Reds',     'k']      if metric in ['stability'] else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                     r'OLR [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rlut']      else [var_type, met_name, label, cmap, color]                    
 
     # ---------
     #  clouds
     # ---------
     var_type, met_name, label, cmap, color = ['lcf', f'lcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', 'low cloud frac. [%]',                'Blues', 'b'] if metric in ['lcf'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['hcf', f'hcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', 'high cloud frac. [%]',               'Blues', 'b'] if metric in ['lcf'] else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['hcf', f'hcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', 'high cloud frac. [%]',               'Blues', 'b'] if metric in ['hcf'] else [var_type, met_name, label, cmap, color]
     var_type, met_name, label, cmap, color = ['ws',  f'ws{c_type(switch)}{m_type(switch)}',                r'weather state freq. [Nb day$^-1$]', 'Blues', 'b'] if metric in ['ws']  else [var_type, met_name, label, cmap, color]
 
     # -------------------

@@ -27,21 +27,21 @@ models_cmip5 = [
 # 14 models used in Schiro not [1, 2, 6, 13, 15]
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    'INM-CM5-0',         # 1
-    'IITM-ESM',          # 2
-    'FGOALS-g3',         # 3                                      
-    'MIROC6',            # 4                                      
-    'MPI-ESM1-2-LR',     # 5                                      
-    'KIOST-ESM',         # 6 
-    'BCC-CSM2-MR',       # 7                                      
-    'NorESM2-MM',        # 8                                      
-    'MRI-ESM2-0',        # 9                                      
-    'GFDL-CM4',          # 10                                     
-    'CMCC-ESM2',         # 11                                     
-    'NESM3',             # 12 # up to here                                 
-    'EC-Earth3',         # 13
-    'CNRM-CM6-1',        # 14                                     
-    'IPSL-CM6A-LR',      # 15
+    # 'INM-CM5-0',         # 1
+    # 'IITM-ESM',          # 2
+    # 'FGOALS-g3',         # 3                                      
+    # 'MIROC6',            # 4                                      
+    # 'MPI-ESM1-2-LR',     # 5                                      
+    # 'KIOST-ESM',         # 6 
+    # 'BCC-CSM2-MR',       # 7                                      
+    # 'NorESM2-MM',        # 8                                      
+    # 'MRI-ESM2-0',        # 9                                      
+    # 'GFDL-CM4',          # 10                                     
+    # 'CMCC-ESM2',         # 11                                     
+    # 'NESM3',             # 12 # up to here                                 
+    # 'EC-Earth3',         # 13
+    # 'CNRM-CM6-1',        # 14                                     
+    # 'IPSL-CM6A-LR',      # 15
     'TaiESM1',           # 16                                       
     'CESM2-WACCM',       # 17    
     'CanESM5',           # 18
@@ -66,8 +66,8 @@ datasets = models_cmip5 + models_cmip6 + observations + other
 
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 experiments = [
@@ -95,8 +95,8 @@ timescales_plot = [
     ]
 
 folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
+    # os.path.expanduser("~") + '/Documents/data',
+    '/g/data/k10/cb4968/data'
     ]
 
 
@@ -237,6 +237,7 @@ def data_available(source = '', dataset = '', experiment = '', var = ''):
     
     # available variables
     if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
+        print(f'No {var} data for this dataset')
         return False
     return True
 

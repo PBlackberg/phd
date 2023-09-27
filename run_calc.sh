@@ -28,9 +28,9 @@ python /home/565/cb4968/Documents/code/phd/switch/calculate_clouds.py $PBS_NCPUS
 # --------------------
 # interactive terminal
 # --------------------
-# qsub -I -qnormal  -Pw40 -lwalltime=02:00:00,ncpus=1,mem=50GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/rt52+gdata/k10+gdata/hh5,wd
+qsub -I -qnormal  -Pw40 -lwalltime=05:00:00,ncpus=1,mem=50GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/rt52+gdata/k10+gdata/hh5,wd
 module use /g/data/hh5/public/modules
 module load conda/analysis3-unstable
 
 
-
+scp -r cb4968@gadi-dm.nci.org.au:/g/data/k10/cb4968/data/cl/sample_data/cmip6 /Users/cbla0002/Desktop/metrics
