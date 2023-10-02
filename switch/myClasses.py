@@ -39,14 +39,6 @@ def h_reg(switch):
     region = '_a' if switch['ascent']  else region
     return region
 
-def c_type(switch):
-    ''' picks region of ascent / descent '''
-    cloud_type = ''
-    for met_type in [k for k, v in switch.items() if v]:
-        cloud_type = '_low_clouds'  if met_type in ['low_clouds']  else cloud_type
-        cloud_type = '_high_clouds' if met_type in ['high_clouds'] else cloud_type
-    return cloud_type
-
 def exceptions(metric, switch, cmap, label):
     for met_type in [k for k, v in switch.items() if v]:
         cmap = 'RdBu_r' if met_type in ['change with warming'] else cmap
@@ -69,54 +61,55 @@ class metric_class():
         self.cmap          = cmap
         self.color         = color
 
-def get_metric_class(metric, switch, prctile = ''):
+def get_metric_class(metric, switch, prctile = '95'):
     ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for plots of metrics '''
     var_type, met_name, label, cmap, color = [None, None, None, 'Greys', 'k']
     # -------------
     # precipitation
     # -------------
-    var_type, met_name, label, cmap, color = ['pr', f'pr{m_type(switch)}',                                       r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr']        else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['pr', f'p_90{m_type(switch)}',                                     r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_90']     else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['pr', f'p_95{m_type(switch)}',                                     r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_95']     else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['pr', f'p_97{m_type(switch)}',                                     r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_97']     else [var_type, met_name, label, cmap, color] 
-    var_type, met_name, label, cmap, color = ['pr', f'p_99{m_type(switch)}',                                     r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_99']     else [var_type, met_name, label, cmap, color] 
-    var_type, met_name, label, cmap, color = ['pr', f'pr_rx1day{m_type(switch)}',                                r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_rx1day'] else [var_type, met_name, label, cmap, color] 
-    var_type, met_name, label, cmap, color = ['pr', f'pr_rx5day{m_type(switch)}',                                r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_rx5day'] else [var_type, met_name, label, cmap, color] 
-    var_type, met_name, label, cmap, color = ['pr', f'pr_o{m_type(switch)}{c_prctile(prctile)}{t_type(switch)}', r'pr [mm day$^{-1}$]', 'Blues', 'b'] if metric in ['pr_o']      else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['pr',        f'pr{m_type(switch)}',                                        r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr']           else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_90{m_type(switch)}',                                     r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_90']        else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_95{m_type(switch)}',                                     r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_95']        else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_97{m_type(switch)}',                                     r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_97']        else [var_type, met_name, label, cmap, color] 
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_99{m_type(switch)}',                                     r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_99']        else [var_type, met_name, label, cmap, color] 
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_rx1day{m_type(switch)}',                                 r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_rx1day']    else [var_type, met_name, label, cmap, color] 
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_rx5day{m_type(switch)}',                                 r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_rx5day']    else [var_type, met_name, label, cmap, color] 
+    var_type, met_name, label, cmap, color = ['pr',        f'pr_o{m_type(switch)}{c_prctile(prctile)}{t_type(switch)}',  r'pr [mm day$^{-1}$]',                'Blues',    'b']      if metric in ['pr_o']         else [var_type, met_name, label, cmap, color]
 
     # ------------
     # organization
     # ------------
-    var_type, met_name, label, cmap, color = ['org', f'obj_snapshot{c_prctile(prctile)}{t_type(switch)}', 'obj [binary]',      cmap, color] if metric in ['obj']          else [var_type, met_name, label, cmap, color]      
-    var_type, met_name, label, cmap, color = ['org', f'rome{c_prctile(prctile)}{t_type(switch)}',         r'ROME [km$^2$]',    cmap, color] if metric in ['rome']         else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['org', f'rome_n{c_prctile(prctile)}{t_type(switch)}',       r'ROME [km$^2$]',    cmap, color] if metric in ['rome_n']       else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['org', f'ni{c_prctile(prctile)}{t_type(switch)}',           'number index [Nb]', cmap, color] if metric in ['ni']           else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['org', f'areafraction{c_prctile(prctile)}{t_type(switch)}', 'area frac. [N%]',   cmap, color] if metric in ['areafraction'] else [var_type, met_name, label, cmap, color]   
-    var_type, met_name, label, cmap, color = ['org', f'o_area{c_prctile(prctile)}{t_type(switch)}',       r'area [km$^2$]',    cmap, color] if metric in ['o_area']       else [var_type, met_name, label, cmap, color]  
-    var_type, met_name, label, cmap, color = ['org', f'mean_area{c_prctile(prctile)}{t_type(switch)}',    r'area [km$^2$]',    cmap, color] if metric in ['mean_area']    else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['org', f'F_pr10{c_prctile(prctile)}{t_type(switch)}',       r'area [km$^2$]',    cmap, color] if metric in ['F_pr10']       else [var_type, met_name, label, cmap, color]   
+    var_type, met_name, label, cmap, color = ['org',       f'obj_snapshot{c_prctile(prctile)}{t_type(switch)}',         'obj [binary]',                       cmap,       color]    if metric in ['obj']          else [var_type, met_name, label, cmap, color]      
+    var_type, met_name, label, cmap, color = ['org',       f'rome{c_prctile(prctile)}{t_type(switch)}',                 r'ROME [km$^2$]',                     cmap,       color]    if metric in ['rome']         else [var_type, met_name, label, cmap, color]    
+    var_type, met_name, label, cmap, color = ['org',       f'rome_n{c_prctile(prctile)}{t_type(switch)}',               r'ROME [km$^2$]',                     cmap,       color]    if metric in ['rome_n']       else [var_type, met_name, label, cmap, color]    
+    var_type, met_name, label, cmap, color = ['org',       f'ni{c_prctile(prctile)}{t_type(switch)}',                   'number index [Nb]',                  cmap,       color]    if metric in ['ni']           else [var_type, met_name, label, cmap, color]    
+    var_type, met_name, label, cmap, color = ['org',       f'areafraction{c_prctile(prctile)}{t_type(switch)}',         'area frac. [N%]',                    cmap,       color]    if metric in ['areafraction'] else [var_type, met_name, label, cmap, color]   
+    var_type, met_name, label, cmap, color = ['org',       f'o_area{c_prctile(prctile)}{t_type(switch)}',               r'area [km$^2$]',                     cmap,       color]    if metric in ['o_area']       else [var_type, met_name, label, cmap, color]  
+    var_type, met_name, label, cmap, color = ['org',       f'mean_area{c_prctile(prctile)}{t_type(switch)}',            r'area [km$^2$]',                     cmap,       color]    if metric in ['mean_area']    else [var_type, met_name, label, cmap, color]    
+    var_type, met_name, label, cmap, color = ['org',       f'F_pr10{c_prctile(prctile)}{t_type(switch)}',               r'area [km$^2$]',                     cmap,       color]    if metric in ['F_pr10']       else [var_type, met_name, label, cmap, color]   
 
     # -----------------------------
     # large-scale environment state
     # -----------------------------
-    var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                      'ECS [K]',                 'Reds',     'r']      if metric in ['ecs']       else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                      r'temp. [$\degree$C]',     'coolwarm', 'r']      if metric in ['tas']       else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['hur',       f'hur{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       'rel. humid. [%]',         'Greens',   'g']      if metric in [f'hur']      else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['wap',       f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       r'wap [hPa day$^{-1}$]',   'RdBu_r',   'k']      if metric in ['wap']       else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                r'temp. [hPa day$^{-1}$]', 'Reds',     'k']      if metric in ['stability'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                     r'OLR [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rlut']      else [var_type, met_name, label, cmap, color]                    
+    var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                            'Reds',     'r']      if metric in ['ecs']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'temp. [$\degree$C]',                'coolwarm', 'r']      if metric in ['tas']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['hur',       f'hur{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'rel. humid. [%]',                    'Greens',   'g']      if metric in ['hur']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['wap',       f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        r'wap [hPa day$^{-1}$]',              'RdBu_r',   'k']      if metric in ['wap']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'temp. [hPa day$^{-1}$]',            'Reds',     'k']      if metric in ['stability']    else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rlut']         else [var_type, met_name, label, cmap, color]                    
 
     # ---------
     #  clouds
     # ---------
-    var_type, met_name, label, cmap, color = ['lcf', f'lcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', 'low cloud frac. [%]',                'Blues', 'b'] if metric in ['lcf'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['hcf', f'hcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}', 'high cloud frac. [%]',               'Blues', 'b'] if metric in ['hcf'] else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['ws',  f'ws{c_type(switch)}{m_type(switch)}',                r'weather state freq. [Nb day$^-1$]', 'Blues', 'b'] if metric in ['ws']  else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['lcf',       f'lcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'low cloud frac. [%]',                'Blues',    'b']      if metric in ['lcf']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['hcf',       f'hcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'high cloud frac. [%]',               'Blues',    'b']      if metric in ['hcf']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['ws',        f'ws_lc{m_type(switch)}',                                    r'weather state freq. [Nb day$^{-1}$]', 'Blues',    'b']      if metric in ['ws_lc']        else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['ws',        f'ws_hc{m_type(switch)}',                                    r'weather state freq. [Nb day$^{-1}$]', 'Blues',    'b']      if metric in ['ws_hc']        else [var_type, met_name, label, cmap, color]
 
     # -------------------
     # Moist static energy
     # -------------------
-    var_type, met_name, label, cmap, color = ['hus',   f'hus{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',       'spec. humid. [%]',       'Greens',   'g']      if metric in ['hus'] else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['hus',       f'hus{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'spec. humid. [%]',                   'Greens',   'g']      if metric in ['hus']          else [var_type, met_name, label, cmap, color]
 
     # ---------------------------
     #  Exceptions / Manually set

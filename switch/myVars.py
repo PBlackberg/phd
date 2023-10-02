@@ -27,7 +27,7 @@ models_cmip5 = [
 # 14 models used in Schiro not [1, 2, 6, 13, 15]
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    # 'INM-CM5-0',         # 1
+    'INM-CM5-0',         # 1
     # 'IITM-ESM',          # 2
     # 'FGOALS-g3',         # 3                                      
     # 'MIROC6',            # 4                                      
@@ -42,10 +42,10 @@ models_cmip6 = [
     # 'EC-Earth3',         # 13
     # 'CNRM-CM6-1',        # 14                                     
     # 'IPSL-CM6A-LR',      # 15
-    'TaiESM1',           # 16                                       
-    'CESM2-WACCM',       # 17    
-    'CanESM5',           # 18
-    'UKESM1-0-LL',       # 19              
+    # 'TaiESM1',           # 16                                       
+    # 'CESM2-WACCM',       # 17    
+    # 'CanESM5',           # 18
+    # 'UKESM1-0-LL',       # 19              
     ]
 
 other = [
@@ -57,23 +57,24 @@ observations = [
     # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
     # 'GPCP_1998-2009',    # high offset in high percentile precipitation
     # 'GPCP_2010-2022',    # low offset in high percentile precipitation
-    # 'ISCCP',               # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html)
-    # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#)
-    # 'ERA5'               # humidity (from project rt52 on gadi)
+    # 'ISCCP',               # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
+    # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
+    # 'ERA5'               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
     ]
 
 datasets = models_cmip5 + models_cmip6 + observations + other
 
 
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
+    # 'annual'
     ]
 
 experiments = [
     'historical',     
     # 'rcp85',             # warm scenario for cmip5
-    'ssp585',              # warm scenario for cmip6
+    # 'ssp585',              # warm scenario for cmip6
     # ''                   # observations
     ]
 
@@ -88,15 +89,9 @@ conv_percentiles = [       # for organization metrics
     # '97'
     ]
 
-timescales_plot = [
-    # 'daily',
-    # 'monthly',
-    # 'annual',
-    ]
-
 folder_save = [
-    # os.path.expanduser("~") + '/Documents/data',
-    '/g/data/k10/cb4968/data'
+    os.path.expanduser("~") + '/Documents/data',
+    # '/g/data/k10/cb4968/data'
     ]
 
 

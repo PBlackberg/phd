@@ -1,12 +1,5 @@
+d = {'a':False, 'b':False, 'c':True}
 
+first_true_key = next((key for key, value in d.items() if value), None)
 
-a = [1, 2, 3]
-
-for a, idx in enumerate([1, 5, 10]):
-    print('a', a)
-    print('idx', idx)
-
-
-
-
-
+print(first_true_key)

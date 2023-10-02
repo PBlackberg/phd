@@ -64,14 +64,14 @@ def resample_timeMean(da, timeMean_option=''):
         da = da.assign_coords(season=["MAM", "JJA", "SON", "DJF"])
         da = da.isel(year=slice(1, None))
     elif timeMean_option == 'monthly' and len(da) > 360:
-        da = da.resample(time='M').mean(dim='time', keep_attrs=True)
+        da = da.resample(time='1MS').mean(dim='time')
     elif timeMean_option == 'daily' or not timeMean_option:
         pass
     else:
         pass
     return da
 
-def find_limits(switch, datasets, metric_class, func = resample_timeMean, # dummy function
+def find_limits(switchM, datasets, metric_class, func = resample_timeMean, # dummy function (use function for getting metric when calling)
                 quantileWithin_low = 0, quantileWithin_high = 1, 
                 quantileBetween_low = 0, quantileBetween_high=1, 
                 vmin = '', vmax = ''):    
@@ -79,7 +79,7 @@ def find_limits(switch, datasets, metric_class, func = resample_timeMean, # dumm
     if vmin == '' and vmax == '':
         vmin_list, vmax_list = [], []
         for dataset in datasets:
-            data, _, _ = func(switch, dataset, metric_class)
+            data, _, _ = func(switchM, dataset, metric_class)
             vmin_list, vmax_list = np.append(vmin_list, np.nanquantile(data, quantileWithin_low)), np.append(vmax_list, np.nanquantile(data, quantileWithin_high))
         return np.nanquantile(vmin_list, quantileBetween_low), np.nanquantile(vmax_list, quantileBetween_high)
     else:
@@ -116,6 +116,7 @@ def timing_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         ''' wrapper '''
+        print(f'{func.__name__} started')
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
@@ -124,17 +125,14 @@ def timing_decorator(func):
         return result
     return wrapper
 
-def load_metric(metric_class, folder_save, source, dataset, conv_percentile = '95', timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
-    if metric_class.var_type == 'org':
-        ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{conv_percentile}thPrctile_{timescale}_{experiment}_{resolution}.nc')     
-    else:
-        ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
+def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
+    ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
     return ds
 
 def save_plot(switch, fig, home, filename):
-    save_figure(fig, f'{home}/Desktop',            'test.pdf')       if switch['save_test']      else None
-    save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf') if switch['save_to_desktop'] else None
-    save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if switch['save to cwd']   else None
+    save_figure(fig, f'{home}/Desktop',            'test.pdf')           if switch['save_test_desktop']   else None
+    save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if switch['save_folder_desktop'] else None
+    save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if switch['save_folder_cwd']     else None
 
 
 
@@ -216,7 +214,7 @@ def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label =
     ax.text(cbar_text_x, cbar_text_y, cbar_label, ha = 'center', fontsize = 12, transform=fig.transFigure)
     return cbar
 
-def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 8, cbar_label = '', text_pad = 0.1):
+def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 8, cbar_label = '', text_pad = 0.1, fontsize = 10):
     # colorbar position
     ax_position = ax.get_position()
     cbar_bottom = ax_position.y0
@@ -229,12 +227,12 @@ def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 
     # colobar label
     cbar_text_y = ax_position.y0 + (ax_position.y1 - ax_position.y0) / 2
     cbar_text_x = cbar_left + cbar_width + text_pad
-    ax.text(cbar_text_x, cbar_text_y, cbar_label, rotation = 'vertical', va = 'center', fontsize = 10, transform=fig.transFigure)
+    ax.text(cbar_text_x, cbar_text_y, cbar_label, rotation = 'vertical', va = 'center', fontsize = fontsize, transform=fig.transFigure)
     return cbar
 
 
 
-# -------------------------------------------------------------------------------- Cartopy --------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------- Cartopy --------------------------------------------------------------------------------------------------- #
 def create_map_figure(width, height, nrows = 1, ncols = 1, projection = ccrs.PlateCarree(central_longitude=180)):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height), subplot_kw=dict(projection=projection))
     return fig, axes
@@ -252,7 +250,7 @@ def format_ticks(ax, i = 0, num_subplots = 1, ncols = 1, col = 0, labelsize = 8,
         ax.yaxis.set_tick_params(labelsize=labelsize)
         ax.yaxis.set_ticks_position('both')
 
-def plot_axScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
+def plot_axMapScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
     lat = scene.lat
     lon = scene.lon
     lonm,latm = np.meshgrid(lon,lat)
@@ -263,7 +261,7 @@ def plot_axScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
 
 def plot_one_scene(scene, metric, figure_title = '', ax_title= '', vmin = None, vmax = None):
     fig, ax = create_map_figure(width = 12, height = 4)
-    pcm = plot_axScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
+    pcm = plot_axMapScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
     move_col(ax, moveby = -0.055)
     move_row(ax, moveby = 0.075)
     scale_ax(ax, scaleby = 1.15)
@@ -274,65 +272,22 @@ def plot_one_scene(scene, metric, figure_title = '', ax_title= '', vmin = None, 
     format_ticks(ax, labelsize = 11)
     return fig
 
-def plot_multiple_scenes(datasets, metric_class, func, title = '', vmin = None, vmax = None, switch = {}): # for copying
-    ''' For copying and modifying in new script (calling this script as mF) '''
-    nrows, ncols = 5, 4 # set these to necessary shape                                             
-    fig, axes = mF.create_map_figure(width = 14, height = 6, nrows=nrows, ncols=ncols)
-    num_subplots = len(datasets)
-    for i, dataset in enumerate(datasets):
-        row = i // ncols
-        col = i % ncols
-        ax = axes.flatten()[i]
-        scene, _, axtitle = func(switch, dataset, metric_class)
-        pcm = mF.plot_axScene(ax, scene, metric_class.cmap, vmin = vmin, vmax = vmax)
-
-        mF.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
-
-        mF.move_row(ax, 0.025+0.005)      if row == 0 else None
-
-        mF.scale_ax(ax, 1.3)
-        mF.plot_xlabel(fig, ax, 'Lon', pad = 0.064, fontsize = 8) if i >= num_subplots-ncols else None
-        mF.plot_ylabel(fig, ax, 'Lat', pad = 0.0375, fontsize = 8) if col == 0 else None
-        mF.format_ticks(ax, i, num_subplots, ncols, col, labelsize = 9)
-        mF.plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095, fontsize = 9)
-    ax.text(0.5, 0.95, title, ha = 'center', fontsize = 15, transform=fig.transFigure)
-    cbar_position = [0.225, 0.095, 0.60, 0.02] # [left, bottom, width, height]
-    cbar_ax = fig.add_axes(cbar_position)
-    fig.colorbar(pcm, cax=cbar_ax, orientation='horizontal')
-    ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, metric_class.label, ha = 'center', fontsize = 10, transform=fig.transFigure)
-    mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
-    return fig
-
 
 
 # -------------------------------------------------------------------------------------- Trend --------------------------------------------------------------------------------------------------- #
+def plot_scatter(ax, x, y, metric_class):
+    h = ax.scatter(x, y, facecolors='none', edgecolor= metric_class.color)    
+    return h
+
+def plot_ax_datapointDensity(ax, x, y, metric_class):
+    h = ax.hist2d(x,y,[20,20], cmap = metric_class.cmap)
+    return h
+
+def plot_ax_line(ax, x, y, metric_class):
+    h = ax.plot(x, y, metric_class.color)
+    return h
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# -------------------------------------------------------------------------------------- Time-mean --------------------------------------------------------------------------------------------------- #
 
 
 

@@ -12,6 +12,11 @@ import myVars as mV
 import myClasses as mC
 import myFuncs as mF
 
+
+
+# ------------------------
+#       Get data
+# ------------------------
 # --------------------------------------------------------------------------------------------- Load data ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def load_data(switch, source, dataset, experiment):
@@ -29,6 +34,17 @@ def load_data(switch, source, dataset, experiment):
     if dataset == 'GPCP_2010-2022':
         da = da.sel(time= slice('2010', '2022'))
     return da
+
+
+# ----------------------------------------------------------------------------------------- find conv threshold ----------------------------------------------------------------------------------------------------- #
+def calc_conv_threshold(switch, da):
+    ''' Convection can be based on fixed precipitation rate threshold (variable area) or fixed areafraction (fixed area). Both applications have the same mean area for the complete time period'''
+    if switch['fixed_area']:
+        conv_threshold = da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
+    else:
+        conv_threshold = da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
+        conv_threshold = xr.DataArray(data = conv_threshold.mean(dim='time').data * np.ones(shape = len(da.time)), dims = 'time', coords = {'time': da.time.data}) 
+    return conv_threshold
 
 
 
@@ -61,7 +77,6 @@ def calc_pr_area(da):
     return area
 
 
-
 # -------------------------------------------------------------------------------------------- Global extremes ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def get_percentile_snapshot(da, percentile):
@@ -81,7 +96,6 @@ def calc_percentile_sMean(da, percentile):
     percentile_value = da.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
     meanInPercentile = da.where(da >= percentile_value).weighted(aWeights).mean(dim=('lat', 'lon'), keep_attrs=True)
     return meanInPercentile
-
 
 
 # --------------------------------------------------------------------------------------------- Local extremes ----------------------------------------------------------------------------------------------------- #
@@ -131,17 +145,7 @@ def calc_rx5day_sMean(da):
     return rx5day_sMean
 
 
-
-# ---------------------------------------------------------------------------- Convective region based precipitation extremes ----------------------------------------------------------------------------------------------------- #
-def calc_conv_threshold(switch, da): # conv_percentile is number [0,1], conv_threshold is a list of thresholds
-    ''' Convection can be based on fixed precipitation rate threshold (variable area) or fixed areafraction (fixed area). Both applications have the same mean area for the complete time period'''
-    if switch['fixed_area']:
-        conv_threshold = da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
-    else:
-        conv_threshold = da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
-        conv_threshold = xr.DataArray(data = conv_threshold.mean(dim='time').data * np.ones(shape = len(da.time)), dims = 'time', coords = {'time': da.time.data}) 
-    return conv_threshold
-
+# --------------------------------------------------------------------------------- Precipitation extremes in convective regions ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def get_pr_o_snapshot(switch, da):
     pr_day = da.isel(time=0)
@@ -176,7 +180,7 @@ def calc_pr_o_sMean(switch, da):
 # ------------------------
 #   Run / save metrics
 # ------------------------
-# -------------------------------------------------------------------------------------------- Get metric and save ----------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------------- Get metric and save ----------------------------------------------------------------------------------------------------- #
 def get_metric(switch, source, dataset, experiment, da, metric, metric_type):
     da_calc, metric_name = None, None
     if metric_type == 'snapshot':
@@ -211,66 +215,54 @@ def get_metric(switch, source, dataset, experiment, da, metric, metric_type):
         metric_name =f'{metric}_area' 
         da_calc = calc_pr_area(da)                  if metric == 'pr'        else da_calc
 
-    if metric_type == 'other':
+    if metric_type == '':
         metric_name =f'{metric}'
         da_calc = calc_percentile(da, 0.90)         if metric == 'pr_90'     else da_calc
         da_calc = calc_percentile(da, 0.95)         if metric == 'pr_95'     else da_calc
         da_calc = calc_percentile(da, 0.97)         if metric == 'pr_97'     else da_calc
         da_calc = calc_percentile(da, 0.99)         if metric == 'pr_99'     else da_calc
 
-    metric_name = f'{metric_name}_{mV.conv_percentiles[0]}thprctile' if (metric_name and metric == 'pr_o')                        else metric_name
-    metric_name = f'{metric_name}_fixed_area'                      if (metric_name and metric == 'pr_o' and switch['fixed_area']) else metric_name
-    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'pr', metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                    if (switch['save'] and da_calc is not None)            else None
+    metric_name = f'{metric_name}_{mV.conv_percentiles[0]}thprctile' if (metric_name and metric == 'pr_o')                          else metric_name
+    metric_name = f'{metric_name}_fixed_area'                        if (metric_name and metric == 'pr_o' and switch['fixed_area']) else metric_name
+    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'pr', metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                      if (switch['save'] and da_calc is not None)            else None
     mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if (switch['save_to_desktop'] and da_calc is not None) else None
 
 
+# --------------------------------------------------------------------------------------------------- Run metric ----------------------------------------------------------------------------------------------------- #
+def run_metric_type(switchM, switch, source, dataset, experiment, da, metric):
+    for metric_type in [k for k, v in switchM.items() if v]:
+        get_metric(switch, source, dataset, experiment, da, metric, metric_type)
 
-# ---------------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
-def run_metric_type(switch, source, dataset, experiment, da, metric):
-    for metric_type in [k for k, v in switch.items() if v] : # loop over true keys
-        if metric_type in ['snapshot', 'sMean', 'tMean', 'area', 'other']:
-            get_metric(switch, source, dataset, experiment, da, metric, metric_type)
-
-def run_metric(switch, source, dataset, experiment):
+def run_metric(switch_metric, switchM, switch, source, dataset, experiment):
     da = load_data(switch, source, dataset, experiment)
-    for metric in [k for k, v in switch.items() if v] : # loop over true keys
-        if metric in ['pr', 'pr_90', 'pr_95', 'pr_97', 'pr_99', 'pr_rx1day', 'pr_rx5day', 'pr_o']:
-            run_metric_type(switch, source, dataset, experiment, da, metric)
+    for metric in [k for k, v in switch_metric.items() if v]:
+        run_metric_type(switchM, switch, source, dataset, experiment, da, metric)
 
-@mF.timing_decorator
-def run_experiment(switch, source, dataset):
+def run_experiment(switch_metric, switchM, switch, source, dataset):
     for experiment in mV.experiments:
         if not mV.data_available(source, dataset, experiment):
             continue
-        print(f'\t {experiment}') if experiment else print(f'\t observational dataset')
-        run_metric(switch, source, dataset, experiment)
+        print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
+        run_metric(switch_metric, switchM, switch, source, dataset, experiment)
 
-@mF.timing_decorator
-def run_dataset(switch):
+def run_dataset(switch_metric, switchM, switch):
     for dataset in mV.datasets:
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(f'{dataset} ({source})')
-        run_experiment(switch, source, dataset)
+        print(f'\t{dataset} ({source})')
+        run_experiment(switch_metric, switchM, switch, source, dataset)
 
 @mF.timing_decorator
-def run_pr_metrics(switch):
-    print(f'Running pr metrics with {mV.resolutions[0]} {mV.timescales[0]} data')
-    print(f'switch: {[key for key, value in switch.items() if value]}')
-    run_dataset(switch)
-
+def run_pr_metrics(switch_metric, switchM, switch):
+    print(f'Running {mV.resolutions[0]} {mV.timescales[0]} data')
+    print(f'metric: {[key for key, value in switch_metric.items() if value]}')
+    print(f'metric type: {[key for key, value in switchM.items() if value]}')
+    print(f'settings: {[key for key, value in switch.items() if value]}')
+    run_dataset(switch_metric, switchM, switch)
 
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    run_pr_metrics(switch = {
-        # Type of dataset
-        'constructed_fields':             False, 
-        'sample_data':                    True,
-        'gadi_data':                      False,
-
-        # conv_threshold
-        'fixed_area':                     False,
-
+    switch_metric = {
         # choose metric
         'pr':                             True,
         'pr_90':                          True,
@@ -280,19 +272,32 @@ if __name__ == '__main__':
         'pr_rx1day':                      True,
         'pr_rx5day':                      True,
         'pr_o':                           True,
-
+        }
+    
+    switchM = {
         # choose type of metric
         'snapshot':                       True,
         'sMean':                          True,
         'tMean':                          True,
         'area':                           True,
-        'other':                          True,
+        '':                               True,
+        }
+    
+    switch = {
+        # Type of dataset
+        'constructed_fields':             False, 
+        'sample_data':                    True,
+        'gadi_data':                      False,
 
-        # save3
-        'save':                           True,
+        # conv_threshold
+        'fixed_area':                     False,
+
+        # save
+        'save':                           False,
         'save_to_desktop':                False
         }
-    )
+    
+    run_pr_metrics(switch_metric, switchM, switch)
     
 
 

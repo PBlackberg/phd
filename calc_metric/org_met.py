@@ -1,18 +1,22 @@
 import numpy as np
 import xarray as xr
 import skimage.measure as skm
-
 import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util')
-import constructed_fields as cF                     # imports fields for testing
-import get_data as gD                               # imports functions to get data from gadi
+import constructed_fields as cF                     
+import get_data as gD                               
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                                 # imports common variables
+import myVars as mV                                 
 import myClasses as mC
-import myFuncs as mF                                # imports common operators
+import myFuncs as mF                                
 
+
+
+# ------------------------
+#       Get data
+# ------------------------
 # --------------------------------------------------------------------------------------------- Load data ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def load_data(switch, source, dataset, experiment):
@@ -31,7 +35,9 @@ def load_data(switch, source, dataset, experiment):
         da = da.sel(time= slice('2010', '2022'))
     return da
 
-def calc_conv_threshold(switch, da): # conv_percentile is number [0,1], conv_threshold is a list of thresholds
+
+# ------------------------------------------------------------------------------------------ Find conv threshold ----------------------------------------------------------------------------------------------------- #
+def calc_conv_threshold(switch, da):
     ''' Convection can be based on fixed precipitation rate threshold (variable area) or fixed areafraction (fixed area). Both applications have the same mean area for the complete time period'''
     if switch['fixed_area']:
         conv_threshold = da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
@@ -45,6 +51,7 @@ def calc_conv_threshold(switch, da): # conv_percentile is number [0,1], conv_thr
 # ------------------------
 #    Calculate metrics
 # ------------------------
+# -------------------------------------------------------------------------------- Scene from which metrics are calculated ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def get_obj_snapshot(da, conv_threshold):
     ''' Connected components (objects) of convection (precipiation rate exceeding threshold) '''
@@ -157,6 +164,7 @@ def calc_areafraction(da, dim, conv_threshold):
         areaf = np.append(areaf, areaf_scene)
     return areaf
 
+
 # ---------------------------------------------------------------------------------------------- Object area ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def calc_o_area(da, dim, conv_threshold):
@@ -246,46 +254,54 @@ def get_metric(switch, source, dataset, experiment, da, dim, conv_threshold, met
         metric_name = metric
         da_calc = calc_F_pr10(da)
 
-    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'org', metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                   if (switch['save'] and da_calc is not None)            else None
-    mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if (switch['save_to_desktop'] and da_calc is not None) else None
-
+    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'org', metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                                   if (switch['save'] and da_calc is not None) else None
+    mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if (switch['save_to_desktop'] and da_calc is not None)    else None
 
 
 # ---------------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
-def run_metrics(switch, source, dataset, experiment, da, dim, conv_threshold):
-    for metric in [k for k, v in switch.items() if v] : # loop over true keys
-        if metric in ['obj_snapshot', 'rome', 'rome_n', 'ni', 'areafraction', 'o_area', 'mean_area', 'F_pr10']:
-            get_metric(switch, source, dataset, experiment, da, dim, conv_threshold, metric)
+def run_metrics(switch_metric, switch, source, dataset, experiment, da, dim, conv_threshold):
+    for metric in [k for k, v in switch_metric.items() if v]:
+        get_metric(switch, source, dataset, experiment, da, dim, conv_threshold, metric)
 
-@mF.timing_decorator
-def run_experiment(switch, source, dataset):
+def run_experiment(switch_metric, switch, source, dataset):
     for experiment in mV.experiments:
         if not mV.data_available(source, dataset, experiment):
             continue
-        print(f'\t {experiment}') if experiment else print(f'\t observational dataset')
+        print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
         da = load_data(switch, source, dataset, experiment)
         dim = mC.dims_class(da)
         conv_threshold = calc_conv_threshold(switch, da)
-        run_metrics(switch, source, dataset, experiment, da, dim, conv_threshold)
+        run_metrics(switch_metric, switch, source, dataset, experiment, da, dim, conv_threshold)
 
-@mF.timing_decorator
-def run_dataset(switch):
+def run_dataset(switch_metric, switch):
     for dataset in mV.datasets:
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(f'{dataset} ({source})')
-        run_experiment(switch, source, dataset)
+        print(f'\t{dataset} ({source})')
+        run_experiment(switch_metric, switch, source, dataset)
 
 @mF.timing_decorator
-def run_org_metrics(switch):
-    print(f'Running {os.path.basename(__file__)} on {mV.resolutions[0]} {mV.timescales[0]} data with {mV.conv_percentiles[0]}th percentile precipitation threshold')
-    print(f'switch: {[key for key, value in switch.items() if value]}')
-    run_dataset(switch)
+def run_org_metrics(switch_metric, switch):
+    print(f'Running {mV.resolutions[0]} {mV.timescales[0]} data with {mV.conv_percentiles[0]}th percentile precipitation threshold')
+    print(f'metric: {[key for key, value in switch_metric.items() if value]}')
+    print(f'settings: {[key for key, value in switch.items() if value]}')
+    run_dataset(switch_metric, switch)
 
 
-
-# ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    run_org_metrics(switch = {
+    switch_metric = {
+        # choose metric
+        'obj_snapshot':       True,
+        'rome':               True, 
+        'rome_n':             True, 
+        'ni':                 True, 
+        'areafraction':       True, 
+        'o_area':             True,
+        'mean_area':          True,
+        'F_pr10':             True,
+        }
+
+    switch = {
         # choose data to calculate metric on
         'constructed_fields': False,
         'sample_data':        True,
@@ -294,21 +310,12 @@ if __name__ == '__main__':
         # threshold
         'fixed_area':         False,
 
-        # choose metric
-        'obj_snapshot':       False,
-        'rome':               True, 
-        'rome_n':             False, 
-        'ni':                 False, 
-        'areafraction':       False, 
-        'o_area':             False,
-        'mean_area':          False,
-        'F_pr10':             False,
-
         # save
-        'save':               True,
+        'save':               False,
         'save_to_desktop':    False
         }
-    )
+
+    run_org_metrics(switch_metric, switch)
     
 
 
