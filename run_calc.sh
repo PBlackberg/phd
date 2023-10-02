@@ -33,4 +33,4 @@ module use /g/data/hh5/public/modules
 module load conda/analysis3-unstable
 
 
-scp -r cb4968@gadi-dm.nci.org.au:/g/data/k10/cb4968/data/cl/sample_data/cmip6 /Users/cbla0002/Desktop/metrics
+scp -r cb4968@gadi-dm.nci.org.au:/g/data/k10/cb4968/data/metrics /Users/cbla0002/Desktop/
