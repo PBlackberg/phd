@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import xarray as xr
 import os
@@ -29,6 +28,9 @@ def load_data(year):
 
 
 
+# ------------------------
+#   intermediate plot
+# ------------------------
 # ------------------------------------------------------------------------------- plot intermediate calculation ----------------------------------------------------------------------------------------------------- #
 def plot_scene(scene, title = ''):
     fig, ax = mF.create_map_figure(width = 12, height = 4)
@@ -71,7 +73,7 @@ def plot_tMean_scene(switch, metric, scene, year, month):
 # ------------------------
 #    Calculate metrics
 # ------------------------
-# --------------------------------------------------------------------------------------- spatial mean ----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- Field from which metric is calculated ----------------------------------------------------------------------------------------------------- #
 def get_snapshot(ws_values, da_month):
     start = 0
     slice_dict = {da_month.dims[0]: slice(start, start + 8)} # picks out sections of 8 slices (1 day)
@@ -84,6 +86,8 @@ def get_snapshot(ws_values, da_month):
     scene = rG.regrid_conserv(scene.sel(lat = slice(35,-35))) if mV.resolutions[0] == 'regridded' else scene.sel(lat = slice(30,-30)) 
     return scene
 
+
+# --------------------------------------------------------------------------------------- spatial mean ----------------------------------------------------------------------------------------------------- #
 def calc_daily_freq(switch, metric, ws_values, year, month, da_month):
     plot_scan(switch, da_month, month, year) if switch['show_scans'] else None
 
@@ -109,6 +113,8 @@ def calc_daily_freq(switch, metric, ws_values, year, month, da_month):
         sMean = np.append(sMean, sMean_day)
     return dates, sMean
 
+
+# ----------------------------------------------------------------------------------------- time mean ----------------------------------------------------------------------------------------------------- #
 def calc_tMean_freq(switch, metric, ws_values, year, month, da_month, tMean):
     nb_days = len(da_month[da_month.dims[0]])/8        
     slice_dict = {da_month.dims[0]: 0}
@@ -166,10 +172,11 @@ def get_metric(switch, source, years, metric, ws_values, metric_type):
     mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'ws', metric_name, source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0]) if switch['save'] else None
 
 
+
 # ------------------------
 #    Run / save metric
 # ------------------------
-# ---------------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
 def run_metric(switch_metric, switchM, switch):
     source = mV.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
     years = np.arange(2000, 2018) # available years: 1983-2017 (first years do not have complete coverage)
