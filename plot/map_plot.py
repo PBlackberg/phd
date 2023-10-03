@@ -170,6 +170,7 @@ def plot_metric(switchM, switch, metric_class):
 def run_map_plot(switch_metric, switchM, switch):
     print(f'Plotting map_plot from {mV.timescales[0]} {mV.resolutions[0]} data')
     print(f'metric: {[key for key, value in switch_metric.items() if value]} {[key for key, value in switchM.items() if value]}')
+    print(f'metric_type: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
     for metric in [k for k, v in switch_metric.items() if v] :
         metric_class = mC.get_metric_class(metric, switchM, prctile = mV.conv_percentiles[0])
@@ -196,12 +197,12 @@ if __name__ == '__main__':
         'hur':                 False,
         'rlut':                False,
         'wap':                 False,
-        'stability':           False,
+        'stability':           True,
         # clouds
         'lcf':                 False,
         'hcf':                 False,
         'ws_lc':               False,
-        'ws_hc':               True,
+        'ws_hc':               False,
         # moist static energy
         'hus':                 False,
         }
@@ -230,10 +231,10 @@ if __name__ == '__main__':
         'one_scene':           True,
         'multiple_scenes':     False,
         # show/save
-        'show':                True,
+        'show':                False,
         'save_test_desktop':   False,
         'save_folder_desktop': False,
-        'save_folder_cwd':     False,
+        'save_folder_cwd':     True,
         }
     
     run_map_plot(switch_metric, switchM, switch)

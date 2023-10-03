@@ -1,6 +1,5 @@
 import numpy as np
 import xarray as xr
-
 import os
 import sys
 home = os.path.expanduser("~")
@@ -12,10 +11,13 @@ import myVars as mV
 import myClasses as mC
 import myFuncs as mF
 
+
+
 # ------------------------
 #       Get data
 # ------------------------
 # ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
+@mF.timing_decorator
 def load_data(switch, source, dataset, experiment, var):
     if switch['constructed_fields']:
         da = cF.var3D
@@ -23,32 +25,31 @@ def load_data(switch, source, dataset, experiment, var):
         da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
     if switch['gadi_data']:
         if var == 'hur':                                                  # Bolton's formula (calculated from specific humidity and temperature)
-            r = gD.get_var_data(source, dataset, experiment, 'hus')       # unitless (kg/kg)
-            T = gD.get_var_data(source, dataset, experiment, 'ta')        # degrees Kelvin
+            r = gD.get_var_data(source, dataset, experiment, 'hus', switch)       # unitless (kg/kg)
+            T = gD.get_var_data(source, dataset, experiment, 'ta', switch)        # degrees Kelvin
             p = T['plev']                                                 # Pa
             e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))              # saturation water vapor pressure
             r_s = 0.622 * e_s/p
             da = (r/r_s)*100                                              # relative humidity could do e/e_s
         elif var == 'stability':                                            # Calculated as differnece in potential temperature at two height slices
-            da = gD.get_var_data(source, dataset, experiment, 'ta')
+            da = gD.get_var_data(source, dataset, experiment, 'ta', switch)
             theta =  da * (1000e2 / da.plev)**(287/1005)                  # theta = T (P_0/P)^(R_d/C_p)
-            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]        # pressure levels in ERA are reversed to cmip
+            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]               # pressure levels in ERA are reversed to cmip
             da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))] if not dataset == 'ERA5' else [theta.sel(plev=slice(plevs1[1], plevs1[0])), theta.sel(plev=slice(plevs2[1], plevs2[0]))] 
             da = ((da1 * da1.plev).sum(dim='plev') / da1.plev.sum(dim='plev')) - ((da2 * da2.plev).sum(dim='plev') / da2.plev.sum(dim='plev'))   
 
         elif var in ['lcf', 'hcf']:
-            p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma')
-            da = gD.get_var_data(source, dataset, experiment, 'cl')
+            p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma', switch)
+            da = gD.get_var_data(source, dataset, experiment, 'cl', switch)
             plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
             da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if switch['hcf'] else da
             da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if switch['lcf'] else da
         else:
-            da = gD.get_var_data(source, dataset, experiment, f'{var}')
+            da = gD.get_var_data(source, dataset, experiment, f'{var}', switch)
     return da
 
 
-
-# ---------------------------------------------------------------------------------------- pick region ----------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------- pick region ----------------------------------------------------------------------------------------------------- #
 def pick_vert_reg(switch, dataset, da):
     region = ''
     if switch['250hpa']:
@@ -79,6 +80,8 @@ def pick_hor_reg(switch, source, dataset, experiment, da):
         wap500 = load_data(switch, source, dataset, experiment, 'wap').sel(plev = 500e2)
         da = da.where(wap500<0)
         region = '_a'
+    if switch['ascent']:
+        region = '_ocean'
     return da, region
 
 
@@ -112,7 +115,7 @@ def calc_area(da):
 
 
 # ------------------------
-#   Run / save metrics
+#   Run / save metric
 # ------------------------
 # -------------------------------------------------------------------------------------------- Get metric and save ----------------------------------------------------------------------------------------------------- #
 def get_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_reg, metric):
@@ -137,83 +140,88 @@ def get_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_reg, 
     mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop'] else None
 
 
-
-# -------------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
-def run_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_region):
-    for metric in [k for k, v in switch.items() if v] : # loop over true keys
-        if metric in ['snapshot', 'sMean', 'tMean', 'area']:
+# ------------------------------------------------------------------------------------------------- run metric ----------------------------------------------------------------------------------------------------- #
+def run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, hor_region):
+    for metric in [k for k, v in switchM.items() if v]:
             get_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_region, metric)
 
-def run_variable(switch, source, dataset, experiment):
-    for var in [k for k, v in switch.items() if v] : # loop over true keys
-        if var in ['hur', 'rlut', 'tas', 'wap', 'stability', 'lcf', 'hcf']:
+def run_variable(switch_var, switchM, switch, source, dataset, experiment):
+    for var in [k for k, v in switch_var.items() if v]:
             print(f'{var}')
             if not mV.data_available(source, dataset, experiment, var):
                 continue
             da =           load_data(switch, source, dataset, experiment, var)
             da, vert_reg = pick_vert_reg(switch, dataset, da) if var in ['hur', 'wap'] else [da, '']
             da, hor_reg =  pick_hor_reg(switch, source, dataset, experiment, da)
-            run_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_reg)
+            run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, hor_reg)
 
-def run_experiment(switch, source, dataset):
+def run_experiment(switch_var, switchM, switch, source, dataset):
     for experiment in mV.experiments:
-        if not mV.data_available(source, dataset, experiment):
+        if not mV.data_available(source, dataset, experiment, var = '', switch = switch):
             continue
-        print(f'\t {experiment}') if experiment else print(f'\t observational dataset')
-        run_variable(switch, source, dataset, experiment)
+        print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
+        run_variable(switch_var, switchM, switch, source, dataset, experiment)
 
-def run_dataset(switch):
+def run_dataset(switch_var, switchM, switch):
     for dataset in mV.datasets:
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(f'{dataset} ({source})')
-        run_experiment(switch, source, dataset)
+        print(f'\t{dataset} ({source})')
+        run_experiment(switch_var, switchM, switch, source, dataset)
 
 @mF.timing_decorator
-def run_large_scale_state_metrics(switch):
-    print(f'Running {os.path.basename(__file__)} with {mV.resolutions[0]} {mV.timescales[0]} data')
-    print(f'switch: {[key for key, value in switch.items() if value]}')
-    run_dataset(switch)
-
+def run_large_scale_state_metrics(switch_var, switchM, switch):
+    print(f'Running {mV.resolutions[0]} {mV.timescales[0]} data')
+    print(f'metric: {[key for key, value in switch_var.items() if value]}')
+    print(f'metric_type: {[key for key, value in switchM.items() if value]}')
+    print(f'settings: {[key for key, value in switch.items() if value]}')
+    run_dataset(switch_var, switchM, switch)
 
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    run_large_scale_state_metrics(switch = {
+
+    switch_var = {
+        # choose variable (can choose multiple)
+        'hur':                False,
+        'rlut':               False, 
+        'tas':                False,
+        'wap':                False,
+        'stability':          True,
+        'lcf':                False,
+        'hcf':                False,
+        }
+    
+    switchM = {
+        # choose type of metric (can choose multiple)
+        'snapshot':           True, 
+        'tMean':              True, 
+        'sMean':              True, 
+        'area':               False,
+        }
+
+    switch = {
         # choose type of data to calculate metric on
         'constructed_fields': False, 
         'sample_data':        False,
         'gadi_data':          True,
 
-        # choose variable (can choose multiple)
-        'hur':                True,
-        'rlut':               True, 
-        'tas':                True,
-        'wap':                False,
-        'stability':          True,
-        'lcf':                True,
-        'hcf':                True,
-
-        # Choose vertical region (choose up to one)
+        # Choose vertical region (only affects wap, hur)
         '250hpa':             False,
         '500hpa':             False,
         '700hpa':             False,
-        'vMean':              True, 
+        'vMean':              False,
 
-        # Choose horizontal region (choose up to one)
-        'ascent':             True,
+        # Choose horizontal region
+        'ascent':             False,
         'descent':            False,
-
-        # choose type of metric (can choose multiple)
-        'snapshot':           True, 
-        'tMean':              True, 
-        'sMean':              True, 
-        'area':               True,
+        'ocean_mask':         True,
         
         # save
         'save':               True,
         'save_to_desktop':    False
         }
-    )
+    
+    run_large_scale_state_metrics(switch_var, switchM, switch)
     
 
 

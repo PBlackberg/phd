@@ -3,10 +3,14 @@ import numpy as np
 import os
 import sys
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV # imports common variables
+import myVars as mV
 
-# ------------------------------------------------------------------------------------ General ----------------------------------------------------------------------------------------------------------#
 
+
+# ------------------------
+#      General funcs
+# ------------------------
+# ----------------------------------------------------------------------------- concatenate files ----------------------------------------------------------------------------------------------------------#
 def concat_files(path_folder, experiment):
     ''' Concatenates files of monthly or daily data between specified years
     (takes out a little bit wider range to not exclude data when interpolating grid) '''
@@ -25,26 +29,13 @@ def concat_files(path_folder, experiment):
     ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
     return ds
 
+
+# ---------------------------------------------------------------------------------- pick folder ----------------------------------------------------------------------------------------------------------#
 def latestVersion(path):
     ''' Picks the latest version if there are multiple '''
     versions = os.listdir(path)
     version = max(versions, key=lambda x: int(x[1:])) if len(versions)>1 else versions[0]
     return version
-
-def choose_cmip5_ensemble(model, experiment):
-    ''' Some models don't have the ensemble most common amongst other models 
-    and some experiments don't have the same ensemble as the historical simulation'''
-    ensemble = 'r6i1p1' if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
-    ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
-    ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
-    return ensemble
-
-def choose_cmip6_ensemble(model, experiment):
-    ''' Some models don't have the ensemble most common amongst other models 
-    and some experiments don't have the same ensemble as the historical simulation'''
-    ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL'] else 'r1i1p1f1'
-    ensemble = 'r11i1p1f1' if model == 'CESM2' and not experiment == 'historical' else ensemble
-    return ensemble
 
 def grid_folder(model):
     ''' Some models have a different grid folder in the path to the files'''
@@ -54,7 +45,18 @@ def grid_folder(model):
     return folder
 
 
-# ---------------------------------------------------------------------------------------- CMIP5 ----------------------------------------------------------------------------------------------------------#
+
+# ------------------------
+#          CMIP5
+# ------------------------
+# ------------------------------------------------------------------------------- For most variables ----------------------------------------------------------------------------------------------------------#
+def choose_cmip5_ensemble(model, experiment):
+    ''' Some models don't have the ensemble most common amongst other models 
+    and some experiments don't have the same ensemble as the historical simulation'''
+    ensemble = 'r6i1p1' if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
+    ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
+    ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
+    return ensemble
 
 def get_cmip5_data(variable, model, experiment):
     ''' concatenates file data and interpolates grid to common grid if needed '''    
@@ -72,6 +74,8 @@ def get_cmip5_data(variable, model, experiment):
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
     return ds
 
+
+# --------------------------------------------------------------------------------- For cloudfraction ----------------------------------------------------------------------------------------------------------#
 def get_cmip5_cl(variable, model, experiment):
     ds_cl, ds_p_hybridsigma = None, None
     ''' Cloud pressure on hybrid-sigma vertical levels '''    
@@ -105,9 +109,19 @@ def get_cmip5_cl(variable, model, experiment):
     return ds_cl, ds_p_hybridsigma
 
 
-# -------------------------------------------------------------------------------------- CMIP6 ----------------------------------------------------------------------------------------------------------#
 
-def get_cmip6_data(variable, model, experiment):
+# ------------------------
+#         CMIP6
+# ------------------------
+# ------------------------------------------------------------------------------- For most variables ----------------------------------------------------------------------------------------------------------#
+def choose_cmip6_ensemble(model, experiment):
+    ''' Some models don't have the ensemble most common amongst other models 
+    and some experiments don't have the same ensemble as the historical simulation'''
+    ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL'] else 'r1i1p1f1'
+    ensemble = 'r11i1p1f1' if model == 'CESM2' and not experiment == 'historical' else ensemble
+    return ensemble
+
+def get_cmip6_data(variable, model, experiment, switch = ''):
     ''' concatenates file data and interpolates grid to common grid if needed'''
     ensemble = choose_cmip6_ensemble(model, experiment)
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
@@ -116,9 +130,12 @@ def get_cmip6_data(variable, model, experiment):
     folder_grid = grid_folder(model)
     version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
-    # print(path_folder)
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     da = ds[variable]
+
+    if switch['ocean_mask']:
+        ''
+
     if mV.resolutions[0] == 'regridded': # conservatively interpolate
         import xesmf_regrid as regrid
         regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
@@ -126,6 +143,11 @@ def get_cmip6_data(variable, model, experiment):
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
     return ds
     
+
+# '/g/data/oi10/replicas/CMIP6/CMIP/IPSL/IPSL-CM6A-LR/historical/r1i1p1f1/fx/sftlf/gr/v20180803/sftlf_fx_IPSL-CM6A-LR_historical_r1i1p1f1_gr.nc'
+
+
+# --------------------------------------------------------------------------------- For cloudfraction ----------------------------------------------------------------------------------------------------------#
 def get_cmip6_cl(variable, model, experiment):
     ''' Cloud pressure on hybrid-sigma vertical levels '''
     ensemble = choose_cmip6_ensemble(model, experiment)
@@ -166,10 +188,11 @@ def get_cmip6_cl(variable, model, experiment):
     return ds_cl, ds_p_hybridsigma
 
 
-# ------------------------------------------------------------------------------------- OBS ----------------------------------------------------------------------------------------------------------#
-# --------
-#   GPCP
-# --------
+
+# ------------------------
+#   Observations (NCI)
+# ------------------------
+# ------------------------------------------------------------------------------------- GPCP ----------------------------------------------------------------------------------------------------------#
 def get_gpcp():
     ''' Observations from the Global Precipitation Climatology Project (GPCP) '''
     path_gen = '/g/data/ia39/aus-ref-clim-data-nci/gpcp/data/day/v1-3'
@@ -201,9 +224,8 @@ def get_gpcp():
     ds = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
     return ds
 
-# --------
-#   ERA5
-# --------
+
+# -------------------------------------------------------------------------------------- ERA5 ----------------------------------------------------------------------------------------------------------#
 def get_era5_monthly(variable):
     ''' Reanalysis data from ERA5 '''
     path_gen = f'/g/data/rt52/era5/pressure-levels/monthly-averaged/{variable}'
