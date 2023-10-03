@@ -92,8 +92,6 @@ def plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmi
     y, metric_title, axtitle = get_list(switchY, mV.datasets[0], metric_classY)
     x, y = xr.align(x, y, join='inner')
 
-    print(len(x))
-
     fig_title = f'{metric_classX.name} and {metric_classY.name} ({metric_title})'
     h_points, h_pcm, h_line, cbar = plot_axTrend(switch, fig, ax, x, y, metric_classY)
     res= stats.pearsonr(x,y)

@@ -130,9 +130,10 @@ def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily',
     return ds
 
 def save_plot(switch, fig, home, filename):
-    save_figure(fig, f'{home}/Desktop',            'test.pdf')           if switch['save_test_desktop']   else None
-    save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if switch['save_folder_desktop'] else None
-    save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if switch['save_folder_cwd']     else None
+    for save_type in [k for k, v in switch.items() if v]:
+        save_figure(fig, f'{home}/Desktop',            'test.pdf')           if save_type == 'save_test_desktop'   else None
+        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if save_type == 'save_folder_desktop' else None
+        save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
 
 
 

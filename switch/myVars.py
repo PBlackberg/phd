@@ -27,9 +27,9 @@ models_cmip5 = [
 # 14 models used in Schiro not [1, 2, 6, 13, 15]
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    'INM-CM5-0',         # 1
-    # 'IITM-ESM',          # 2
-    # 'FGOALS-g3',         # 3                                      
+    # 'INM-CM5-0',         # 1
+    # 'IITM-ESM',          # 2 # no ocean mask
+    # 'FGOALS-g3',         # 3                                 
     # 'MIROC6',            # 4                                      
     # 'MPI-ESM1-2-LR',     # 5                                      
     # 'KIOST-ESM',         # 6 
@@ -38,14 +38,20 @@ models_cmip6 = [
     # 'MRI-ESM2-0',        # 9                                      
     # 'GFDL-CM4',          # 10                                     
     # 'CMCC-ESM2',         # 11                                     
-    # 'NESM3',             # 12 # up to here                                 
-    # 'EC-Earth3',         # 13
-    # 'CNRM-CM6-1',        # 14                                     
-    # 'IPSL-CM6A-LR',      # 15
-    # 'TaiESM1',           # 16                                       
-    # 'CESM2-WACCM',       # 17    
-    # 'CanESM5',           # 18
-    # 'UKESM1-0-LL',       # 19              
+    'NESM3',             # 12                            
+    'EC-Earth3',         # 13
+    'CNRM-CM6-1',        # 14                                     
+    'IPSL-CM6A-LR',      # 15
+    'TaiESM1',           # 16                                       
+    'CESM2-WACCM',       # 17    
+    'CanESM5',           # 18
+    'UKESM1-0-LL',       # 19
+    # 'NorESM2-LM',
+    # 'GFDL-ESM4',
+    # 'CMCC-CM2-SR5',
+    # 'ACCESS-ESM1-5',
+    # 'ACCESS-CM2',
+    # 'CNRM-ESM2-1',
     ]
 
 other = [
@@ -74,7 +80,7 @@ timescales = [
 experiments = [
     'historical',     
     # 'rcp85',             # warm scenario for cmip5
-    # 'ssp585',              # warm scenario for cmip6
+    'ssp585',              # warm scenario for cmip6
     # ''                   # observations
     ]
 
@@ -90,8 +96,8 @@ conv_percentiles = [       # for organization metrics
     ]
 
 folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
+    # os.path.expanduser("~") + '/Documents/data',
+    '/g/data/k10/cb4968/data'
     ]
 
 
@@ -175,14 +181,20 @@ institutes_cmip6 = {
     'TaiESM1':           'AS-RCEC',
     'BCC-CSM2-MR':       'BCC',
     'FGOALS-g3':         'CAS',
+    'FGOALS-f3-L':       'CAS',
     'CanESM5':           'CCCma',
     'CMCC-ESM2':         'CMCC',
+    'CMCC-CM2-SR5':      'CMCC',
     'CNRM-CM6-1':        'CNRM-CERFACS',
+    'CNRM-ESM2-1':       'CNRM-CERFACS',
     'MIROC6':            'MIROC',
     'MPI-ESM1-2-LR':     'MPI-M',
     'GISS-E2-1-H':       'NASA-GISS',
+    'GISS-E2-1-G':       'NASA-GISS',
     'NorESM2-MM':        'NCC',
+    'NorESM2-LM':        'NCC',
     'GFDL-CM4':          'NOAA-GFDL',
+    'GFDL-ESM4':         'NOAA-GFDL',
     'UKESM1-0-LL':       'MOHC',
     'MRI-ESM2-0':        'MRI',
     'CESM2':             'NCAR',
@@ -193,7 +205,12 @@ institutes_cmip6 = {
     'INM-CM5-0':         'INM',
     'IPSL-CM6A-LR':      'IPSL',
     'KIOST-ESM':         'KIOST',
+    'ACCESS-ESM1-5':     'CSIRO',
+    'ACCESS-CM2':        'CSIRO-ARCCSS',
     }
+
+
+
 
 # not included from cmip6:
 # 'KACE-1-0-G':      'NIMS-KMA'             (this institute has data for UKESM1-0-LL which is already included from a different institute)
@@ -205,8 +222,11 @@ institutes_cmip6 = {
 # 'E3SM-1-0':        'E3SM-Project',        (not correct years)
 # 'FIO-ESM-2-0':     'FIO-QLNM',            (only monthly)
 # 'MPI-ESM-1-2-HAM': 'HAMMOZ-Consortium'    (no future scenario)
+# 'MPI-ESM1-2-LR':   'MPI-M'                (no future scenario)
 # 'SAM0-UNICON':     'SNU',                 (no future scenario)
 # *'CESM2':           'NCAR',               (regular CESM2 does not have monthly hur in ssp585, but does have it in CESM2-WACCM)
+# 'GISS-E2-1-G',     'NASA-GISS'            Does not have daily precipitation
+# 'FGOALS-f3-L',                            Only monthly variables in future scenario
 institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
@@ -220,11 +240,11 @@ def find_source(dataset, models_cmip5, models_cmip6, observations):
     source = 'obs'   if np.isin(observations, dataset).any() else source
     return source
 
-def data_available(source = '', dataset = '', experiment = '', var = ''):
+def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
     ''' Check if dataset has variable '''
     # dataset experiment combination
     if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
-        return False
+        return  False
     if not experiment and not source in ['obs', 'test']:                                          # only run obs or other for experiment == ''
         return False
     if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
@@ -234,6 +254,16 @@ def data_available(source = '', dataset = '', experiment = '', var = ''):
     if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
         print(f'No {var} data for this dataset')
         return False
+    
+    if var in ['ta', 'stability'] and dataset in ['KIOST-ESM']:
+        print(f'No {var} data for this dataset')
+        return False
+
+    # some models don't have an ocean mask
+    for mask_type in [k for k, v in switch.items() if v]:
+        if mask_type == 'ocean_mask' and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3']: 
+            print(f'No ocean mask for this dataset')
+            return False
     return True
 
 def find_list_source(datasets, models_cmip5, models_cmip6, observations):
