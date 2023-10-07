@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-# -------------------------------------------------------------------------------------- For choosing dataset / model----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------  Vars for choosing dataset / model----------------------------------------------------------------------------------------------------- #
 models_cmip5 = [
     # 'IPSL-CM5A-MR',      # 1
     # 'GFDL-CM3',          # 2
@@ -27,17 +27,17 @@ models_cmip5 = [
 # 14 models used in Schiro not [1, 2, 6, 13, 15]
 # Models ordered by change in temperature with warming
 models_cmip6 = [
-    # 'INM-CM5-0',         # 1
-    # 'IITM-ESM',          # 2 # no ocean mask
-    # 'FGOALS-g3',         # 3                                 
-    # 'MIROC6',            # 4                                      
-    # 'MPI-ESM1-2-LR',     # 5                                      
-    # 'KIOST-ESM',         # 6 
-    # 'BCC-CSM2-MR',       # 7                                      
-    # 'NorESM2-MM',        # 8                                      
-    # 'MRI-ESM2-0',        # 9                                      
-    # 'GFDL-CM4',          # 10                                     
-    # 'CMCC-ESM2',         # 11                                     
+    'INM-CM5-0',         # 1
+    'IITM-ESM',          # 2
+    'FGOALS-g3',         # 3                                 
+    'MIROC6',            # 4                                      
+    'MPI-ESM1-2-LR',     # 5                                      
+    'KIOST-ESM',         # 6 
+    'BCC-CSM2-MR',       # 7                                      
+    'NorESM2-MM',        # 8                                      
+    'MRI-ESM2-0',        # 9                                      
+    'GFDL-CM4',          # 10                                     
+    'CMCC-ESM2',         # 11                                     
     'NESM3',             # 12                            
     'EC-Earth3',         # 13
     'CNRM-CM6-1',        # 14                                     
@@ -46,12 +46,12 @@ models_cmip6 = [
     'CESM2-WACCM',       # 17    
     'CanESM5',           # 18
     'UKESM1-0-LL',       # 19
-    # 'NorESM2-LM',
-    # 'GFDL-ESM4',
-    # 'CMCC-CM2-SR5',
-    # 'ACCESS-ESM1-5',
-    # 'ACCESS-CM2',
-    # 'CNRM-ESM2-1',
+    'NorESM2-LM',
+    'GFDL-ESM4',
+    'CMCC-CM2-SR5',
+    'ACCESS-ESM1-5',
+    'ACCESS-CM2',
+    'CNRM-ESM2-1',
     ]
 
 other = [
@@ -72,8 +72,8 @@ datasets = models_cmip5 + models_cmip6 + observations + other
 
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     # 'annual'
     ]
 
@@ -96,14 +96,74 @@ conv_percentiles = [       # for organization metrics
     ]
 
 folder_save = [
-    # os.path.expanduser("~") + '/Documents/data',
-    '/g/data/k10/cb4968/data'
+    os.path.expanduser("~") + '/Documents/data',
+    # '/g/data/k10/cb4968/data'
     ]
 
 
 
-# ---------------------------------------------------------------------------------------- other variables ----------------------------------------------------------------------------------------------------- #
 
+# -------------------------------------------------------------------- Deal with missing data ----------------------------------------------------------------------------------------------------- #
+def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
+    ''' Check if dataset has variable '''
+    # Invalid source and dataset combination for for-loops
+    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
+        return  False
+    if not experiment and not source in ['obs', 'test']:                                          # only run obs or other for experiment == ''
+        return False
+    if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
+        return False
+
+        # Clouds
+    if var in ['ta', 'stability'] and dataset in ['KIOST-ESM']:
+        print(f'No {var} data for this dataset')
+        return False
+    
+    if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
+        print(f'No {var} data for this dataset')
+        return False
+    
+        # Ocean mask
+    for mask_type in [k for k, v in switch.items() if v]:
+        if mask_type == 'ocean_mask' and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
+            print(f'No ocean mask for this dataset')
+            return False
+    return True
+
+
+
+# -------------------------------------------------------------------- Label the source ----------------------------------------------------------------------------------------------------- #
+def find_source(dataset, models_cmip5, models_cmip6, observations):
+    '''Determining source of dataset '''
+    source = 'cmip5' if np.isin(models_cmip5, dataset).any() else None      
+    source = 'cmip6' if np.isin(models_cmip6, dataset).any() else source         
+    source = 'test'  if np.isin(other, dataset).any()        else source     
+    source = 'obs'   if np.isin(observations, dataset).any() else source
+    return source
+
+def find_list_source(datasets, models_cmip5, models_cmip6, observations):
+    ''' Determining source of dataset list (for figures) '''
+    sources = set()
+    for dataset in datasets:
+        sources.add('cmip5') if dataset in models_cmip5 else None
+        sources.add('cmip6') if dataset in models_cmip6 else None
+        sources.add('obs')   if dataset in observations else None
+    list_source = 'cmip5' if 'cmip5' in sources else 'test'
+    list_source = 'cmip6' if 'cmip6' in sources else list_source
+    list_source = 'obs'   if 'obs'   in sources else list_source
+    list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
+    return list_source
+
+def find_ifWithObs(datasets, observations):
+    ''' Indicate if there is observations in the dataset list (for figures) '''
+    for dataset in datasets:
+        if dataset in observations:
+            return '_withObs'
+    return ''
+
+
+
+# ---------------------------------------------------------------------------------------- ECS ----------------------------------------------------------------------------------------------------- #
 # ECS taken from supplementary information from:
 # https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019GL085782#pane-pcw-figures
 # https://www.nature.com/articles/d41586-022-01192-2 # most taken from here (used the column which had the same value for models existing in both sets)
@@ -155,6 +215,8 @@ ecs_cmip6 = {
 ecs_list = {**ecs_cmip5, **ecs_cmip6}
 
 
+
+# ---------------------------------------------------------------------------------------- Institute list ----------------------------------------------------------------------------------------------------- #
 institutes_cmip5 = {
     'IPSL-CM5A-MR': 'IPSL',
     'GFDL-CM3':     'NOAA-GFDL',
@@ -210,8 +272,6 @@ institutes_cmip6 = {
     }
 
 
-
-
 # not included from cmip6:
 # 'KACE-1-0-G':      'NIMS-KMA'             (this institute has data for UKESM1-0-LL which is already included from a different institute)
 # 'GISS-E2-1-H':     'NASA-GISS'            (only monthly for all variables)
@@ -228,67 +288,6 @@ institutes_cmip6 = {
 # 'GISS-E2-1-G',     'NASA-GISS'            Does not have daily precipitation
 # 'FGOALS-f3-L',                            Only monthly variables in future scenario
 institutes = {**institutes_cmip5, **institutes_cmip6}
-
-
-
-# -------------------------------------------------------------------- functions for checking available data ----------------------------------------------------------------------------------------------------- #
-def find_source(dataset, models_cmip5, models_cmip6, observations):
-    '''Determining source of dataset '''
-    source = 'cmip5' if np.isin(models_cmip5, dataset).any() else None      
-    source = 'cmip6' if np.isin(models_cmip6, dataset).any() else source         
-    source = 'test'  if np.isin(other, dataset).any()        else source     
-    source = 'obs'   if np.isin(observations, dataset).any() else source
-    return source
-
-def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
-    ''' Check if dataset has variable '''
-    # dataset experiment combination
-    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
-        return  False
-    if not experiment and not source in ['obs', 'test']:                                          # only run obs or other for experiment == ''
-        return False
-    if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
-        return False
-    
-    # available variables
-    if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
-        print(f'No {var} data for this dataset')
-        return False
-    
-    if var in ['ta', 'stability'] and dataset in ['KIOST-ESM']:
-        print(f'No {var} data for this dataset')
-        return False
-
-    # some models don't have an ocean mask
-    for mask_type in [k for k, v in switch.items() if v]:
-        if mask_type == 'ocean_mask' and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3']: 
-            print(f'No ocean mask for this dataset')
-            return False
-    return True
-
-def find_list_source(datasets, models_cmip5, models_cmip6, observations):
-    ''' Determining source of dataset list (for figures) '''
-    sources = set()
-    for dataset in datasets:
-        sources.add('cmip5') if dataset in models_cmip5 else None
-        sources.add('cmip6') if dataset in models_cmip6 else None
-        sources.add('obs')   if dataset in observations else None
-    list_source = 'cmip5' if 'cmip5' in sources else 'test'
-    list_source = 'cmip6' if 'cmip6' in sources else list_source
-    list_source = 'obs'   if 'obs'   in sources else list_source
-    list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
-    return list_source
-
-def find_ifWithObs(datasets, observations):
-    ''' Indicate if there is observations in the dataset list (for figures) '''
-    for dataset in datasets:
-        if dataset in observations:
-            return '_withObs'
-    return ''
-
-
-
-
 
 
 

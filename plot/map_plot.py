@@ -187,18 +187,31 @@ if __name__ == '__main__':
     switch_metric = {
         # organization
         'obj':                 False,
+        'tas':                 False,
         # precipitation
         'pr':                  False,
         'pr99':                False,
         'pr_rx1day':           False,
         'pr_rx5day':           False,
-        # Large scale state
-        'tas':                 False,
-        'hur':                 False,
-        'rlut':                False,
+        # drying
         'wap':                 False,
-        'stability':           True,
+        'hur':                 False,
+
+        # radiation
+        'rlut':               False,
+        'rlds':               True,
+        'rlus':               False, 
+        'rlut':               False, 
+        'netlw':              False,
+
+        'rsdt':               False,
+        'rsds':               False,
+        'rsus':               False,
+        'rsut':               False,
+        'netsw':              False,
+
         # clouds
+        'stability':           False,
         'lcf':                 False,
         'hcf':                 False,
         'ws_lc':               False,

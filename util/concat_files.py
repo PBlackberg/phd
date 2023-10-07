@@ -68,7 +68,7 @@ def get_cmip5_data(variable, model, experiment):
     ds = concat_files(path_folder, variable, model, experiment)
     da= ds[variable]
     if mV.resolutions[0] == 'regridded':
-        import xesmf_regrid as regrid
+        import util.regrid_xesmf as regrid
         regridder = regrid.regrid_conserv_xesmf(ds)
         da = regridder(da)
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
@@ -99,7 +99,7 @@ def get_cmip5_cl(variable, model, experiment):
         ds_cl = ds # units in % on sigma pressure coordinates
         ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
     if mV.resolutions[0] == 'regridded':
-        import xesmf_regrid as regrid
+        import util.regrid_xesmf as regrid
         cl = ds['cl'] # units in % on sigma pressure coordinates
         regridder = regrid.regrid_conserv_xesmf(ds)
         cl = regridder(cl)
@@ -137,7 +137,7 @@ def get_cmip6_data(variable, model, experiment, switch = ''):
         ''
 
     if mV.resolutions[0] == 'regridded': # conservatively interpolate
-        import xesmf_regrid as regrid
+        import util.regrid_xesmf as regrid
         regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
         da = regridder(da) # conservatively interpolate data onto grid from other model
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
@@ -178,7 +178,7 @@ def get_cmip6_cl(variable, model, experiment):
         ds_cl = ds # units in % on sigma pressure coordinates
         ds_p_hybridsigma = xr.Dataset(data_vars = {'p_hybridsigma': p_hybridsigma}, attrs = ds.lev.attrs)
     if mV.resolutions[0] == 'regridded':
-        import xesmf_regrid as regrid
+        import util.regrid_xesmf as regrid
         cl = ds['cl'] # units in % on sigma pressure coordinates
         regridder = regrid.regrid_conserv_xesmf(ds)
         cl = regridder(cl)
@@ -217,7 +217,7 @@ def get_gpcp():
     da = da.dropna('time', how='all') # drop days where all values are NaN (one day)
 
     if mV.resolutions[0] == 'regridded':
-        import xesmf_regrid as regrid
+        import util.regrid_xesmf as regrid
         regridder = regrid.regrid_conserv_xesmf(ds)
         da = regridder(da)
     
@@ -250,7 +250,7 @@ def get_era5_monthly(variable):
     da = da.rename({'level': 'plev'})
 
     if mV.resolutions[0] == 'regridded':
-        import xesmf_regrid as rD
+        import util.regrid_xesmf as rD
         regridder = rD.regrid_conserv_xesmf(ds)
         da = regridder(da)
     
