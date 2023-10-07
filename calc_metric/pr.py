@@ -293,7 +293,7 @@ if __name__ == '__main__':
         'fixed_area':                     False,
 
         # save
-        'save':                           False,
+        'save':                           True,
         'save_to_desktop':                False
         }
     
