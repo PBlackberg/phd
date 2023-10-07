@@ -44,6 +44,26 @@ def load_data(switch, source, dataset, experiment, var):
             plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
             da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if switch['hcf'] else da
             da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if switch['lcf'] else da
+
+        elif var == 'netlw':    
+            rlds = gD.get_var_data(source, dataset, experiment, 'rlds', switch) 
+            rlus = gD.get_var_data(source, dataset, experiment, 'rlus', switch) 
+            rlut = gD.get_var_data(source, dataset, experiment, 'rlut', switch) 
+            da = -rlds + rlus - rlut
+
+        elif var == 'netsw':   
+            rsdt = gD.get_var_data(source, dataset, experiment, 'rsdt', switch) 
+            rsds = gD.get_var_data(source, dataset, experiment, 'rsds', switch) 
+            rsus = gD.get_var_data(source, dataset, experiment, 'rsus', switch) 
+            rsut = gD.get_var_data(source, dataset, experiment, 'rsut', switch) 
+            da = rsdt - rsds + rsus - rsut
+
+        elif var == 'mse':   
+            c_p, L_v = 1.005, 2.256e6 # g = 9.8
+            ta = gD.get_var_data(source, dataset, experiment, 'ta', switch) 
+            zg = gD.get_var_data(source, dataset, experiment, 'zg', switch) 
+            hus = gD.get_var_data(source, dataset, experiment,'hus', switch) 
+            da = c_p*ta + zg + L_v*hus
         else:
             da = gD.get_var_data(source, dataset, experiment, f'{var}', switch)
     return da
@@ -182,13 +202,32 @@ if __name__ == '__main__':
 
     switch_var = {
         # choose variable (can choose multiple)
-        'hur':                False,
-        'rlut':               False, 
-        'tas':                False,
         'wap':                False,
-        'stability':          True,
+
+        'hur':                False,
+        'tas':                False,
+
+        'stability':          False,
         'lcf':                False,
         'hcf':                False,
+
+        'rlds':               False,
+        'rlus':               False, 
+        'rlut':               False, 
+        'netlw':              False,
+
+        'rsdt':               False,
+        'rsds':               False,
+        'rsus':               True,
+        'rsut':               True,
+        'netsw':              False,
+
+        'hus':                False,
+        'zg':                 False,
+        'mse':                False,
+
+        'hfss':               False,
+        'hfls':               False,
         }
     
     switchM = {
@@ -196,7 +235,7 @@ if __name__ == '__main__':
         'snapshot':           True, 
         'tMean':              True, 
         'sMean':              True, 
-        'area':               False,
+        'area':               True,
         }
 
     switch = {
@@ -214,7 +253,7 @@ if __name__ == '__main__':
         # Choose horizontal region
         'ascent':             False,
         'descent':            False,
-        'ocean_mask':         True,
+        'ocean_mask':         False,
         
         # save
         'save':               True,
@@ -223,6 +262,4 @@ if __name__ == '__main__':
     
     run_large_scale_state_metrics(switch_var, switchM, switch)
     
-
-
 
