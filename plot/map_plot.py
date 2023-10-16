@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
         # radiation
         'rlut':               False,
-        'rlds':               True,
+        'rlds':               False,
         'rlus':               False, 
         'rlut':               False, 
         'netlw':              False,
@@ -211,7 +211,7 @@ if __name__ == '__main__':
         'netsw':              False,
 
         # clouds
-        'stability':           False,
+        'stability':           True,
         'lcf':                 False,
         'hcf':                 False,
         'ws_lc':               False,
@@ -228,6 +228,7 @@ if __name__ == '__main__':
         '700hpa':              False,
         'descent':             False,
         'ascent':              False,
+        'ocean':               True,
         'per kelvin':          False,
         'per kelvin (ecs)':    False,
         # scene type

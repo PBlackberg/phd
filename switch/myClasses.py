@@ -38,6 +38,8 @@ def h_reg(switch):
     region = ''
     region = '_d' if switch['descent'] else region
     region = '_a' if switch['ascent']  else region
+
+    region = f'{region}_o' if switch['ocean']  else region
     return region
 
 def exceptions(metric, switch, cmap, label):
