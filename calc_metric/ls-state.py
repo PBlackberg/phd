@@ -33,6 +33,8 @@ def load_data(switch, source, dataset, experiment, var):
             da = (r/r_s)*100                                              # relative humidity could do e/e_s
         elif var == 'stability':                                            # Calculated as differnece in potential temperature at two height slices
             da = gD.get_var_data(source, dataset, experiment, 'ta', switch)
+            nan_mask = da.isnull().any(dim='plev')
+            da = da.where(~nan_mask, np.nan)
             theta =  da * (1000e2 / da.plev)**(287/1005)                  # theta = T (P_0/P)^(R_d/C_p)
             plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]               # pressure levels in ERA are reversed to cmip
             da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))] if not dataset == 'ERA5' else [theta.sel(plev=slice(plevs1[1], plevs1[0])), theta.sel(plev=slice(plevs2[1], plevs2[0]))] 
@@ -100,10 +102,9 @@ def pick_hor_reg(switch, source, dataset, experiment, da):
         wap500 = load_data(switch, source, dataset, experiment, 'wap').sel(plev = 500e2)
         da = da.where(wap500<0)
         region = '_a'
-    if switch['ascent']:
-        region = '_ocean'
+    if switch['ocean_mask']:
+        region = f'{region}_o'
     return da, region
-
 
 
 # ------------------------
@@ -207,7 +208,7 @@ if __name__ == '__main__':
         'hur':                False,
         'tas':                False,
 
-        'stability':          False,
+        'stability':          True,
         'lcf':                False,
         'hcf':                False,
 
@@ -218,8 +219,8 @@ if __name__ == '__main__':
 
         'rsdt':               False,
         'rsds':               False,
-        'rsus':               True,
-        'rsut':               True,
+        'rsus':               False,
+        'rsut':               False,
         'netsw':              False,
 
         'hus':                False,
@@ -233,9 +234,9 @@ if __name__ == '__main__':
     switchM = {
         # choose type of metric (can choose multiple)
         'snapshot':           True, 
-        'tMean':              True, 
-        'sMean':              True, 
-        'area':               True,
+        'tMean':              False, 
+        'sMean':              False, 
+        'area':               False,
         }
 
     switch = {
@@ -253,7 +254,7 @@ if __name__ == '__main__':
         # Choose horizontal region
         'ascent':             False,
         'descent':            False,
-        'ocean_mask':         False,
+        'ocean_mask':         True,
         
         # save
         'save':               True,

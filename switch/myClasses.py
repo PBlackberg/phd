@@ -36,17 +36,9 @@ def v_reg(switch):
 def h_reg(switch):
     ''' picks region of ascent / descent '''
     region = ''
-    for met_type in [k for k, v in switch.items() if v]:
-        region = '_d'          if met_type in ['descent'] else region
-        region = '_a'          if met_type in ['ascent']  else region
-        region = f'{region}_o' if met_type in ['ocean']  else region
-    return region
-
-def o_reg(switch):
-    ''' picks ocean/land region '''
-    region = ''
-    region = '_l' if switch['land'] else region
-    region = '_o' if switch['ocean']  else region
+    region = '_d' if switch['descent'] else region
+    region = '_a' if switch['ascent']  else region
+    region = f'{region}_o' if switch['ocean']  else region
     return region
 
 def exceptions(metric, switch, cmap, label):
