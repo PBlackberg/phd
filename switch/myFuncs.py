@@ -13,6 +13,7 @@ from functools import wraps
 # ------------------------
 #      Calculations
 # ------------------------
+# ----------------------------------------------------------------- For objects (contiguous convective regions) --------------------------------------------------------------------------------------------------- #
 def connect_boundary(da):
     ''' Connect objects across boundary 
     Objects that touch across lon=0, lon=360 boundary are the same object.
@@ -46,6 +47,24 @@ def haversine_dist(lat1, lon1, lat2, lon2):
     h = np.sin((lat2 - lat1)/2)**2 + np.cos(lat1)*np.cos(lat2) * np.sin((lon2 - lon1)/2)**2 # Haversine formula
     return 2 * R * np.arcsin(np.sqrt(h))
 
+
+# ----------------------------------------------------------------------------------- For plots --------------------------------------------------------------------------------------------------- #
+def find_limits(switchM, datasets, metric_class, func = haversine_dist, # dummy function (use metric function when calling in plot script)
+                quantileWithin_low = 0, quantileWithin_high = 1, 
+                quantileBetween_low = 0, quantileBetween_high=1, 
+                vmin = '', vmax = ''):    
+    ''' If vmin and vmax is not set, the specified quantile values are used as limits '''
+    if vmin == '' and vmax == '':
+        vmin_list, vmax_list = [], []
+        for dataset in datasets:
+            data, _, _ = func(switchM, dataset, metric_class)
+            vmin_list, vmax_list = np.append(vmin_list, np.nanquantile(data, quantileWithin_low)), np.append(vmax_list, np.nanquantile(data, quantileWithin_high))
+        return np.nanquantile(vmin_list, quantileBetween_low), np.nanquantile(vmax_list, quantileBetween_high)
+    else:
+        return vmin, vmax
+
+
+# -------------------------------------------------------------------------------------- Other --------------------------------------------------------------------------------------------------- #
 def monthly_clim(da):
     ''' Creates a data array with the climatology of each month  '''
     year = da.time.dt.year
@@ -71,25 +90,12 @@ def resample_timeMean(da, timeMean_option=''):
         pass
     return da
 
-def find_limits(switchM, datasets, metric_class, func = resample_timeMean, # dummy function (use function for getting metric when calling)
-                quantileWithin_low = 0, quantileWithin_high = 1, 
-                quantileBetween_low = 0, quantileBetween_high=1, 
-                vmin = '', vmax = ''):    
-    ''' If vmin and vmax is not set, the specified quantile values are used as limits '''
-    if vmin == '' and vmax == '':
-        vmin_list, vmax_list = [], []
-        for dataset in datasets:
-            data, _, _ = func(switchM, dataset, metric_class)
-            vmin_list, vmax_list = np.append(vmin_list, np.nanquantile(data, quantileWithin_low)), np.append(vmax_list, np.nanquantile(data, quantileWithin_high))
-        return np.nanquantile(vmin_list, quantileBetween_low), np.nanquantile(vmax_list, quantileBetween_high)
-    else:
-        return vmin, vmax
-
 
 
 # ------------------------
 #       Operations
 # ------------------------
+# --------------------------------------------------------------------------------------- Saving --------------------------------------------------------------------------------------------------- #
 def save_file(data, folder='', filename='', path = ''):
     ''' Saves file to specified folder and filename, or path '''
     if folder and filename:
@@ -112,6 +118,20 @@ def save_figure(figure, folder = '', filename = '', path = ''):
     os.remove(path) if os.path.exists(path) else None
     figure.savefig(path)
 
+def save_plot(switch, fig, home, filename):
+    for save_type in [k for k, v in switch.items() if v]:
+        save_figure(fig, f'{home}/Desktop',            'test.pdf')           if save_type == 'save_test_desktop'   else None
+        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if save_type == 'save_folder_desktop' else None
+        save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
+
+
+# --------------------------------------------------------------------------------------- Loading --------------------------------------------------------------------------------------------------- #
+def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
+    ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
+    return ds
+
+
+# --------------------------------------------------------------------------------------- Decorators --------------------------------------------------------------------------------------------------- #
 def timing_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -125,22 +145,12 @@ def timing_decorator(func):
         return result
     return wrapper
 
-def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
-    ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
-    return ds
-
-def save_plot(switch, fig, home, filename):
-    for save_type in [k for k, v in switch.items() if v]:
-        save_figure(fig, f'{home}/Desktop',            'test.pdf')           if save_type == 'save_test_desktop'   else None
-        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if save_type == 'save_folder_desktop' else None
-        save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
-
 
 
 # ------------------------
 #       Plotting
 # ------------------------
-# -------------------------------------------------------------------------------- General --------------------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------------------- General plot --------------------------------------------------------------------------------------------------- #
 def create_figure(width, height, nrows = 1, ncols = 1):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height))
     return fig, axes
@@ -233,7 +243,7 @@ def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 
 
 
 
-# ----------------------------------------------------------------------------------- Cartopy --------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------- Cartopy plot --------------------------------------------------------------------------------------------------- #
 def create_map_figure(width, height, nrows = 1, ncols = 1, projection = ccrs.PlateCarree(central_longitude=180)):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height), subplot_kw=dict(projection=projection))
     return fig, axes
@@ -260,13 +270,13 @@ def plot_axMapScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
     pcm = ax.pcolormesh(lonm,latm, scene, transform=ccrs.PlateCarree(),zorder=zorder, cmap=cmap, vmin=vmin, vmax=vmax)
     return pcm
 
-def plot_one_scene(scene, metric, figure_title = '', ax_title= '', vmin = None, vmax = None):
+def plot_one_scene(scene, metric_class, figure_title = '', ax_title= '', vmin = None, vmax = None):
     fig, ax = create_map_figure(width = 12, height = 4)
-    pcm = plot_axMapScene(ax, scene, metric.cmap, vmin = vmin, vmax = vmax)
+    pcm = plot_axMapScene(ax, scene, metric_class.cmap, vmin = vmin, vmax = vmax)
     move_col(ax, moveby = -0.055)
     move_row(ax, moveby = 0.075)
     scale_ax(ax, scaleby = 1.15)
-    cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = metric.label, text_pad = 0.125)
+    cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = metric_class.label, text_pad = 0.125)
     plot_xlabel(fig, ax, 'Lon', pad = 0.1, fontsize = 12)
     plot_ylabel(fig, ax, 'Lat', pad = 0.055, fontsize = 12)
     plot_axtitle(fig, ax, figure_title, xpad = 0.005, ypad = 0.025, fontsize = 15)
@@ -274,8 +284,7 @@ def plot_one_scene(scene, metric, figure_title = '', ax_title= '', vmin = None, 
     return fig
 
 
-
-# -------------------------------------------------------------------------------------- Trend --------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- Trend plot --------------------------------------------------------------------------------------------------- #
 def plot_scatter(ax, x, y, metric_class):
     h = ax.scatter(x, y, facecolors='none', edgecolor= metric_class.color)    
     return h

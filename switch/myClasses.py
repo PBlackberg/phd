@@ -36,8 +36,17 @@ def v_reg(switch):
 def h_reg(switch):
     ''' picks region of ascent / descent '''
     region = ''
-    region = '_d' if switch['descent'] else region
-    region = '_a' if switch['ascent']  else region
+    for met_type in [k for k, v in switch.items() if v]:
+        region = '_d'          if met_type in ['descent'] else region
+        region = '_a'          if met_type in ['ascent']  else region
+        region = f'{region}_o' if met_type in ['ocean']  else region
+    return region
+
+def o_reg(switch):
+    ''' picks ocean/land region '''
+    region = ''
+    region = '_l' if switch['land'] else region
+    region = '_o' if switch['ocean']  else region
     return region
 
 def exceptions(metric, switch, cmap, label):
@@ -62,7 +71,7 @@ class metric_class():
         self.cmap          = cmap
         self.color         = color
 
-def get_metric_class(metric, switch, prctile = '95'):
+def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     ''' list of metric: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for plots of metrics '''
     var_type, met_name, label, cmap, color = [None, None, None, 'Greys', 'k']
     # -------------
@@ -95,7 +104,7 @@ def get_metric_class(metric, switch, prctile = '95'):
     # Temperature
     # ------------
     var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                            'Reds',     'r']      if metric in ['ecs']          else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'temp. [$\degree$C]',                'coolwarm', 'r']      if metric in ['tas']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'temp. [$\degree$C]',                'Reds',     'r']      if metric in ['tas']          else [var_type, met_name, label, cmap, color]
     
 
     # ------------
@@ -108,15 +117,16 @@ def get_metric_class(metric, switch, prctile = '95'):
     # ------------
     #  Radiation
     # ------------
-    var_type, met_name, label, cmap, color = ['rlds',      f'rlds{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rlds']         else [var_type, met_name, label, cmap, color]       
-    var_type, met_name, label, cmap, color = ['rlus',      f'rlus{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rlus']         else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['rlds',      f'rlds{h_reg(switch)}{m_type(switch)}',                      r'LW dwel. surf. [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rlds']         else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['rlus',      f'rlus{h_reg(switch)}{m_type(switch)}',                      r'LW upwel. surf. [W m$^{-2}$]',      'Purples',  'purple'] if metric in ['rlus']         else [var_type, met_name, label, cmap, color]       
     var_type, met_name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rlut']         else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['netlw',     f'netlw{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['netlw']        else [var_type, met_name, label, cmap, color]    
+    var_type, met_name, label, cmap, color = ['netlw',     f'netlw{h_reg(switch)}{m_type(switch)}',                     r'NetlW [W m$^{-2}$]',                'Purples',  'purple'] if metric in ['netlw']        else [var_type, met_name, label, cmap, color]    
 
-    var_type, met_name, label, cmap, color = ['rsdt',      f'rsdt{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rsdt']         else [var_type, met_name, label, cmap, color]       
-    var_type, met_name, label, cmap, color = ['rsds',      f'rsds{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rsds']         else [var_type, met_name, label, cmap, color]       
-    var_type, met_name, label, cmap, color = ['rsus',      f'rsus{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rsus']         else [var_type, met_name, label, cmap, color]       
-    var_type, met_name, label, cmap, color = ['netsw',     f'netsw{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['netsw']        else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['rsdt',      f'rsdt{h_reg(switch)}{m_type(switch)}',                      r'SW dwel TOA [W m$^{-2}$]',          'Purples',  'purple'] if metric in ['rsdt']         else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['rsds',      f'rsds{h_reg(switch)}{m_type(switch)}',                      r'SW dwel surf. [W m$^{-2}$]',        'Purples',  'purple'] if metric in ['rsds']         else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['rsus',      f'rsus{h_reg(switch)}{m_type(switch)}',                      r'SW upwel surf. [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rsus']         else [var_type, met_name, label, cmap, color] 
+    var_type, met_name, label, cmap, color = ['rsut',      f'rsut{h_reg(switch)}{m_type(switch)}',                      r'SW upwel TOA [W m$^{-2}$]',         'Purples',  'purple'] if metric in ['rsut']         else [var_type, met_name, label, cmap, color]       
+    var_type, met_name, label, cmap, color = ['netsw',     f'netsw{h_reg(switch)}{m_type(switch)}',                     r'NetSW [W m$^{-2}$]',                'Purples',  'purple'] if metric in ['netsw']        else [var_type, met_name, label, cmap, color]       
 
 
     # ---------

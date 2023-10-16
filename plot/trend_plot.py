@@ -176,13 +176,13 @@ def plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_class
 # ------------------------
 # ---------------------------------------------------------------------------------- Find metric / labels and run ----------------------------------------------------------------------------------------------------- #
 def plot_trend(switchX, switchY, switch, metric_classX, metric_classY):
-    if switch['one_dataset']:
+    if len(mV.datasets) == 1:
         xmin, xmax = get_limits(switchX, metric_classX, [mV.datasets[0]])
         ymin, ymax = get_limits(switchY, metric_classY, [mV.datasets[0]])
         fig, title = plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
         filename = f'{mV.datasets[0]}{title}'
 
-    elif switch['multiple_datasets']:
+    else:
         xmin, xmax = get_limits(switchX, metric_classX, mV.datasets)
         ymin, ymax = get_limits(switchY, metric_classY, mV.datasets)
         fig, fig_title = plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
@@ -193,6 +193,7 @@ def plot_trend(switchX, switchY, switch, metric_classX, metric_classY):
     mF.save_plot(switch, fig, home, filename)
     plt.show() if switch['show'] else None
 
+@mF.timing_decorator
 def run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch):
     print(f'Plotting {mV.timescales[0]} correlation between')
     print(f'metricX: {[key for key, value in switch_metricX.items() if value]} {[key for key, value in switchX.items() if value]}')
@@ -227,27 +228,39 @@ if __name__ == '__main__':
         'areafraction':        False,
         # precipitation
         'pr':                  False,
-        'pr95':                False,
-        'pr97':                False,
         'pr99':                False,
         'pr_rx1day':           False,
         'pr_rx5day':           False,
-        # Large scale state
-        'tas':                 False,
-        'hur':                 False,
-        'rlut':                False,
+        # ascent/descent
         'wap':                 False,
-        'wap_area':            False,
-        'stability':           False,
+        # humidity
+        'hur':                 False,
+        # temperature
+        'tas':                 False,
+        # radiation
+            # longwave
+            'rlut':               False,
+            'rlds':               False,
+            'rlus':               False, 
+            'rlut':               False, 
+            'netlw':              False,
+            # shortwave
+            'rsdt':               False,
+            'rsds':               False,
+            'rsus':               False,
+            'rsut':               False,
+            'netsw':              False,
         # clouds
+        'stability':           False,
         'lcf':                 False,
         'hcf':                 False,
-        'ws_lc':               True,
+        'ws_lc':               False,
         'ws_hc':               False,
         # moist static energy
         'hus':                 False,
         }
     
+
     switchX = {               # choose seetings for x-metric
         # masked by
         'descent':             False,
@@ -271,26 +284,36 @@ if __name__ == '__main__':
         # organization
         'rome':                False,
         'ni':                  False,
-        'areafraction':        True,
+        'areafraction':        False,
         # precipitation
         'pr':                  False,
-        'pr_95':               False,
-        'pr_97':               False,
-        'pr_99':               False,
+        'pr99':                False,
         'pr_rx1day':           False,
         'pr_rx5day':           False,
-        # Large scale state
-        'tas':                 False,
-        'hur':                 False,
-        'rlut':                False,
+        # ascent/descent
         'wap':                 False,
-        'wap_area':            False,
-        'stability':           False,
+        # humidity
+        'hur':                 False,
+        # temperature
+        'tas':                 False,
+        # radiation
+            # longwave
+            'rlds':               False,
+            'rlus':               False, 
+            'rlut':               False, 
+            'netlw':              False,
+            # shortwave
+            'rsdt':               False,
+            'rsds':               False,
+            'rsus':               False,
+            'rsut':               False,
+            'netsw':              True,
         # clouds
+        'stability':           False,
         'lcf':                 False,
         'hcf':                 False,
         'ws_lc':               False,
-        'ws_hc':               True,
+        'ws_hc':               False,
         # moist static energy
         'hus':                 False,
         }
@@ -318,12 +341,9 @@ if __name__ == '__main__':
         # plot type
         'scatter':             False,
         'bins':                True,
-        # type of figure
-        'one_dataset':         True,
-        'multiple_datasets':   False,
         # show/save
-        'show':                True,
-        'save_test_desktop':   False,
+        'show':                False,
+        'save_test_desktop':   True,
         'save_folder_desktop': False,
         'save_folder_cwd':     False,
         }

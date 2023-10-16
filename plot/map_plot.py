@@ -33,9 +33,9 @@ def get_scene(switchM, dataset, metric_class):
         scene = scene_warm - scene_historical
         if switchM['per kelvin']:
                 title = f'_per_K (dTas)'
-                tas_class      = mF.get_metric_class('tas', {'sMean': True, 'ascent': False, 'descent': False})
-                tas_historical = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.timescales[0], mV.experiments[0], mV.resolutions[0])[metric_class.name].mean(dim='time')
-                tas_warm       = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.timescales[0], mV.experiments[1], mV.resolutions[0])[metric_class.name].mean(dim='time')
+                tas_class      = mC.get_metric_class('tas', {'sMean': True, 'ascent': False, 'descent': False})
+                tas_historical = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.timescales[0], mV.experiments[0], mV.resolutions[0])[tas_class.name].mean(dim='time')
+                tas_warm       = mF.load_metric(tas_class, mV.folder_save[0], source, dataset, mV.timescales[0], mV.experiments[1], mV.resolutions[0])[tas_class.name].mean(dim='time')
                 tas_change = tas_warm - tas_historical
                 scene = scene/tas_change
                 axtitle = f'{dataset:20} dT = {np.round(tas_change.data,2)} K'
@@ -72,7 +72,7 @@ def get_limits(switchM, metric_class, datasets):
                                 qWithin_low, qWithin_high, qBetween_low, qBetween_high, # if calculating limits (set lims to '', or comment out)
                                 vmin = '', vmax = ''                                    # if manually setting limits
                                 )      
-    if metric_class.var_type in ['wap', 'tas'] or switchM['change with warming']:
+    if metric_class.var_type in ['wap'] or switchM['change with warming']:
         vabs_max = np.maximum(np.abs(vmin), np.abs(vmax))
         vmin, vmax = -vabs_max, vabs_max 
     return vmin, vmax
@@ -152,12 +152,11 @@ def plot_multiple_scenes(switchM, metric_class, vmin = None, vmax = None):
 # ------------------------
 # ----------------------------------------------------------------------------------------- get scene and run ----------------------------------------------------------------------------------------------------- #
 def plot_metric(switchM, switch, metric_class):
-    if switch['one_scene']:
+    if len(mV.datasets) == 1:
         vmin, vmax = get_limits(switchM, metric_class, [mV.datasets[0]])      
         fig, fig_title = plot_one_scene(switchM, metric_class, vmin, vmax)
         filename = f'{mV.datasets[0]}_{fig_title}'
-
-    if switch['multiple_scenes']:
+    else:
         vmin, vmax = get_limits(switchM, metric_class, mV.datasets)
         fig, fig_title = plot_multiple_scenes(switchM, metric_class, vmin, vmax)
         source_list = mV.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
@@ -167,12 +166,13 @@ def plot_metric(switchM, switch, metric_class):
     mF.save_plot(switch, fig, home, filename)
     plt.show() if switch['show'] else None
 
+@mF.timing_decorator
 def run_map_plot(switch_metric, switchM, switch):
-    print(f'Plotting map_plot from {mV.timescales[0]} {mV.resolutions[0]} data')
-    print(f'metric: {[key for key, value in switch_metric.items() if value]} {[key for key, value in switchM.items() if value]}')
+    print(f'Plotting {mV.timescales[0]} {mV.resolutions[0]} data')
+    print(f'metric: {[key for key, value in switch_metric.items() if value]}')
     print(f'metric_type: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
-    for metric in [k for k, v in switch_metric.items() if v] :
+    for metric in [k for k, v in switch_metric.items() if v]:
         metric_class = mC.get_metric_class(metric, switchM, prctile = mV.conv_percentiles[0])
         plot_metric(switchM, switch, metric_class)
 
@@ -187,31 +187,31 @@ if __name__ == '__main__':
     switch_metric = {
         # organization
         'obj':                 False,
-        'tas':                 False,
         # precipitation
         'pr':                  False,
         'pr99':                False,
         'pr_rx1day':           False,
         'pr_rx5day':           False,
-        # drying
+        # ascent/descent
         'wap':                 False,
-        'hur':                 False,
-
-        # radiation
-        'rlut':               False,
-        'rlds':               True,
-        'rlus':               False, 
-        'rlut':               False, 
-        'netlw':              False,
-
-        'rsdt':               False,
-        'rsds':               False,
-        'rsus':               False,
-        'rsut':               False,
-        'netsw':              False,
-
-        # clouds
+        # temperature
+        'tas':                 True,
         'stability':           False,
+        # humidity
+        'hur':                 False,
+        # radiation
+            # longwave
+            'rlds':               False,
+            'rlus':               False, 
+            'rlut':               False, 
+            'netlw':              False,
+            # shortwave
+            'rsdt':               False,
+            'rsds':               False,
+            'rsus':               False,
+            'rsut':               False,
+            'netsw':              False,
+        # clouds
         'lcf':                 False,
         'hcf':                 False,
         'ws_lc':               False,
@@ -227,27 +227,25 @@ if __name__ == '__main__':
         '500hpa':              False,
         '700hpa':              False,
         'descent':             False,
-        'ascent':              False,
-        'per kelvin':          False,
-        'per kelvin (ecs)':    False,
+        'ascent':              True,
+        'ocean':               False,
         # scene type
         'snapshot':            True,
         'tMean':               False,
         'change with warming': False,
+        'per kelvin':          False,
+        'per kelvin (ecs)':    False,
         }
 
 
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch = {
-        # type of figure
-        'one_scene':           True,
-        'multiple_scenes':     False,
         # show/save
         'show':                False,
-        'save_test_desktop':   False,
+        'save_test_desktop':   True,
         'save_folder_desktop': False,
-        'save_folder_cwd':     True,
+        'save_folder_cwd':     False,
         }
     
     run_map_plot(switch_metric, switchM, switch)

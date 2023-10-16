@@ -1,58 +1,65 @@
 import os
 import numpy as np
 
+
+
 # -------------------------------------------------------------------------  Vars for choosing dataset / model----------------------------------------------------------------------------------------------------- #
 models_cmip5 = [
-    # 'IPSL-CM5A-MR',      # 1
-    # 'GFDL-CM3',          # 2
-    # 'GISS-E2-H',         # 3
-    # 'bcc-csm1-1',        # 4
-    # 'CNRM-CM5',          # 5
-    # 'CCSM4',             # 6
-    # 'HadGEM2-AO',        # 7
-    # 'BNU-ESM',           # 8
-    # 'EC-EARTH',          # 9
-    # 'FGOALS-g2',         # 10
-    # 'MPI-ESM-MR',        # 11
-    # 'CMCC-CM',           # 12
-    # 'inmcm4',            # 13
-    # 'NorESM1-M',         # 14
-    # 'CanESM2',           # 15
-    # 'MIROC5',            # 16
-    # 'HadGEM2-CC',        # 17
-    # 'MRI-CGCM3',         # 18
-    # 'CESM1-BGC'          # 19
+    # 'IPSL-CM5A-MR',    # 1
+    # 'GFDL-CM3',        # 2
+    # 'GISS-E2-H',       # 3
+    # 'bcc-csm1-1',      # 4
+    # 'CNRM-CM5',        # 5
+    # 'CCSM4',           # 6
+    # 'HadGEM2-AO',      # 7
+    # 'BNU-ESM',         # 8
+    # 'EC-EARTH',        # 9
+    # 'FGOALS-g2',       # 10
+    # 'MPI-ESM-MR',      # 11
+    # 'CMCC-CM',         # 12
+    # 'inmcm4',          # 13
+    # 'NorESM1-M',       # 14
+    # 'CanESM2',         # 15
+    # 'MIROC5',          # 16
+    # 'HadGEM2-CC',      # 17
+    # 'MRI-CGCM3',       # 18
+    # 'CESM1-BGC'        # 19
     ]
 
-# 14 models used in Schiro not [1, 2, 6, 13, 15]
-# Models ordered by change in temperature with warming
-models_cmip6 = [
+models_cmip6 = [         # Models ordered by change in temperature with warming (similar models removed)
     'INM-CM5-0',         # 1
     'IITM-ESM',          # 2
     'FGOALS-g3',         # 3                                 
     'MIROC6',            # 4                                      
     'MPI-ESM1-2-LR',     # 5                                      
     'KIOST-ESM',         # 6 
-    'BCC-CSM2-MR',       # 7                                      
-    'NorESM2-MM',        # 8                                      
-    'MRI-ESM2-0',        # 9                                      
-    'GFDL-CM4',          # 10                                     
-    'CMCC-ESM2',         # 11                                     
-    'NESM3',             # 12                            
-    'EC-Earth3',         # 13
-    'CNRM-CM6-1',        # 14                                     
-    'IPSL-CM6A-LR',      # 15
-    'TaiESM1',           # 16                                       
-    'CESM2-WACCM',       # 17    
-    'CanESM5',           # 18
-    'UKESM1-0-LL',       # 19
-    'NorESM2-LM',
-    'GFDL-ESM4',
-    'CMCC-CM2-SR5',
-    'ACCESS-ESM1-5',
-    'ACCESS-CM2',
-    'CNRM-ESM2-1',
+    'BCC-CSM2-MR',       # 7        
+    'GFDL-ESM4',         # 8        
+    'NorESM2-LM',        # 9
+    'NorESM2-MM',        # 10                                      
+    'MRI-ESM2-0',        # 11                                  
+    'GFDL-CM4',          # 12      
+    'CMCC-CM2-SR5',      # 13                  
+    'CMCC-ESM2',         # 14                                    
+    'NESM3',             # 15     
+    'ACCESS-ESM1-5',     # 16 
+    'CNRM-ESM2-1',       # 17  
+    'EC-Earth3',         # 18
+    'CNRM-CM6-1',        # 19                       
+    'IPSL-CM6A-LR',      # 20
+    'ACCESS-CM2',        # 21
+    'TaiESM1',           # 22                                      
+    'CESM2-WACCM',       # 23   
+    'CanESM5',           # 24
+    'UKESM1-0-LL',       # 25
     ]
+
+switch_exclude = {              # exclude models to fit subplots (mutually exclusive categories)
+    'similar_versions':  True,  # 3
+    'org_deviating':     True,  # 2
+    'other_deviating':   False, # 2
+    'no_ocean':          False, # 6 
+    }
 
 other = [
     # 'constructed'        # 1
@@ -63,12 +70,10 @@ observations = [
     # 'GPCP',              # for precipitation and organization index (from project al33 on gadi)
     # 'GPCP_1998-2009',    # high offset in high percentile precipitation
     # 'GPCP_2010-2022',    # low offset in high percentile precipitation
-    # 'ISCCP',               # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
+    # 'ISCCP',             # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',             # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
     # 'ERA5'               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
     ]
-
-datasets = models_cmip5 + models_cmip6 + observations + other
 
 
 timescales = [
@@ -102,8 +107,31 @@ folder_save = [
 
 
 
-
 # -------------------------------------------------------------------- Deal with missing data ----------------------------------------------------------------------------------------------------- #
+def exclude_models(models_cmip6, switch):
+    ''' Some models are versions of the same model and give close to identical results.
+     Some models are exluded to fit into plots.
+     5 models need to be excluded to fit 20 subplots plot
+     '''
+    if switch['similar_versions']:
+        m1, m2, m3 = 'GFDL-ESM4', 'CMCC-CM2-SR5', 'CNRM-ESM2-1' # these models are very similar in time-mean
+        models_cmip6 = list(filter(lambda x: x not in (m1, m2, m3), models_cmip6))
+
+    if switch['org_deviating']:
+        m1, m2 = 'INM-CM5-0', 'CanESM5' # these models stick out in size distribution
+        models_cmip6 = list(filter(lambda x: x not in (m1, m2), models_cmip6))
+
+    if switch['other_deviating']:
+        m1, m2 = 'FGOALS-g3', 'GFDL-ESM4' # these models stick out in other ways
+        models_cmip6 = list(filter(lambda x: x not in (m1, m2), models_cmip6))
+
+    if switch['no_ocean']:
+        m1, m2, m3, m4, m5, m6 = 'IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1', 'KIOST-ESM' # no ocean maskk (KIOST just no ta variable)
+        models_cmip6 = list(filter(lambda x: x not in (m1, m2, m3, m4, m5, m6), models_cmip6))
+    return models_cmip6
+models_cmip6 = exclude_models(models_cmip6, switch_exclude)
+
+
 def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
     ''' Check if dataset has variable '''
     # Invalid source and dataset combination for for-loops
@@ -114,16 +142,17 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
     if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
         return False
 
-        # Clouds
+    # Temperature
     if var in ['ta', 'stability'] and dataset in ['KIOST-ESM']:
         print(f'No {var} data for this dataset')
         return False
     
+    # Clouds
     if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL']:
         print(f'No {var} data for this dataset')
         return False
     
-        # Ocean mask
+    # Ocean mask
     for mask_type in [k for k, v in switch.items() if v]:
         if mask_type == 'ocean_mask' and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
             print(f'No ocean mask for this dataset')
@@ -284,18 +313,13 @@ institutes_cmip6 = {
 # 'MPI-ESM-1-2-HAM': 'HAMMOZ-Consortium'    (no future scenario)
 # 'MPI-ESM1-2-LR':   'MPI-M'                (no future scenario)
 # 'SAM0-UNICON':     'SNU',                 (no future scenario)
-# *'CESM2':           'NCAR',               (regular CESM2 does not have monthly hur in ssp585, but does have it in CESM2-WACCM)
+# *'CESM2':          'NCAR',               (regular CESM2 does not have monthly hur in ssp585, but does have it in CESM2-WACCM)
 # 'GISS-E2-1-G',     'NASA-GISS'            Does not have daily precipitation
 # 'FGOALS-f3-L',                            Only monthly variables in future scenario
+
+
+datasets = models_cmip5 + models_cmip6 + observations + other
 institutes = {**institutes_cmip5, **institutes_cmip6}
-
-
-
-
-
-
-
-
 
 
 
