@@ -308,7 +308,7 @@ if __name__ == '__main__':
         'gadi_data':          False,
 
         # threshold
-        'fixed_area':         True,
+        'fixed_area':         False,
 
         # save
         'save':               True,

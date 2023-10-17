@@ -1,10 +1,6 @@
+nrows = 5
+width, height = [14, 6] if nrows == 5 else [14, 6] 
 
 
-
-import xarray as xr
-import numpy as np
-
-a = xr.DataArray([1, 2, np.nan])
-
-print(a.sum())
-
+print(width)
+print(height)

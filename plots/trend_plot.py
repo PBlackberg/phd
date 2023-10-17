@@ -119,7 +119,12 @@ def plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmi
     mF.cbar_right_of_axis(fig, ax, h_pcm[3], width_frac= 0.05, height_frac=1, pad=0.035, numbersize = 12, cbar_label = 'months [Nb]', text_pad = 0.05, fontsize = 12) if switch['bins'] else None
     return fig, fig_title
 
-def plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_classY, xmin = None, xmax = None, ymin = None, ymax = None):
+def highlight_subplot_frame(ax, color):
+    for spine in ax.spines.values():
+        spine.set_edgecolor(color)
+        spine.set_linewidth(2)  # Adjust line width
+
+def plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY, xmin = None, xmax = None, ymin = None, ymax = None):
     nrows, ncols = 5, 4
     fig, axes = mF.create_figure(width = 12, height = 8.5, nrows=nrows, ncols=ncols)
     num_subplots = len(mV.datasets)
@@ -127,6 +132,11 @@ def plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_class
         row = i // ncols  # determine row index
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
+
+        dataset_highlight = mV.get_ds_highlight(switch_highlight, mV.datasets)
+        highlight_subplot_frame(ax, color = 'b') if dataset in dataset_highlight else None
+        highlight_subplot_frame(ax, color = 'r') if mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations) in ['obs'] else None
+
         x, _, _ =                  get_list(switchX, dataset, metric_classX)
         y, metric_title, axtitle = get_list(switchY, dataset, metric_classY)
         fig_title = f'{metric_classX.name} and {metric_classY.name} ({metric_title})'
@@ -175,17 +185,16 @@ def plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_class
 #     Run / save plot
 # ------------------------
 # ---------------------------------------------------------------------------------- Find metric / labels and run ----------------------------------------------------------------------------------------------------- #
-def plot_trend(switchX, switchY, switch, metric_classX, metric_classY):
+def plot_trend(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY):
     if len(mV.datasets) == 1:
         xmin, xmax = get_limits(switchX, metric_classX, [mV.datasets[0]])
         ymin, ymax = get_limits(switchY, metric_classY, [mV.datasets[0]])
         fig, title = plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
         filename = f'{mV.datasets[0]}{title}'
-
     else:
         xmin, xmax = get_limits(switchX, metric_classX, mV.datasets)
         ymin, ymax = get_limits(switchY, metric_classY, mV.datasets)
-        fig, fig_title = plot_multiple_datasets(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
+        fig, fig_title = plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
         source_list = mV.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
         ifWith_obs = mV.find_ifWithObs(mV.datasets, mV.observations)
         filename = f'{source_list}_{fig_title}{ifWith_obs}'
@@ -194,7 +203,7 @@ def plot_trend(switchX, switchY, switch, metric_classX, metric_classY):
     plt.show() if switch['show'] else None
 
 @mF.timing_decorator
-def run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch):
+def run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch_highlight, switch):
     print(f'Plotting {mV.timescales[0]} correlation between')
     print(f'metricX: {[key for key, value in switch_metricX.items() if value]} {[key for key, value in switchX.items() if value]}')
     print(f'metricY: {[key for key, value in switch_metricY.items() if value]} {[key for key, value in switchY.items() if value]}')
@@ -212,7 +221,7 @@ def run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch):
 
         metric_classX = mC.get_metric_class(metricX, switchX, prctile = prctileX)
         metric_classY = mC.get_metric_class(metricY, switchY, prctile = prctileY)
-        plot_trend(switchX, switchY, switch, metric_classX, metric_classY)
+        plot_trend(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY)
 
 
 
@@ -337,6 +346,12 @@ if __name__ == '__main__':
         }
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
+    switch_highlight = {       # models to highlight
+        'by_dTas':             False,
+        'by_org_hur_corr':     False,
+        'by_obs_sim':          False,
+        }
+    
     switch = {                 # overall settings
         # plot type
         'scatter':             False,
@@ -349,7 +364,7 @@ if __name__ == '__main__':
         }
     
 # ----------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #
-    run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch)
+    run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch_highlight, switch)
 
 
 

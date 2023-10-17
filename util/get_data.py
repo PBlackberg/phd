@@ -10,7 +10,7 @@ import myFuncs as mF
 
 
 # ------------------------
-# Concatenate var files
+#   Concatenate files
 # ------------------------
 # ----------------------------------------------------------------------------- concatenate files ----------------------------------------------------------------------------------------------------------#
 def concat_files(path_folder, experiment):
@@ -42,7 +42,7 @@ def latestVersion(path):
 
 
 # ------------------------
-#          CMIP5
+#       For CMIP5
 # ------------------------
 # ---------------------------------------------------------------------------------- pick ensemble ----------------------------------------------------------------------------------------------------------#
 def choose_cmip5_ensemble(model, experiment):
@@ -52,6 +52,7 @@ def choose_cmip5_ensemble(model, experiment):
     ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
     ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
     return ensemble
+
 
 # ------------------------------------------------------------------------------- For most variables ----------------------------------------------------------------------------------------------------------#
 def get_cmip5_data(variable, model, experiment, switch = {'ocean_mask': False}):
@@ -107,7 +108,7 @@ def get_cmip5_cl(variable, model, experiment, switch = {'ocean_mask': False}):
 
 
 # ------------------------
-#         CMIP6
+#       For CMIP6
 # ------------------------
 # ---------------------------------------------------------------------------- Pick ensemble and gridfolder ----------------------------------------------------------------------------------------------------------#
 def choose_cmip6_ensemble(model, experiment):
@@ -218,7 +219,7 @@ def get_cmip6_cl(variable, model, experiment, switch = {'ocean_mask': False}):
 
 
 # ------------------------
-#   Observations (NCI)
+#  For observations (NCI)
 # ------------------------
 # ------------------------------------------------------------------------------------- GPCP ----------------------------------------------------------------------------------------------------------#
 def get_gpcp():

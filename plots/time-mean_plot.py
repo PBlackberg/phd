@@ -58,7 +58,6 @@ def get_datapoint(switchM, dataset, metric_class):
     return datapoint, metric_title, axtitle
 
 
-
 # ---------------------------------------------------------------------------------------- get limits ----------------------------------------------------------------------------------------------------- #
 def get_limits(switchM, metric_class, datasets):
     qWithin_low, qWithin_high, qBetween_low, qBetween_high = 0, 1, 0, 1 # quantiles
@@ -72,26 +71,12 @@ def get_limits(switchM, metric_class, datasets):
 
 
 # --------------------------
-#   Plot correlation plot
+#     Correlation plot
 # --------------------------
-# --------------------------------------------------------------------------------- pick datsets to highlight ----------------------------------------------------------------------------------------------------- #
-def datapoint_highlight(metric_classY):
-    model_highlight = mV.datasets[-int(len(mV.datasets)/2):] # Largest increase in ecs
-    # model_highlight = ['MIROC6', 'NorESM2-LM', 'NorESM2-MM', 'MRI-ESM2-0', 'GFDL-CM4', 'CMCC-CM2-SR5', 'CMCC-ESM2', 'CNRM-ESM2-1', 'EC-Earth3', 'CNRM-CM6-1', 'TaiESM1', 'CESM2-WACCM'] # rlut sensitive to org
-    model_highlight = ['MIROC6', 'NorESM2-LM', 'NorESM2-MM', 'CMCC-ESM2', 'ACCESS-ESM1-5', 'CNRM-CM6-1', 'ACCESS-CM2', 'TaiESM1', 'CESM2-WACCM', 'UKESM1-0-LL']                         # hur sensitive to org
-    # model_highlight = []                                                                                                                                                                # Most realistic org
-    # model_highlight = ['INM-CM5-0', 'CanESM5']     
-    #                                                                                                                                        # excluded
-    # model_highlight = ['dont highlight']
-    return model_highlight
-
-
-
 # ---------------------------------------------------------------------------------------- plot figure ----------------------------------------------------------------------------------------------------- #
-def plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin = None, xmax = None, ymin = None, ymax = None):
+def plot_scatter(switchX, switchY, switch_highlight, metric_classX, metric_classY, xmin = None, xmax = None, ymin = None, ymax = None):
     fig, ax = mF.create_figure(width = 10, height = 5.5)
     mF.scale_ax_x(ax, scaleby=0.75)
-
     x, y = [], []
     for dataset in mV.datasets:
         x_datapoint, x_metric_title, _ = get_datapoint(switchX, dataset, metric_classX)
@@ -102,7 +87,6 @@ def plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin = None, xm
 
     fig_title = f'{metric_classX.name} {x_metric_title} and \n {metric_classY.name}{y_metric_title}'
 
-    # get correlation
     ax.scatter(x, y, alpha=0)  # Completely transparent points (putting text over)    
     res= stats.pearsonr(x[0:-1],y[0:-1]) if mV.find_ifWithObs(mV.datasets, mV.observations) else stats.pearsonr(x,y)
     print('r: ', res[0])
@@ -111,8 +95,7 @@ def plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin = None, xm
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', 
                     xytext=(0.8, 0.9), textcoords='axes fraction', fontsize = 12, color = 'r')
         
-    # plot letters and legend
-    model_highlight = datapoint_highlight(metric_classY)    
+    model_highlight = mV.get_ds_highlight(switch_highlight, mV.datasets, mV.switch_exclude, mV.exclude_models)
     legend_handles, legend_labels = [], []
     for dataset in mV.datasets: # put 2 letters as label for each dataset (with associated legend)
         dataset_idx = mV.datasets.index(dataset)
@@ -124,7 +107,8 @@ def plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin = None, xm
         legend_labels.append(f"{label_text} - {dataset}")
     ax.legend(handles=legend_handles, labels=legend_labels, bbox_to_anchor=(1.1, 0.475), loc='center left')
 
-    # plt.axhline(y=0, color='k', linestyle='--')
+    plt.axhline(y=0, color='k', linestyle='--') if np.min(y)<0 and np.max(y)>0 else None
+    plt.axvline(x=0, color='k', linestyle='--') if np.min(x)<0 and np.max(x)>0 else None
 
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
@@ -147,10 +131,10 @@ def plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin = None, xm
 #     Run / save plot
 # ------------------------
 # ----------------------------------------------------------------------------------- Find metric / labels and run ----------------------------------------------------------------------------------------------------- #
-def run_corr(switchX, switchY, switch, metric_classX, metric_classY):
+def run_corr(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY):
     xmin, xmax = get_limits(switchX, metric_classX, mV.datasets)
     ymin, ymax = get_limits(switchY, metric_classY, mV.datasets)
-    fig, fig_title = plot_scatter(switchX, switchY, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
+    fig, fig_title = plot_scatter(switchX, switchY, switch_highlight, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
 
     source_list = mV.find_list_source(mV.datasets, mV.models_cmip5, mV.models_cmip6, mV.observations)
     ifWith_obs = mV.find_ifWithObs(mV.datasets, mV.observations)
@@ -159,18 +143,17 @@ def run_corr(switchX, switchY, switch, metric_classX, metric_classY):
     mF.save_plot(switch, fig, home, filename)
     plt.show() if switch['show'] else None
 
-def run_timeMean_corr(switch_metricX, switch_metricY, switchX, switchY, switch):
+def run_timeMean_corr(switch_metricX, switch_metricY, switchX, switchY, switch_highlight, switch):
     print(f'Plotting {mV.timescales[0]} correlation between')
     print(f'metricX: {[key for key, value in switch_metricX.items() if value]} {[key for key, value in switchX.items() if value]}')
     print(f'metricY: {[key for key, value in switch_metricY.items() if value]} {[key for key, value in switchY.items() if value]}')
-
     print(f'settings: {[key for key, value in switch.items() if value]}')
 
     metricX = next((key for key, value in switch_metricX.items() if value), None)
     for metricY in [k for k, v in switch_metricY.items() if v]:
         metric_classX = mC.get_metric_class(metricX, switchX, prctile = mV.conv_percentiles[0])
         metric_classY = mC.get_metric_class(metricY, switchY, prctile = mV.conv_percentiles[0])
-        run_corr(switchX, switchY, switch, metric_classX, metric_classY)
+        run_corr(switchX, switchY, switch_highlight, switch, metric_classX, metric_classY)
 
 
 
@@ -304,6 +287,13 @@ if __name__ == '__main__':
         }
 
 # ----------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
+    switch_highlight = {       # models to highlight
+        'by_dTas':             False,
+        'by_org_hur_corr':     False,
+        'by_obs_sim':          False,
+        'by_excluded':         False,
+        }
+    
     switch = {                 # overall settings
         # show/save
         'show':                False,
@@ -313,7 +303,7 @@ if __name__ == '__main__':
         }
     
 # -------------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #
-    run_timeMean_corr(switch_metricX, switch_metricY, switchX, switchY, switch)
+    run_timeMean_corr(switch_metricX, switch_metricY, switchX, switchY, switch_highlight, switch)
 
 
 
