@@ -185,72 +185,48 @@ def run_map_plot(switch_metric, switchM, switch):
 
 
 # ------------------------
-#   Choose what to run
+#   Choose what to plot
 # ------------------------
 if __name__ == '__main__':
 # ---------------------------------------------------------------------------------- metric ----------------------------------------------------------------------------------------------------- #
- 
     switch_metric = {
         # organization
-        'obj':                 False,
+        'obj':   False,
         # precipitation
-        'pr':                  False,
-        'pr99':                False,
-        'pr_rx1day':           False,
-        'pr_rx5day':           False,
-        # ascent/descent
-        'wap':                 False,
+        'pr':    False, 'pr99': False, 'pr_rx1day': False, 'pr_rx5day': False,
+        # circulation
+        'wap':   False,
         # temperature
-        'tas':                 False,
-        'stability':           False,
+        'tas':   False, 'stability': False,
         # humidity
-        'hur':                 True,
+        'hur':   True,
         # radiation
-            # longwave
-            'rlds':               False,
-            'rlus':               False, 
-            'rlut':               False, 
-            'netlw':              False,
-            # shortwave
-            'rsdt':               False,
-            'rsds':               False,
-            'rsus':               False,
-            'rsut':               False,
-            'netsw':              False,
+        'netlw': False, 'rlds': False, 'rlus': False, 'rlut': False, 
+        'netsw': False, 'rsdt': False, 'rsds': False, 'rsus': False, 'rsut': False,
         # clouds
-        'lcf':                 False,
-        'hcf':                 False,
-        'ws_lc':               False,
-        'ws_hc':               False,
+        'lcf':   False, 'hcf':   False,
+        'ws_lc': False, 'ws_hc': False,
         # moist static energy
-        'hus':                 False,
+        'hus':   False,
         }
 
     switchM = {    
+        # org threshold
+        'fixed area':          False,
         # masked by
-        'fixed area':          False, # only applies to org_metrics
-        '250hpa':              False,
-        '500hpa':              False,
-        '700hpa':              False,
-        'descent':             False,
-        'ascent':              False,
-        'ocean':               False,
+        '250hpa':              False, '500hpa': False, '700hpa': False, # vertical
+        'descent':             False, 'ascent': False, 'ocean':  False, # horizontal
         # scene type
-        'snapshot':            True,
-        'tMean':               False,
-        'change with warming': False,
-        'per kelvin':          False,
-        'per kelvin (ecs)':    False,
+        'snapshot':            True, 'tMean': False,
+        # scenario type
+        'change with warming': False, 'per kelvin': False, 'per kelvin (ecs)': False,
         }
 
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch = {
         # show/save
-        'show':                True,
-        'save_test_desktop':   False,
-        'save_folder_desktop': False,
-        'save_folder_cwd':     False,
+        'show': True, 'save_test_desktop': False, 'save_folder_desktop': False, 'save_folder_cwd': False,
         }
     
     run_map_plot(switch_metric, switchM, switch)
