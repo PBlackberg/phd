@@ -4,7 +4,12 @@
 # -------------------
 # ssh.config: file for setting initiation: module avail, module load python3/unstable, module load git/2.31.1-gcc-11.2.0, module list
 # spack:      used as package manager to build and maintain the software tree (https://spack.readthedocs.io)
+# To use module in script:  in bash or ksh script source /sw/etc/profile.levante
+#                           in tcsh or csh script source /sw/etc/csh.levante
 
+
+# in tcsh or csh script
+source /sw/etc/csh.levante
 
 import numpy as np
 import xarray as xr
