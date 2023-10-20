@@ -94,6 +94,19 @@ observations = [
     ]
 
 
+# -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
+models_dyamond = [
+    'winter',
+]
+
+
+
+
+
+
+
+
+
 # ------------------------------------------------------------------------ Overall settings ----------------------------------------------------------------------------------------------------- #
 timescales = [
     # 'daily',
@@ -121,10 +134,10 @@ conv_percentiles = [       # for organization metrics
 
 
 # ------------------------------------------------------------------------ Folder to save metric to ----------------------------------------------------------------------------------------------------- #
-folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
-    ]
+folder_save = [os.path.expanduser("~") + '/Documents/data']
+folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
+folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
+
 
 
 
