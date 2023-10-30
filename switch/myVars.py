@@ -92,6 +92,19 @@ observations = [
     ]
 
 
+# -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
+models_dyamond = [
+    'winter',
+]
+
+
+
+
+
+
+
+
+
 # ------------------------------------------------------------------------ Overall settings ----------------------------------------------------------------------------------------------------- #
 timescales = [
     # 'daily',
@@ -119,10 +132,10 @@ conv_percentiles = [       # for organization metrics
 
 
 # ------------------------------------------------------------------------ Folder to save metric to ----------------------------------------------------------------------------------------------------- #
-folder_save = [
-    os.path.expanduser("~") + '/Documents/data',
-    # '/g/data/k10/cb4968/data'
-    ]
+folder_save = [os.path.expanduser("~") + '/Documents/data']
+folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
+folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
+
 
 
 
@@ -174,7 +187,6 @@ models_cmip6, models_excluded = exclude_models(models_cmip6, switch_subset)
 
 def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
     ''' Check if dataset has variable '''
-    # Invalid source and dataset combination for for-loops
     if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
         return  False
     if not experiment and not source in ['obs', 'test']:                                          # only run obs or other for experiment == ''
@@ -244,7 +256,6 @@ def get_ds_highlight(switch_highlight, datasets, switch_exclude= {'a':False}, fu
     return dataset_highlight
 
     # model_highlight = ['MIROC6', 'NorESM2-LM', 'NorESM2-MM', 'CMCC-ESM2', 'ACCESS-ESM1-5', 'CNRM-CM6-1', 'ACCESS-CM2', 'TaiESM1', 'CESM2-WACCM', 'UKESM1-0-LL']                         # hur sensitive to org
-
 
 
 # ------------------------
@@ -412,6 +423,27 @@ institutes_cmip6 = {
     # CESM2-WACCM-FV2                    
     # CESM2-FV2 
 
+    # 'NorCPM1 '         'NCC'                  (No monthly hur)
+    # 'E3SM-1-0':        'E3SM-Project',        (not correct years)                                 # 16
+    # 'EC-Earth3-LR':    'EC-EARTH-Consortium'  (no historical simulation)
+    # 'NorESM1-F':       'NCC'                  (no historical simulation)
+
+# could include for part of analysis
+    # 'CAMS-CSM1-0':     'CAMS'                 (hardly any other variables except precip daily)    # 17
+    # 'HadGEM3-GC31-LL'  'MOHC'                 (hardly any other variables except precip daily)
+    # 'HadGEM3-GC31-MM'  'MOHC'                 (hardly any other variables except precip daily)
+    # 'FGOALS-f3-L':     'CAS'                  (only monthly variables in future scenario)         # 14
+    # 'CESM2':           'NCAR',                (no monthly hur in future scenario)                 # 15
+    # no monthly hur in
+    # 'MPI-ESM-1-2-HAM': 'HAMMOZ-Consortium'    (no future scenario)                                # 10
+    # 'MPI-ESM1-2-LR':   'MPI-M'                (no future scenario)                                # 11
+    # 'SAM0-UNICON':     'SNU',                 (no future scenario)                                # 12
+    # 'CMCC-CM2-HR4':    'CMCC'                 (no future scenario)                                # 13
+    # 'IPSL-CM5A2-INCA': 'IPSL'                 (no future scenario)                                # 13  
+
+# not sure what the FV2 ending is referring to here (might be the same model essentially)
+    # CESM2-WACCM-FV2                    
+    # CESM2-FV2 
 
 
 # ---------------------------------------------------------------------------------------- Order by ----------------------------------------------------------------------------------------------------- #

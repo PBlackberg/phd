@@ -25,14 +25,14 @@ def concat_files(path_folder, experiment):
     paths = []
     for file in files:
         paths = np.append(paths, os.path.join(path_folder, file))
-    # print(paths[0])
+    print(paths[0])
     ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
     return ds
 
 
 # ---------------------------------------------------------------------------------- pick version ----------------------------------------------------------------------------------------------------------#
 def latestVersion(path):
-    ''' Picks the latest version if there are multiple '''
+    ''' Picks the latest version if there are multiple '''    
     versions = os.listdir(path)
     version = max(versions, key=lambda x: int(x[1:])) if len(versions)>1 else versions[0]
     return version
@@ -46,9 +46,9 @@ def latestVersion(path):
 def choose_cmip5_ensemble(model, experiment):
     ''' Some models don't have the ensemble most common amongst other models 
     and some experiments don't have the same ensemble as the historical simulation'''
-    ensemble = 'r6i1p1' if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
-    ensemble = 'r6i1p1' if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
-    ensemble = 'r2i1p1' if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
+    ensemble = 'r6i1p1'   if model in ['EC-EARTH', 'CCSM4'] else 'r1i1p1'
+    ensemble = 'r6i1p1'   if model == 'GISS-E2-H' and experiment == 'historical' else ensemble
+    ensemble = 'r2i1p1'   if model == 'GISS-E2-H' and not experiment == 'historical' else ensemble
     return ensemble
 
 
@@ -112,15 +112,15 @@ def get_cmip5_cl(variable, model, experiment, switch = {'ocean_mask': False}):
 def choose_cmip6_ensemble(model, experiment):
     ''' Some models don't have the ensemble most common amongst other models 
     and some experiments don't have the same ensemble as the historical simulation'''
-    ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL', 'CNRM-ESM2-1'] else 'r1i1p1f1'
+    ensemble = 'r1i1p1f2' if model in ['CNRM-CM6-1', 'UKESM1-0-LL', 'CNRM-ESM2-1', 'CNRM-CM6-1-HR', 'MIROC-ES2L'] else 'r1i1p1f1'
     ensemble = 'r11i1p1f1' if model == 'CESM2' and not experiment == 'historical' else ensemble
     return ensemble
 
 def grid_folder(model):
     ''' Some models have a different grid folder in the path to the files'''
     folder = 'gn'
-    folder = 'gr' if model in ['CNRM-CM6-1', 'EC-Earth3', 'IPSL-CM6A-LR', 'FGOALS-f3-L', 'CNRM-ESM2-1'] else folder
-    folder = 'gr1' if model in ['GFDL-CM4', 'INM-CM5-0', 'KIOST-ESM', 'GFDL-ESM4'] else folder           
+    folder = 'gr' if model in ['CNRM-CM6-1', 'EC-Earth3', 'IPSL-CM6A-LR', 'FGOALS-f3-L', 'CNRM-ESM2-1', 'CNRM-CM6-1-HR', 'KACE-1-0-G'] else folder
+    folder = 'gr1' if model in ['GFDL-CM4', 'INM-CM5-0', 'KIOST-ESM', 'GFDL-ESM4', 'INM-CM4-8'] else folder           
     return folder
 
 
@@ -142,34 +142,17 @@ def get_cmip6_data(variable, model, experiment, switch = {'ocean_mask': False}):
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     da = ds[variable]
 
-    if switch['ocean_mask']:
-        ensemble = choose_cmip6_ensemble(model, 'historical')
-
-        if model in ['ACCESS-ESM1-5', 'ACCESS-CM2']:
-            path_gen = f'/g/data/fs38/publications/CMIP6/CMIP/{mV.institutes[model]}/{model}/historical/{ensemble}/fx/sftlf/{folder_grid}'
-            version = 'latest'
-        else:            
-            path_gen = f'/g/data/oi10/replicas/CMIP6/CMIP/{mV.institutes[model]}/{model}/historical/{ensemble}/fx/sftlf/{folder_grid}'
-            version = latestVersion(path_gen)
-        
-        folder = f'{path_gen}/{version}'
-        filename = f'sftlf_fx_{model}_historical_{ensemble}_{folder_grid}.nc'
-        print(f'{folder}/{filename}')
-        mask = ((xr.open_dataset(f'{folder}/{filename}')['sftlf'].sel(lat=slice(-35,35))/100)-1)*(-1)
-        if model in ['MPI-ESM1-2-LR']: # the coordinates misalign by e-14
-            da['lat'] = da['lat'].round(decimals=6)
-            mask['lat'] = mask['lat'].round(decimals=6)
-
-        if model in ['ACCESS-ESM1-5']: # coordinates mosaligned
-            mask = mask.interp(lat=da['lat'])
-            mask['lon'] = mask['lon'] + 0.9375
-
-        da = da * mask
+    if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] and 'plev' in da.dims:
+        da['plev'] = da['plev'].round(0) # plev coordinate is specified to a higher number of significant figures
 
     if mV.resolutions[0] == 'regridded': # conservatively interpolate
         import regrid_xesmf as regrid
-        regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model
-        da = regridder(da) # conservatively interpolate data onto grid from other model
+        regridder = regrid.regrid_conserv_xesmf(ds)  # define regridder based of grid from other model
+        da = regridder(da)                           # conservatively interpolate data onto grid from other model
+        if switch['ocean_mask']:
+            mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util/ocean_mask.nc')['ocean_mask']
+            da = da * mask
+
     ds = xr.Dataset(data_vars = {f'{variable}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs) # if regridded it should already be lat: [-30,30]
     return ds
 
@@ -180,9 +163,15 @@ def get_cmip6_cl(variable, model, experiment, switch = {'ocean_mask': False}):
     ensemble = choose_cmip6_ensemble(model, experiment)
     project = 'CMIP' if experiment == 'historical' else 'ScenarioMIP'
     timeInterval = 'day' if mV.timescales[0] == 'daily' else 'Amon'
-    path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+
+    if model in ['ACCESS-ESM1-5', 'ACCESS-CM2']:
+        path_gen = f'/g/data/fs38/publications/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+    else:
+        path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+
+    # print(path_gen)
     folder_grid = grid_folder(model)
-    version = latestVersion(os.path.join(path_gen, folder_grid))
+    version = latestVersion(os.path.join(path_gen, folder_grid)) if not model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else 'latest'
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
     ds = concat_files(path_folder, experiment) # picks out lat: [-35, 35]
     if model == 'IITM-ESM': # different models have different conversions from height coordinate to pressure coordinate.
@@ -191,13 +180,14 @@ def get_cmip6_cl(variable, model, experiment, switch = {'ocean_mask': False}):
     elif model == 'IPSL-CM6A-LR':
         ds = ds.rename({'presnivs':'lev'})
         p_hybridsigma = ds['lev'] # already on pressure levels
-    elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4']: 
+    elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4', 'CNRM-ESM2-1', 'CNRM-CM6-1-HR']: 
         p_hybridsigma = ds.ap + ds.b*ds.ps
     elif model == 'FGOALS-g3':
         p_hybridsigma = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-    elif model == 'UKESM1-0-LL': # (not used)
-        p_hybridsigma = ds.lev+ds.b*ds.orog # in meters
-        p_hybridsigma = 1000e2 * (1 -  0.0065*p_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065) # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula
+    elif model in ['UKESM1-0-LL', 'KACE-1-0-G', 'ACCESS-CM2', 'ACCESS-ESM1-5']:
+        h_hybridsigma = ds.lev + ds.b*ds.orog                                                      # in meters
+        p_hybridsigma = 1000e2 * (1 -  0.0065*h_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065) # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula (approximation based on lapserate)
+        # p_hybridsigma = 1000e2 * np.exp(0.029*9.82*h_hybridsigma/287*T)                        # to pressure: P = P_0 * exp(- Mgh/(RT)) Hydrostatic balance (don't have T at pressure level)
     else:
         p_hybridsigma = ds.a*ds.p0 + ds.b*ds.ps
 
@@ -297,7 +287,7 @@ def get_var_data(source, dataset, experiment, var_name, switch):
     if var_name == 'pr':
         da = get_cmip5_data('pr', dataset, experiment, switch)['pr']*60*60*24 if source == 'cmip5' else da
         da = get_cmip6_data('pr', dataset, experiment, switch)['pr']*60*60*24 if source == 'cmip6' else da
-        da = get_gpcp()['pr']                                         if dataset == 'GPCP' else da
+        da = get_gpcp()['pr']                                                 if dataset == 'GPCP' else da
         da.attrs['units'] = r'mm day$^-1$'
 
     if var_name == 'tas':
@@ -376,13 +366,13 @@ def get_var_data(source, dataset, experiment, var_name, switch):
     if var_name == 'ta':
         da = get_cmip5_data('ta', dataset, experiment, switch)['ta'] if source == 'cmip5' else da
         da = get_cmip6_data('ta', dataset, experiment, switch)['ta'] if source == 'cmip6' else da
-        da = get_era5_monthly('t')['t']                      if dataset == 'ERA5' else da
+        da = get_era5_monthly('t')['t']                              if dataset == 'ERA5' else da
         da.attrs['units'] = 'K'
 
     if var_name == 'hus':
         da = get_cmip5_data('hus', dataset, experiment, switch)['hus'] if source == 'cmip5' else da
         da = get_cmip6_data('hus', dataset, experiment, switch)['hus'] if source == 'cmip6' else da
-        da = get_era5_monthly('q')['q']                        if dataset == 'ERA5' else da
+        da = get_era5_monthly('q')['q']                                if dataset == 'ERA5' else da
         da.attrs['units'] = ''
 
     if var_name == 'zg':
@@ -398,6 +388,8 @@ def get_var_data(source, dataset, experiment, var_name, switch):
     if var_name == 'hfss':
         da = get_cmip5_data('hfss', dataset, experiment, switch)['hfss'] if source == 'cmip5' else da
         da = get_cmip6_data('hfss', dataset, experiment, switch)['hfss'] if source == 'cmip6' else da
+
+
     return da
 
 
@@ -444,11 +436,11 @@ if __name__ == '__main__':
 
     switch_var = {
         # Precipitation and organization, with changes in warming
-        'pr'  :          True,
+        'pr'  :          False,
         'tas' :          False,
 
         # Drying
-        'wap' :          False,    
+        'wap' :          True,    
         'hur' :          False,
 
         # Radiation
@@ -486,6 +478,7 @@ if __name__ == '__main__':
         }
 
     run_get_data(switch_var, switch)
+
 
 
 
