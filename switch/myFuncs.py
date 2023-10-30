@@ -127,7 +127,9 @@ def save_plot(switch, fig, home, filename):
 
 # --------------------------------------------------------------------------------------- Loading --------------------------------------------------------------------------------------------------- #
 def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
-    ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
+    path = f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
+    # print(path)
+    ds = xr.open_dataset(path)     
     return ds
 
 

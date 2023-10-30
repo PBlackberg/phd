@@ -50,11 +50,11 @@ def h_reg(switch):
 def exceptions(metric, switch, cmap, label):
     for met_type in [k for k, v in switch.items() if v]:
         cmap = 'RdBu_r' if met_type in ['change with warming'] else cmap
-        # cmap = 'Reds'  if met_type in ['descent'] and metric in ['wap'] else cmap
+        cmap = 'Reds'  if met_type in ['descent'] and metric in ['wap'] else cmap
         # cmap = 'Blues' if met_type in ['ascent']  and metric in ['wap'] else cmap
 
     for met_type in [k for k, v in switch.items() if v]:
-        label = '{}{}{}'.format(label[:-1], r'K$^{-1}$', label[-1:]) if met_type in ['per kelvin'] and not label == 'ECS [K]' else label
+        label = '{}{}{}'.format(label[:-1], r'K$^{-1}$', label[-1:]) if met_type in ['per kelvin', 'per ecs'] and not label == 'ECS [K]' else label
     return cmap, label
 
 
@@ -94,15 +94,15 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     var_type, met_name, label, cmap, color = ['org',       f'areafraction{c_prctile(prctile)}{t_type(switch)}',         'area frac. [N%]',                    cmap,       color]    if metric in ['areafraction'] else [var_type, met_name, label, cmap, color]   
     var_type, met_name, label, cmap, color = ['org',       f'o_area{c_prctile(prctile)}{t_type(switch)}',               r'area [km$^2$]',                     cmap,       color]    if metric in ['o_area']       else [var_type, met_name, label, cmap, color]  
     var_type, met_name, label, cmap, color = ['org',       f'mean_area{c_prctile(prctile)}{t_type(switch)}',            r'area [km$^2$]',                     cmap,       color]    if metric in ['mean_area']    else [var_type, met_name, label, cmap, color]    
-    var_type, met_name, label, cmap, color = ['org',       f'F_pr10{c_prctile(prctile)}{t_type(switch)}',               r'area [km$^2$]',                     cmap,       color]    if metric in ['F_pr10']       else [var_type, met_name, label, cmap, color]   
+    var_type, met_name, label, cmap, color = ['org',       f'F_pr10',                                                   r'area [%]',                          cmap,       color]    if metric in ['F_pr10']       else [var_type, met_name, label, cmap, color]   
 
 
     # ------------
     # Temperature
     # ------------
-    var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                            'Reds',     'r']      if metric in ['ecs']          else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'temp. [$\degree$C]',                'Reds',     'r']      if metric in ['tas']          else [var_type, met_name, label, cmap, color]
-    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'temp. [hPa day$^{-1}$]',            'Reds',     'k']      if metric in ['stability']    else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                          'Reds',     'r']      if metric in ['ecs']            else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'tas [$\degree$C]',                'Reds',     'r']      if metric in ['tas']            else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'stability [K]',                   'Reds',     'k']      if metric in ['stability']      else [var_type, met_name, label, cmap, color]
 
 
     # ------------
@@ -147,10 +147,22 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     var_type, met_name, label, cmap, color = ['hus',       f'hus{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'spec. humid. [%]',                   'Greens',   'g']      if metric in ['hus']          else [var_type, met_name, label, cmap, color]
 
 
+
+    # -------------------
+    #       Other
+    # -------------------
+    var_type, met_name, label, cmap, color = ['res',        'res',                                                      r'dlat x dlon [$\degree$]',            'Greys',    'k']     if metric in ['res']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['dlat',       'dlat',                                                     r'dlat [$\degree$]',                   'Greys',    'k']     if metric in ['dlat']          else [var_type, met_name, label, cmap, color]
+    var_type, met_name, label, cmap, color = ['dlon',       'dlon',                                                     r'dlon [$\degree$]',                   'Greys',    'k']     if metric in ['dlon']          else [var_type, met_name, label, cmap, color]
+
+
+
     # ---------------------------
     #  Exceptions / Manually set
     # ---------------------------
     cmap, label = exceptions(metric, switch, cmap, label)
+    # cmap, color = 'Oranges', 'k' 
+    label = 'area [%]' if m_type(switch)=='_area' else label
     return metric_class(var_type, met_name, cmap, label, color)
 
 
@@ -186,12 +198,12 @@ def get_variable_class(switch):
 class dims_class():
     R = 6371
     def __init__(self, da):
-        self.lat, self.lon  = da['lat'].data, da['lon'].data
-        self.lonm, self.latm = np.meshgrid(self.lon, self.lat)
-        self.dlat, self.dlon = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
-        self.aream = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # used for area of object
+        self.lat, self.lon       = da['lat'].data, da['lon'].data
+        self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
+        self.dlat, self.dlon     = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
+        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # used for area of object
         self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2) # used for broadcasting
-        self.aream3d = np.expand_dims(self.aream,axis=2)
+        self.aream3d             = np.expand_dims(self.aream,axis=2)
 
 
 

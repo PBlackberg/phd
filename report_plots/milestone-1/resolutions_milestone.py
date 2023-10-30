@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 
 import os
 home = os.path.expanduser("~")
-import myVars_m as mV
-import myFuncs_m as mF
+import myVars as mV
+import myFuncs as mF
 
 switch = {'show': False, 'save_to_desktop': True}
 # -------------------------------------------------------------------------------------- Get resolution ----------------------------------------------------------------------------------------------------- #
 dlats, dlons, res, model_list = [], [], [], []
 for model in mV.models_cmip6:
+    print(model)
     source = mF.find_source(model, mV.models_cmip5, mV.models_cmip6, mV.observations)
     da = xr.open_dataset(f'{mV.folder_save[0]}/pr/sample_data/{source}/{model}_pr_{mV.timescales[0]}_{mV.experiments[0]}_{mV.resolutions[0]}.nc')['pr']
     dlat = da['lat'][2] - da['lat'][1]

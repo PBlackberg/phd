@@ -199,11 +199,10 @@ def calc_mean_area(da, dim, conv_threshold):
 @mF.timing_decorator
 def calc_F_pr10(da):
     ''' Frequency of gridboxes exceeding 10 mm/day on monthly [% of domain]'''
-    da = mF.resample_timeMean(da, 'M')
+    da = da.resample(time='1MS').mean(dim='time')
     mask = xr.where(da>10,1,0)
     F_pr10 = (mask.sum(dim=('lat','lon')) / (len(da['lat']) * len(da['lon']))) * 100
     return F_pr10
-
 
 
 # ------------------------
@@ -291,13 +290,13 @@ def run_org_metrics(switch_metric, switch):
 if __name__ == '__main__':
     switch_metric = {
         # choose metric
-        'obj_snapshot':       True,
-        'rome':               True, 
-        'rome_n':             True, 
-        'ni':                 True, 
-        'areafraction':       True, 
-        'o_area':             True,
-        'mean_area':          True,
+        'obj_snapshot':       False,
+        'rome':               False, 
+        'rome_n':             False, 
+        'ni':                 False, 
+        'areafraction':       False, 
+        'o_area':             False,
+        'mean_area':          False,
         'F_pr10':             True,
         }
 
