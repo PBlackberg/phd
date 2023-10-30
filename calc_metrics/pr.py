@@ -81,7 +81,7 @@ def calc_pr_area(da):
 @mF.timing_decorator
 def get_percentile_snapshot(da, percentile):
     da_snapshot = da.isel(time=0)
-    percentile_value = da.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
+    percentile_value = da_snapshot.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
     percentile_snapshot = da_snapshot.where(da_snapshot>=percentile_value)
     return percentile_snapshot
 
@@ -271,16 +271,16 @@ if __name__ == '__main__':
         'pr_99':                          True,
         'pr_rx1day':                      True,
         'pr_rx5day':                      True,
-        'pr_o':                           True,
+        'pr_o':                           False,
         }
     
     switchM = {
         # choose type of metric
         'snapshot':                       True,
-        'sMean':                          True,
-        'tMean':                          True,
-        'area':                           True,
-        '':                               True,
+        'sMean':                          False,
+        'tMean':                          False,
+        'area':                           False,
+        '':                               False,
         }
     
     switch = {
@@ -290,7 +290,7 @@ if __name__ == '__main__':
         'gadi_data':                      False,
 
         # conv_threshold
-        'fixed_area':                     False,
+        'fixed_area':                     True,
 
         # save
         'save':                           True,

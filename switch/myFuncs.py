@@ -120,14 +120,16 @@ def save_figure(figure, folder = '', filename = '', path = ''):
 
 def save_plot(switch, fig, home, filename):
     for save_type in [k for k, v in switch.items() if v]:
-        save_figure(fig, f'{home}/Desktop',            'test.pdf')           if save_type == 'save_test_desktop'   else None
-        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')     if save_type == 'save_folder_desktop' else None
-        save_figure(fig, f'{os.getcwd()}/plot_gadi_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
+        save_figure(fig, f'{home}/Desktop',            'test.pdf')                if save_type == 'save_test_desktop'   else None
+        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')          if save_type == 'save_folder_desktop' else None
+        save_figure(fig, f'{os.getcwd()}/supercomp/plot_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
 
 
 # --------------------------------------------------------------------------------------- Loading --------------------------------------------------------------------------------------------------- #
 def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily', experiment = 'historical', resolution = 'regridded'):
-    ds = xr.open_dataset(f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc')     
+    path = f'{folder_save}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
+    # print(path)
+    ds = xr.open_dataset(path)     
     return ds
 
 

@@ -24,28 +24,38 @@ def load_data(switch, source, dataset, experiment, var):
     if switch['sample_data']:
         da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
     if switch['gadi_data']:
-        if var == 'hur':                                                  # Bolton's formula (calculated from specific humidity and temperature)
-            r = gD.get_var_data(source, dataset, experiment, 'hus', switch)       # unitless (kg/kg)
-            T = gD.get_var_data(source, dataset, experiment, 'ta', switch)        # degrees Kelvin
-            p = T['plev']                                                 # Pa
-            e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))              # saturation water vapor pressure
-            r_s = 0.622 * e_s/p
-            da = (r/r_s)*100                                              # relative humidity could do e/e_s
+        if var == 'hur' and dataset == 'ERA5':                                        # Relative humidity
+                q = gD.get_var_data(source, dataset, experiment, 'hus', switch)       # unitless (kg/kg)
+                r = q / (1 - q)                                                       # q = r / (1+r)
+                T = gD.get_var_data(source, dataset, experiment, 'ta', switch)        # degrees Kelvin
+                p = T['plev']                                                         # Pa 
+                e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))                      # saturation water vapor pressure (also: e_s = 2.53*10^11 * np.exp(-B/T) (both from lecture notes), the Goff-Gratch Equation:  10^(10.79574 - (1731.464 / (T + 233.426)))
+                r_s = 0.622 * e_s/(p-e_s)                                             # from book
+                da = (r/r_s)*((1+(r_s/0.622)) / (1+(r/0.622)))*100                    # relative humidity (from book)
+
         elif var == 'stability':                                            # Calculated as differnece in potential temperature at two height slices
-            da = gD.get_var_data(source, dataset, experiment, 'ta', switch)
-            nan_mask = da.isnull().any(dim='plev')
-            da = da.where(~nan_mask, np.nan)
-            theta =  da * (1000e2 / da.plev)**(287/1005)                  # theta = T (P_0/P)^(R_d/C_p)
-            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]               # pressure levels in ERA are reversed to cmip
-            da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))] if not dataset == 'ERA5' else [theta.sel(plev=slice(plevs1[1], plevs1[0])), theta.sel(plev=slice(plevs2[1], plevs2[0]))] 
-            da = ((da1 * da1.plev).sum(dim='plev') / da1.plev.sum(dim='plev')) - ((da2 * da2.plev).sum(dim='plev') / da2.plev.sum(dim='plev'))   
+            # da = gD.get_var_data(source, dataset, experiment, 'ta', switch)
+            # nan_mask = da.isnull().any(dim='plev')                        
+            # da = da.where(~nan_mask, np.nan)                              # When calculating the difference between two sections I exclude gridpoints where the value at any included pressure level is NaN
+            # theta =  da * (1000e2 / da.plev)**(287/1005)                  # theta = T (P_0/P)^(R_d/C_p)
+            # plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]               # pressure levels in ERA are reversed to cmip
+            # da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))] if not dataset == 'ERA5' else [theta.sel(plev=slice(plevs1[1], plevs1[0])), theta.sel(plev=slice(plevs2[1], plevs2[0]))] 
+            # da = ((da1 * da1.plev).sum(dim='plev') / da1.plev.sum(dim='plev')) - ((da2 * da2.plev).sum(dim='plev') / da2.plev.sum(dim='plev'))   
+
+            da = gD.get_var_data(source, dataset, experiment, 'ta', switch)         # Temperature at pressure levels (K)
+            theta =  da * (1000e2 / da['plev'])**(287/1005) 
+            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]
+            da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))]
+            w1, w2 = ~np.isnan(da1) * da1['plev'], ~np.isnan(da2) * da2['plev']     # Where there are no values, exclude the associated pressure levels from the weights
+            da = ((da1 * w1).sum(dim='plev') / w1.sum(dim='plev')) - ((da2 * w2).sum(dim='plev') / w2.sum(dim='plev'))
+
 
         elif var in ['lcf', 'hcf']:
             p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma', switch)
             da = gD.get_var_data(source, dataset, experiment, 'cl', switch)
             plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
-            da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if switch['hcf'] else da
-            da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if switch['lcf'] else da
+            da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if var == 'hcf' else da
+            da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if var == 'lcf' else da
 
         elif var == 'netlw':    
             rlds = gD.get_var_data(source, dataset, experiment, 'rlds', switch) 
@@ -123,14 +133,14 @@ def get_tMean(da):
 @mF.timing_decorator
 def calc_sMean(da):
     aWeights = np.cos(np.deg2rad(da.lat))
-    return da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True)
+    sMean = da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True).compute()
+    return sMean
 
 @mF.timing_decorator
 def calc_area(da):
     ''' Area covered in domain [% of domain]'''
-    dim = mC.dims_class(da)
-    da = xr.where(da>0, 1, 0)
-    area = np.sum(da * np.transpose(dim.aream3d, (2, 0, 1)), axis=(1,2)) / np.sum(dim.aream)
+    mask = xr.where(da>0, 1, 0)
+    area = (mask.sum(dim=('lat','lon')) / (len(da['lat']) * len(da['lon']))) * 100
     return area
 
 
@@ -168,7 +178,7 @@ def run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, 
 
 def run_variable(switch_var, switchM, switch, source, dataset, experiment):
     for var in [k for k, v in switch_var.items() if v]:
-            print(f'{var}')
+            print(f'\t\t\t{var}')
             if not mV.data_available(source, dataset, experiment, var):
                 continue
             da =           load_data(switch, source, dataset, experiment, var)
@@ -200,67 +210,25 @@ def run_large_scale_state_metrics(switch_var, switchM, switch):
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-
-    switch_var = {
-        # choose variable (can choose multiple)
-        'wap':                False,
-
-        'hur':                False,
-        'tas':                False,
-
-        'stability':          True,
-        'lcf':                False,
-        'hcf':                False,
-
-        'rlds':               False,
-        'rlus':               False, 
-        'rlut':               False, 
-        'netlw':              False,
-
-        'rsdt':               False,
-        'rsds':               False,
-        'rsus':               False,
-        'rsut':               False,
-        'netsw':              False,
-
-        'hus':                False,
-        'zg':                 False,
-        'mse':                False,
-
-        'hfss':               False,
-        'hfls':               False,
+    switch_var = {                                                                                   # choose variable (can choose multiple)
+        'wap':   False,                                                                              # circulation
+        'hur':   False, 'hus':       False,                                                          # humidity
+        'tas':   False, 'stability': True,                                                          # temperature
+        'netlw': False, 'rlds':      False, 'rlus': False, 'rlut': False,                            # longwave radiation
+        'netsw': False, 'rsdt':      False, 'rsds': False, 'rsus': False, 'rsut': False,             # shortwave radiation
+        'lcf':   False, 'hcf':       False,                                                          # cloud fraction
+        'mse':   False, 'zg':        False, 'hfss': False, 'hfls': False,                            # moist static energy
         }
     
-    switchM = {
-        # choose type of metric (can choose multiple)
-        'snapshot':           True, 
-        'tMean':              False, 
-        'sMean':              False, 
-        'area':               False,
+    switchM = {                                                                                      # choose metric type (can choose multiple)
+        'snapshot': True, 'tMean': False, 'sMean': False, 'area': False,                             # type 
         }
 
-    switch = {
-        # choose type of data to calculate metric on
-        'constructed_fields': False, 
-        'sample_data':        False,
-        'gadi_data':          True,
-
-        # Choose vertical region (only affects wap, hur)
-        '250hpa':             False,
-        '500hpa':             False,
-        '700hpa':             False,
-        'vMean':              False,
-
-        # Choose horizontal region
-        'ascent':             False,
-        'descent':            False,
-        'ocean_mask':         True,
-        
-        # save
-        'save':               True,
-        'save_to_desktop':    False
+    switch = {                                                                                       # choose data to use and mask
+        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                       # data to use
+        '250hpa':             False, '500hpa':      False, '700hpa':    False, 'vMean': False,      # mask: vertical (only affects wap, hur)
+        'ascent':             False, 'descent':     False, 'ocean_mask': False,                      # mask: horizontal
+        'save_to_desktop':    False, 'save':        True,                                           # save
         }
-    
     run_large_scale_state_metrics(switch_var, switchM, switch)
-    
 
