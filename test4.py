@@ -1,10 +1,10 @@
-
-
-
-import xarray as xr
 import numpy as np
 
-a = xr.DataArray([1, 2, np.nan])
+a = 0
+nan_value = np.nan
 
-print(a.sum())
+result = a * nan_value
+
+print(result)  # Output: 0
+
 
