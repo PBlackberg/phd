@@ -1,10 +1,6 @@
-import numpy as np
-
-a = 0
-nan_value = np.nan
-
-result = a * nan_value
-
-print(result)  # Output: 0
+nrows = 5
+width, height = [14, 6] if nrows == 5 else [14, 6] 
 
 
+print(width)
+print(height)

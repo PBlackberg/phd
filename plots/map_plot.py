@@ -90,7 +90,7 @@ def plot_one_scene(switchM, metric_class, vmin = None, vmax = None):
         print('No data for this')
     fig, ax = mF.create_map_figure(width = 12, height = 4)
     scene, title, _ = get_scene(switchM, mV.datasets[0], metric_class)
-    fig_title = f'{metric_class.name}{title}'
+    fig_title = f'{metric_class.name}{title}, model: {mV.datasets[0]}'
     pcm = mF.plot_axMapScene(ax, scene, metric_class.cmap, vmin = vmin, vmax = vmax)
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
@@ -104,8 +104,13 @@ def plot_one_scene(switchM, metric_class, vmin = None, vmax = None):
 
 def plot_multiple_scenes(switchM, metric_class, vmin = None, vmax = None):
     ''' Plotting multiple scenes. Can plot up to 20 here '''
-    nrows, ncols = 5, 4                                                     
-    fig, axes = mF.create_map_figure(width = 14, height = 6, nrows=nrows, ncols=ncols)
+    ncols = 4
+    nrows = int(np.ceil(len(mV.datasets)/ ncols))       
+    print(nrows)
+    width, height = [14, 6] if nrows == 5 else [14, 6] 
+    width, height = [14, 7.5] if nrows == 6 else [width, height]
+    fig, axes = mF.create_map_figure(width = width, height = height, nrows=nrows, ncols=ncols)
+
     num_subplots = len(mV.datasets)
     for i, dataset in enumerate(mV.datasets):
         source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
@@ -129,6 +134,7 @@ def plot_multiple_scenes(switchM, metric_class, vmin = None, vmax = None):
         mF.move_row(ax, 0.045+0.01)       if row == 2 else None
         mF.move_row(ax, 0.05+0.01)        if row == 3 else None
         mF.move_row(ax, 0.05+0.01)        if row == 4 else None
+        mF.move_row(ax, 0.05+0.01)        if row == 5 else None
 
         mF.scale_ax(ax, 1.3)
 
@@ -168,7 +174,7 @@ def plot_metric(switchM, switch, metric_class):
 
 @mF.timing_decorator
 def run_map_plot(switch_metric, switchM, switch):
-    print(f'Plotting {mV.timescales[0]} {mV.resolutions[0]} data')
+    print(f'Plotting {len(mV.datasets)} datasets with {mV.timescales[0]} {mV.resolutions[0]} data')
     print(f'metric: {[key for key, value in switch_metric.items() if value]}')
     print(f'metric_type: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
@@ -179,73 +185,48 @@ def run_map_plot(switch_metric, switchM, switch):
 
 
 # ------------------------
-#   Choose what to run
+#   Choose what to plot
 # ------------------------
 if __name__ == '__main__':
 # ---------------------------------------------------------------------------------- metric ----------------------------------------------------------------------------------------------------- #
- 
     switch_metric = {
         # organization
-        'obj':                 False,
+        'obj':   False,
         # precipitation
-        'pr':                  False,
-        'pr99':                False,
-        'pr_rx1day':           False,
-        'pr_rx5day':           False,
-        # ascent/descent
-        'wap':                 False,
+        'pr':    False, 'pr99': False, 'pr_rx1day': False, 'pr_rx5day': False,
+        # circulation
+        'wap':   False,
         # temperature
-        'tas':                 True,
-        'stability':           False,
+        'tas':   False, 'stability': False,
         # humidity
-        'hur':                 False,
+        'hur':   True,
         # radiation
-            # longwave
-            'rlds':               False,
-            'rlus':               False, 
-            'rlut':               False, 
-            'netlw':              False,
-            # shortwave
-            'rsdt':               False,
-            'rsds':               False,
-            'rsus':               False,
-            'rsut':               False,
-            'netsw':              False,
+        'netlw': False, 'rlds': False, 'rlus': False, 'rlut': False, 
+        'netsw': False, 'rsdt': False, 'rsds': False, 'rsus': False, 'rsut': False,
         # clouds
-        'lcf':                 False,
-        'hcf':                 False,
-        'ws_lc':               False,
-        'ws_hc':               False,
+        'lcf':   False, 'hcf':   False,
+        'ws_lc': False, 'ws_hc': False,
         # moist static energy
-        'hus':                 False,
+        'hus':   False,
         }
 
     switchM = {    
+        # org threshold
+        'fixed area':          False,
         # masked by
-        'fixed area':          False, # only applies to org_metrics
-        '250hpa':              False,
-        '500hpa':              False,
-        '700hpa':              False,
-        'descent':             False,
-        'ascent':              True,
-        'ocean':               False,
+        '250hpa':              False, '500hpa': False, '700hpa': False, # vertical
+        'descent':             False, 'ascent': False, 'ocean':  False, # horizontal
         # scene type
-        'snapshot':            True,
-        'tMean':               False,
-        'change with warming': False,
-        'per kelvin':          False,
-        'per kelvin (ecs)':    False,
+        'snapshot':            True, 'tMean': False,
+        # scenario type
+        'change with warming': False, 'per kelvin': False, 'per kelvin (ecs)': False,
         }
-
 
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch = {
         # show/save
-        'show':                False,
-        'save_test_desktop':   True,
-        'save_folder_desktop': False,
-        'save_folder_cwd':     False,
+        'show': True, 'save_test_desktop': False, 'save_folder_desktop': False, 'save_folder_cwd': False,
         }
     
     run_map_plot(switch_metric, switchM, switch)

@@ -1,5 +1,10 @@
 import numpy as np
 
+
+
+# ------------------------
+#   Giive metric specs
+# ------------------------
 # ---------------------------------------------------------------------------- Variation of metric ----------------------------------------------------------------------------------------------------- #
 def m_type(switch):
     metric_type = ''
@@ -36,9 +41,10 @@ def v_reg(switch):
 def h_reg(switch):
     ''' picks region of ascent / descent '''
     region = ''
-    region = '_d' if switch['descent'] else region
-    region = '_a' if switch['ascent']  else region
-    region = f'{region}_o' if switch['ocean']  else region
+    for met_type in [k for k, v in switch.items() if v]:
+        region = '_d'          if met_type in ['descent'] else region
+        region = '_a'          if met_type in ['ascent']  else region
+        region = f'{region}_o' if met_type in ['ocean']   else region
     return region
 
 def exceptions(metric, switch, cmap, label):
@@ -50,7 +56,6 @@ def exceptions(metric, switch, cmap, label):
     for met_type in [k for k, v in switch.items() if v]:
         label = '{}{}{}'.format(label[:-1], r'K$^{-1}$', label[-1:]) if met_type in ['per kelvin'] and not label == 'ECS [K]' else label
     return cmap, label
-
 
 
 # ----------------------------------------------------------------------------------- metric specs (for plots) ----------------------------------------------------------------------------------------------------- #
@@ -97,12 +102,18 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     # ------------
     var_type, met_name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                            'Reds',     'r']      if metric in ['ecs']          else [var_type, met_name, label, cmap, color]
     var_type, met_name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'temp. [$\degree$C]',                'Reds',     'r']      if metric in ['tas']          else [var_type, met_name, label, cmap, color]
-    
+    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'temp. [hPa day$^{-1}$]',            'Reds',     'k']      if metric in ['stability']    else [var_type, met_name, label, cmap, color]
+
 
     # ------------
-    #  Drying
+    #  Circulation
     # ------------
     var_type, met_name, label, cmap, color = ['wap',       f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        r'wap [hPa day$^{-1}$]',              'RdBu_r',   'k']      if metric in ['wap']          else [var_type, met_name, label, cmap, color]
+ 
+
+    # ------------
+    #  Humidity
+    # ------------
     var_type, met_name, label, cmap, color = ['hur',       f'hur{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'rel. humid. [%]',                    'Greens',   'g']      if metric in ['hur']          else [var_type, met_name, label, cmap, color]
 
 
@@ -124,7 +135,6 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     # ---------
     #  clouds
     # ---------
-    var_type, met_name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'temp. [hPa day$^{-1}$]',              'Reds',     'k']    if metric in ['stability']    else [var_type, met_name, label, cmap, color]
     var_type, met_name, label, cmap, color = ['lcf',       f'lcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'low cloud frac. [%]',                  'Blues',    'b']    if metric in ['lcf']          else [var_type, met_name, label, cmap, color]
     var_type, met_name, label, cmap, color = ['hcf',       f'hcf{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        'high cloud frac. [%]',                 'Blues',    'b']    if metric in ['hcf']          else [var_type, met_name, label, cmap, color]
     var_type, met_name, label, cmap, color = ['ws',        f'ws_lc{m_type(switch)}',                                    r'weather state freq. [Nb day$^{-1}$]', 'Blues',    'b']    if metric in ['ws_lc']        else [var_type, met_name, label, cmap, color]
@@ -169,6 +179,9 @@ def get_variable_class(switch):
 
 
 
+# ------------------------
+#    For calculations
+# ------------------------
 # ----------------------------------------------------------------------------------- Dimensions of dataset ----------------------------------------------------------------------------------------------------- #
 class dims_class():
     R = 6371

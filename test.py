@@ -10,7 +10,6 @@ import myVars as mV
 
 for dataset in mV.datasets:
     # a = xr.open_dataset(f'/Users/cbla0002/Documents/data/metrics/rsdt/rsdt_sMean/cmip6/{dataset}_rsdt_sMean_monthly_historical_regridded.nc')
-
     a = xr.open_dataset(f'/Users/cbla0002/Documents/data/metrics/rsdt/rsdt_sMean/cmip6/{dataset}_rsdt_sMean_monthly_historical_regridded.nc')
     plt.figure()
     plt.title(dataset)
