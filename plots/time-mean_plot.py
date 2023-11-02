@@ -177,11 +177,11 @@ def run_timeMean_corr(switch_metricX, switch_metricY, switchX, switchY, switch_h
 if __name__ == '__main__':
 # ---------------------------------------------------------------------------------- x-metric ----------------------------------------------------------------------------------------------------- #
     switch_metricX = {                                                                                                  # pick x-metric (pick one)
-        'rome':       False,  'ni':                 False, 'areafraction': False, 'F_pr10':     False,                  # organization
+        'rome':       True,  'ni':                 False, 'areafraction': False, 'F_pr10':    False,                  # organization
         'pr':         False, 'pr99':                False, 'pr_rx1day':    False, 'pr_rx5day': False,                   # precipitation
-        'wap':        False,                                                                                            # descent/ascent
+        'wap':        False,                                                                                            # circulation
         'hur':        False, 'hus':                 False,                                                              # humidity
-        'tas':        False, 'ecs':                 False, 'stability':    True,                                       # temperature
+        'tas':        False, 'ecs':                 False, 'stability':    False,                                       # temperature
         'netlw':      False, 'rlds':                False, 'rlus':         False, 'rlut':      False,                   # LW
         'netsw':      False, 'rsdt':                False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':                 False,                                                              # cloudfraction
@@ -189,21 +189,21 @@ if __name__ == '__main__':
         }
 
     switchX = {                                                                                                         # choose seetings for x-metric
-        '250hpa':     False, '500hpa':              False, '700hpa':       False,                                       # mask: vertical
-        'descent':    False, 'ascent':              False, 'ocean':        False,                                       # mask: horizontal
-        'fixed area': False, '90':                  False, '95':           False, '97':        False,                   # conv threshold
-        'sMean':      True,  'area':                False,                                                              # metric type
-        'clim':       False, 'change_with_warming': True,                                                              # Scenario type   
-        'per kelvin': True, 'per ecs':             False,                                                              # by warming
+        '250hpa':     False, '500hpa':              False, '700hpa':      False,                                       # mask: vertical
+        'descent':    False, 'ascent':              False, 'ocean':       False,                                       # mask: horizontal
+        'fixed area': False, '90':                  False, '95':          False, '97':         False,                   # conv threshold
+        'sMean':      False, 'area':                False,                                                              # metric type
+        'clim':       True,  'change_with_warming': False,                                                              # Scenario type   
+        'per kelvin': False, 'per ecs':             False,                                                              # by warming
         }
     
 
 # ---------------------------------------------------------------------------------- y-metric ----------------------------------------------------------------------------------------------------- #
     switch_metricY = {                                                                                                  # pick y-metric (can pick multiple)
-        'rome':       False, 'ni':                  False, 'areafraction': False, 'F_pr10':    False,                  # organization
+        'rome':       False, 'ni':                  False, 'areafraction': False, 'F_pr10':    True,                   # organization
         'pr':         False, 'pr_99':               False, 'pr_97':        False, 'pr_95':     False, 'pr_90': False,   # precipitation percentiles
         'pr_rx1day':  False, 'pr_rx5day':           False,                                                              # precipitation extremes
-        'wap':        True,                                                                                            # descent/ascent
+        'wap':        False,                                                                                            # descent/ascent
         'hur':        False, 'hus':                 False,                                                              # humidity
         'tas':        False, 'ecs':                 False, 'stability':    False,                                       # temperature
         'netlw':      False, 'rlds':                False, 'rlus':         False, 'rlut':      False,                   # LW
@@ -214,12 +214,12 @@ if __name__ == '__main__':
         }
     
     switchY = {                                                                                                         # choose seetings for x-metric
-        '250hpa':     False, '500hpa':              True, '700hpa':     False,                                         # mask: vertical
-        'descent':    True, 'ascent':               False,  'ocean':    False,                                         # mask: horizontal
-        'fixed area': False, '90':                  False, '95':        False, '97': False,                            # conv threshold
-        'sMean':      True,  'area':               False,                                                              # metric type
-        'clim':       False, 'change_with_warming': True,                                                              # Scenario type   
-        'per kelvin': True, 'per ecs':             False,                                                              # by warming
+        '250hpa':     False, '500hpa':              False, '700hpa':      False,                                         # mask: vertical
+        'descent':    False, 'ascent':             False,  'ocean':      False,                                         # mask: horizontal
+        'fixed area': False, '90':                  False, '95':          False, '97': False,                            # conv threshold
+        'sMean':      False,  'area':               False,                                                              # metric type
+        'clim':       True, 'change_with_warming': False,                                                              # Scenario type   
+        'per kelvin': False, 'per ecs':             False,                                                              # by warming
         }
 
 

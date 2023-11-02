@@ -265,10 +265,10 @@ if __name__ == '__main__':
         'rome':       False, 'ni':        False, 'areafraction': False, 'F_pr10':     False,                  # organization
         'pr':         False, 'pr_99':     False,'pr_97':         False, 'pr_95':     False, 'pr_90': False,                                                             # precipitation percentiles
         'pr_rx1day':  False, 'pr_rx5day': False,                                                              # precipitation extremes
-        'wap':        True,                                                                                  # circulation
+        'wap':        False,                                                                                  # circulation
         'hur':        False,                                                                                  # humidity
         'tas':        False, 'stability': False,                                                              # temperature
-        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
+        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': True,    # LW
         'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':       False,                                                              # cloudfraction
         'ws_lc':      False, 'ws_hc':     False,                                                              # weather states
@@ -276,10 +276,10 @@ if __name__ == '__main__':
         }
     
     switchY = {                                                                                               # choose seetings for y-metrics
-        '250hpa':     False, '500hpa':    True, '700hpa':       False,                                       # mask: vertical
+        '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
         'descent':    True, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
         'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
-        'sMean':      False, 'area':      True,                                                              # metric type
+        'sMean':      True, 'area':      False,                                                              # metric type
         'anomalies':  True,                                                                                   # calc type
         }
 

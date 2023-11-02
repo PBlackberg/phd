@@ -11,7 +11,7 @@ import myClasses as mC
 
 
 
-dataset = mV.datasets[1]
+dataset = mV.datasets[0]
 
 def r_eff(area):
     return np.sqrt(area/np.pi)
@@ -90,8 +90,8 @@ if plot:
 
     switch = {                 # overall settings
         # show/save
-        'show':                False,
-        'save_test_desktop':   True,
+        'show':                True,
+        'save_test_desktop':   False,
         'save_folder_desktop': False,
         'save_folder_cwd':     False,
         }

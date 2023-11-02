@@ -197,8 +197,8 @@ if __name__ == '__main__':
         'pr_rx1day':           False,'pr_rx5day':   False,                                                               # precipitaiton extremes
         'wap':                 False,                                                                                    # circulation
         'tas':                 False, 'stability':  False,                                                               # temperature
-        'hur':                 True,                                                                                    # humidity
-        'netlw':               False, 'rlds':       False,      'rlus':      False,      'rlut': False,                  # LW
+        'hur':                 False,                                                                                    # humidity
+        'netlw':               False, 'rlds':       False,      'rlus':      False,      'rlut': True,                  # LW
         'netsw':               False, 'rsdt':       False,      'rsds':      False,      'rsus': False, 'rsut': False,   # SW
         'lcf':                 False,  'hcf':       False,                                                               # cloudfraction
         'ws_lc':               False, 'ws_hc':      False,                                                               # weather states
@@ -207,8 +207,8 @@ if __name__ == '__main__':
 
     switchM = {                                                                                                          # choose seetings for metrics
         'fixed area':          False,                                                                                    # org threshold
-        '250hpa':              False, '500hpa':     False,      '700hpa':    True,                                      # mask: vertical
-        'descent':             False, 'ascent':     False,      'ocean':     False,                                      # mask: horizontal
+        '250hpa':              False, '500hpa':     False,      '700hpa':    False,                                      # mask: vertical
+        'descent':             True, 'ascent':    False,      'ocean':    False,                                      # mask: horizontal
         'snapshot':            True, 'tMean':      False,                                                               # scene type
         'change with warming': False, 'per kelvin': False,      'per ecs':   False,                                      # scenario type
         }

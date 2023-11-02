@@ -46,8 +46,8 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     'MIROC6',            # 5                                      
     'MPI-ESM1-2-LR',     # 6                         
     'KIOST-ESM',         # 7    
-    'BCC-CSM2-MR',       # 8        
-    'GFDL-ESM4',         # 9    
+    'BCC-CSM2-MR',       # 8              
+    'GFDL-ESM4',         # 9         
     'MIROC-ES2L',        # 10   
     'NorESM2-LM',        # 11      
     'NorESM2-MM',        # 12                                      
@@ -71,13 +71,14 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     ]
 
 switch_subset = {
-    'exclude':         True,                             # if false only includes the models in the catefories                                   
-    'similar_version': True, 'high_res_version': True,
+    'exclude':         True,  'only_include':      False,                            
+    'similar_version': False, 'high_res_version':  False,
     'no_clouds':       False,
-    'no_stability':    True, 'stability_no_land': True,
+    'no_stability':    False, 'stability_no_land': False,
     'no_orig_ocean':   False,
     'not_in_schiro':   False, 
     'res_versions':    False,
+    'threshold_res':   True, # 2.5 degrees dlat x dlon
     }
 
 
@@ -96,11 +97,6 @@ observations = [
 models_dyamond = [
     'winter',
 ]
-
-
-
-
-
 
 
 
@@ -142,7 +138,7 @@ folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home
 # --------------------------------
 #  Functions for picking datasets
 # --------------------------------
-# -------------------------------------------------------------------- Deal with missing data ----------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------- Exclude models based on conditions ----------------------------------------------------------------------------------------------------- #
 def exclude_models(models_cmip6, switch_subset):
     ''' Some models are versions of the same model and give close to identical results. Some models are exluded to fit into plots.'''
     models_excluded = []
@@ -179,13 +175,20 @@ def exclude_models(models_cmip6, switch_subset):
         models_exclude = ['NorESM2-LM', 'NorESM2-MM', 'CNRM-CM6-1', 'CNRM-CM6-1-HR'] #, 'GFDL-CM4', 'GFDL-ESM4', 'INM-CM5-0', 'INM-CM4-8', 'CMCC-ESM2', 'CMCC-CM2-SR5']
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])
 
-    models_cmip6 = list(filter(lambda x: x not in models_excluded, models_cmip6))
-    models_cmip6 = models_excluded if not switch_subset['exclude'] else models_cmip6
+    if switch_subset['threshold_res']:
+        models_exclude = ['MIROC-ES2L', 'CanESM5', 'GFDL-CM4', 'NorESM2-LM', 'FGOALS-g3', 'NESM3', 'KIOST-ESM', 'MPI-ESM1-2-LR', 'IITM-ESM', 'IPSL-CM6A-LR', 'INM-CM5-0', 'INM-CM4-8'] # in order from lowest to highest res (currently: 2.5 degree res threshold) (first 4 the ones that really stand out)
+        models_excluded.extend([m for m in models_exclude if m not in models_excluded])                            
+                                                   
+
+    models_cmip6 = list(filter(lambda x: x not in models_excluded, models_cmip6)) if switch_subset['exclude']      else models_cmip6
+    models_cmip6 = models_excluded                                                if switch_subset['only_include'] else models_cmip6
     return models_cmip6, models_excluded
 models_cmip6, models_excluded = exclude_models(models_cmip6, switch_subset)
 
 
-def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}):
+
+
+def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}, resolution = 'regridded'):
     ''' Check if dataset has variable '''
     if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
         return  False
@@ -193,20 +196,15 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
         return False
     if experiment and source in ['obs']:                                                          # only run models when experiment ~ '' 
         return False
-
-    # Temperature
-    # if var in ['ta', 'stability'] and dataset in ['KIOST-ESM']:
-    #     print(f'No {var} data for this dataset')
-    #     return False
     
-    # Clouds
+    # No clouds
     if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL', 'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4']:
         print(f'No {var} data for this dataset')
         return False
     
-    # Ocean mask
+    # No original grid ocean mask
     for mask_type in [k for k, v in switch.items() if v]:
-        if mask_type == 'ocean_mask' and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
+        if mask_type == 'ocean_mask' and resolution == 'orig'and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
             print(f'No original grid ocean mask for this dataset')
             return True
     return True
@@ -222,7 +220,7 @@ def find_source(dataset, models_cmip5, models_cmip6, observations):
     return source
 
 def find_list_source(datasets, models_cmip5, models_cmip6, observations):
-    ''' Determining source of dataset list (for figures) '''
+    ''' Determining source of dataset list (for plots) '''
     sources = set()
     for dataset in datasets:
         sources.add('cmip5') if dataset in models_cmip5 else None
@@ -235,7 +233,7 @@ def find_list_source(datasets, models_cmip5, models_cmip6, observations):
     return list_source
 
 def find_ifWithObs(datasets, observations):
-    ''' Indicate if there is observations in the dataset list (for figures) '''
+    ''' Indicate if there is observations in the dataset list (for plots) '''
     for dataset in datasets:
         if dataset in observations:
             return '_withObs'
@@ -251,11 +249,10 @@ def get_ds_highlight(switch_highlight, datasets, switch_exclude= {'a':False}, fu
         if  item == 'by_obs_sim':
             dataset_highlight = ['MIROC6', 'TaiESM1']
         if  item == 'by_excluded':
-            # _, dataset_highlight = func(datasets, switch_exclude)
-            dataset_highlight = ['NorESM2-LM', 'NorESM2-MM', 'CNRM-CM6-1', 'CNRM-CM6-1-HR']
+            switch_exclude['only_include'] = True
+            _, dataset_highlight = func(datasets, switch_exclude)
+            # dataset_highlight = ['NorESM2-LM', 'NorESM2-MM', 'CNRM-CM6-1', 'CNRM-CM6-1-HR']
     return dataset_highlight
-
-    # model_highlight = ['MIROC6', 'NorESM2-LM', 'NorESM2-MM', 'CMCC-ESM2', 'ACCESS-ESM1-5', 'CNRM-CM6-1', 'ACCESS-CM2', 'TaiESM1', 'CESM2-WACCM', 'UKESM1-0-LL']                         # hur sensitive to org
 
 
 # ------------------------
