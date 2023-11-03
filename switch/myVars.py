@@ -78,7 +78,7 @@ switch_subset = {
     'no_orig_ocean':   False,
     'not_in_schiro':   False, 
     'res_versions':    False,
-    'threshold_res':   True, # 2.5 degrees dlat x dlon
+    'threshold_res':   False,                                   # Threshold: 2.5 degrees dlat x dlon
     }
 
 
@@ -206,7 +206,7 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
     for mask_type in [k for k, v in switch.items() if v]:
         if mask_type == 'ocean_mask' and resolution == 'orig'and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
             print(f'No original grid ocean mask for this dataset')
-            return True
+            return False
     return True
 
 

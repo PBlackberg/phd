@@ -201,8 +201,8 @@ class dims_class():
         self.lat, self.lon       = da['lat'].data, da['lon'].data
         self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
         self.dlat, self.dlon     = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
-        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # used for area of object
-        self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2) # used for broadcasting
+        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # area of domain
+        self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2)                     # used for broadcasting
         self.aream3d             = np.expand_dims(self.aream,axis=2)
 
 

@@ -288,30 +288,18 @@ def run_org_metrics(switch_metric, switch):
 
 # -------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    switch_metric = {
-        # choose metric
-        'obj_snapshot':       False,
-        'rome':               False, 
-        'rome_n':             False, 
-        'ni':                 False, 
-        'areafraction':       False, 
-        'o_area':             False,
-        'mean_area':          False,
-        'F_pr10':             True,
+    switch_metric = {                                                                       # choose metric
+        'obj_snapshot': False,                                                              # visualization
+        'rome':         False, 'rome_n':       False, 'mean_area': False,                   # ROME
+        'ni':           False, 'areafraction': False,                                       # Number index
+        'o_area':       False,                                                              # object area (for PWAD)
+        'F_pr10':       True,                                                               # organization proxy
         }
 
-    switch = {
-        # choose data to calculate metric on
-        'constructed_fields': False,
-        'sample_data':        True,
-        'gadi_data':          False,
-
-        # threshold
-        'fixed_area':         False,
-
-        # save
-        'save':               True,
-        'save_to_desktop':    False
+    switch = {                                                                              # choose data to calculate metric on
+        'constructed_fields': False, 'sample_data': True, 'gadi_data': False,               # data source
+        'fixed_area':         False,                                                        # threshold
+        'save':               True, 'save_to_desktop': False                                # save
         }
 
     run_org_metrics(switch_metric, switch)
