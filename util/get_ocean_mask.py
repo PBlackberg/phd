@@ -29,3 +29,10 @@ if __name__ == '__main__':
     save_file(ds, folder='/home/565/cb4968/Documents/code/phd/util', filename='ocean_mask.nc')
 
 
+
+
+
+
+
+
+
