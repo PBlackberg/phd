@@ -72,6 +72,8 @@ def var_folder(model, ensemble, project , timeInterval):
 
 def hor_interpolate(da): 
     import regrid_xesmf as regrid
+    regridder = regrid.regrid_conserv_xesmf(ds)  # define regridder based of grid from other model (FGOALS-g2 from cmip5 currently)
+    da = regridder(da)
     return da
 
 def convert_coordinates(ds):
