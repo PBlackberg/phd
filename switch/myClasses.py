@@ -44,7 +44,7 @@ def h_reg(switch):
     for met_type in [k for k, v in switch.items() if v]:
         region = '_d'          if met_type in ['descent'] else region
         region = '_a'          if met_type in ['ascent']  else region
-        region = f'{region}_o' if met_type in ['ocean']   else region
+        region = f'_o{region}' if met_type in ['ocean']   else region
     return region
 
 def exceptions(metric, switch, cmap, label):

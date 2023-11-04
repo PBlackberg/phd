@@ -216,10 +216,10 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                       # data to use
-        '250hpa':             False, '500hpa':      False, '700hpa':    False, 'vMean': False,      # mask: vertical (only affects wap, hur)
-        'ascent':             False, 'descent':     False, 'ocean': False,                      # mask: horizontal
-        'save_to_desktop':    False, 'save':        True,                                           # save
+        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                        # data to use
+        '250hpa':             False, '500hpa':      False, '700hpa':    False, 'vMean': False,       # mask: vertical (only affects wap, hur)
+        'ascent':             False, 'descent':     False, 'ocean': False,                           # mask: horizontal (can apply both ocean and ascent/descent together)
+        'save_to_desktop':    False, 'save':        True,                                            # save
         }
     run_large_scale_state_metrics(switch_var, switchM, switch)
 
