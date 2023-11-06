@@ -170,4 +170,13 @@
 
 
 
+# pressure level conversion
+# plevs = 1000e2 * (1 -  0.0065*h_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065)         # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula (approximation based on lapserate)
+# p_hybridsigma = 1000e2 * np.exp(0.029*9.82*h_hybridsigma/287*T)                        # to pressure: P = P_0 * exp(- Mgh/(RT)) Hydrostatic balance (don't have T at pressure level)
+# da_h_new = da.interp(plev=plevs, new_z=h_new, method='linear')
+# da_p_new = da.interp(plev=plevs, new_z=p_new, method='linear')
+
+
+
+
 
