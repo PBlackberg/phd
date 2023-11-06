@@ -30,17 +30,21 @@ def concat_files(path_folder, experiment):
 
 
 # --------------------------------------------------------------------------------- interpolate / mask ----------------------------------------------------------------------------------------------------------#
-def hor_interpolate(ds, da, plevs = ''): 
+def hor_interp(ds, da, plevs = ''): 
+    ''' Ensuring all metrics are calculated from the same grid size '''
     import regrid_xesmf as regrid
     regridder = regrid.regrid_conserv_xesmf(ds)  # define regridder based of grid from other model (FGOALS-g2 from cmip5 currently)
     da = regridder(da)
-    if any(plevs) and len(plevs.dims) > 1:
-        plevs = regridder(plevs)                 # hybrid-sigma coordinates converted to pressure coordinates have the same shape as da
+    # if 'plev' in ds.dims:
+    #     if len(plevs.dims) > 1:
+    #         plevs = regridder(plevs)             # hybrid-sigma coordinates converted to pressure coordinates have the same shape as da
     return da, plevs
 
-def vert_interpolate(model, da, plevs): 
-    new_p = [200000, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000, 500, 100] # making sure all variables are on the same pressure coordiantes
-    return da
+def vert_interp(da): 
+    ''' making sure all variables are on the same pressure coordiantes '''
+    p_new = [100000, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000, 500, 100]
+    da_p_new = da.interp(coords={'plev': p_new}, method='linear')
+    return da_p_new
 
 def pick_ocean_region(da):
     mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util/ocean.nc')['ocean']
@@ -76,13 +80,13 @@ def grid_folder(model):
     folder = 'gr1' if model in ['GFDL-CM4', 'INM-CM5-0', 'KIOST-ESM', 'GFDL-ESM4', 'INM-CM4-8'] else folder           
     return folder
 
-def var_folder(model, ensemble, project , timeInterval):
+def var_folder(var, model, experiment, ensemble, project , timeInterval):
     if model in ['ACCESS-ESM1-5', 'ACCESS-CM2']:
-        path_gen = f'/g/data/fs38/publications/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}'
+        path_gen = f'/g/data/fs38/publications/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{var}'
         folder_grid = grid_folder(model)
         version = 'latest'
     else:
-        path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{variable}' 
+        path_gen = f'/g/data/oi10/replicas/CMIP6/{project}/{mV.institutes[model]}/{model}/{experiment}/{ensemble}/{timeInterval}/{var}' 
         folder_grid = grid_folder(model)
         version = latestVersion(os.path.join(path_gen, folder_grid))
     path_folder =  f'{path_gen}/{folder_grid}/{version}'
@@ -90,46 +94,60 @@ def var_folder(model, ensemble, project , timeInterval):
 
 
 # ------------------------------------------------------------------------------------- preprocess data ----------------------------------------------------------------------------------------------------------#
-def p_coords(model, var, ds):
+def vert_interp_cl(da, z, z_new): 
+    interpolated_data = np.empty((len(da['time']), len(z_new), len(da['lat']), len(da['lon'])))
+    for time_i in range(len(da['time'])):
+        for lat_i in range(len(da['lat'])):
+            for lon_i in range(len(da['lon'])):
+                z_values = z.sel(time=da['time'][time_i], lon=da['lon'][lon_i], lat=da['lat'][lat_i]).values
+                var_values = da.sel(time=da['time'][time_i], lon=da['lon'][lon_i], lat=da['lat'][lat_i]).values
+                interpolated_values = np.interp(z_new, z_values, var_values)
+                interpolated_data[time_i, :, lat_i, lon_i] = interpolated_values
+    da_new = xr.DataArray(interpolated_data, dims=('time', 'lev', 'lat', 'lon'),
+                                                coords={'time': da['time'], 'lev': z_new, 'lat': da['lat'], 'lon': da['lon']})
+    return da_new
+    
+def p_coords(model, var, ds, da):
     ''' Covert from hybrid-sigma coordinates to pressure coordinates (mix of cmip5 and cmip6 models)'''
     if var not in 'cl':
-        ds['plev'] = ds['plev'].round(0) if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else ds['plev'] # plev coordinate is specified to a higher number of significant figures in these models
-        plevs = ds['plev']                                                          
+        da['plev'] = da['plev'].round(0) if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else da['plev'] # plev coordinate is specified to a higher number of significant figures in these models                                                    
     else:
-        if model == 'IITM-ESM':                                                                     # already on pressure levels
-            plevs = ds['plev']                                            
-        elif model == 'IPSL-CM6A-LR':                                                               # already on pressure levels
-            ds = ds.rename({'presnivs':'plev'})
-            plevs = ds['plev'] 
+        if model == 'IITM-ESM':                                                                     # already on pressure levels (19)
+            plevs = da['plev']                          
+        elif model == 'IPSL-CM6A-LR':                                                               # already on pressure levels (79 levels)
+            da = da.rename({'presnivs':'plev'})
+            plevs = da['plev']
         elif model in ['MPI-ESM1-2-HR', 'MPI-ESM1-2-LR', 'CanESM5', 'CNRM-CM6-1', 'GFDL-CM4', 'CNRM-ESM2-1', 'CNRM-CM6-1-HR', 'IPSL-CM5A-MR', 'MPI-ESM-MR', 'CanESM2']: 
-            plevs = ds.ap + ds.b*ds.ps
+            plevs = ds.ap + ds.b*ds.ps                                                              # has time
             ds = ds.rename({'lev':'plev'})
-        elif model in ['FGOALS-g2', 'FGOALS-g3']:
-            plevs = ds.ptop + ds.lev*(ds.ps-ds.ptop)
-            ds = ds.rename({'lev':'plev'})
+        elif model in ['FGOALS-g2', 'FGOALS-g3']:                                                   
+            plevs = ds.ptop + ds.lev*(ds.ps-ds.ptop)                                                # has time
+            da = da.rename({'lev':'plev'})
         elif model in ['UKESM1-0-LL', 'KACE-1-0-G', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'HadGEM2-CC']:
-            h_hybridsigma = ds.lev + ds.b*ds.orog                                                    # in meters
-            plevs = 1000e2 * (1 -  0.0065*h_hybridsigma/288.15)**(9.81*0.029)/(8.314*0.0065)         # to pressure: P = P_0 * (1- L*(h-h_0)/T_0)^(g*M/R*L) Barometric formula (approximation based on lapserate)
-            # p_hybridsigma = 1000e2 * np.exp(0.029*9.82*h_hybridsigma/287*T)                        # to pressure: P = P_0 * exp(- Mgh/(RT)) Hydrostatic balance (don't have T at pressure level)
-            ds = ds.rename({'lev':'plev'})
+            z, z_new = ds.lev + ds.b*ds.orog, np.linspace(0,15000,30)                               # in meters (variable and fixed heights)  (does not have time)                        
+            da = vert_interp_cl(da, z, z_new)                                                       # interpolate to fixed heights
+            plevs = 101325*(1-((2.25577e-5)*z_new))**(5.25588)                                      # convert fixed heights to pressure
+            da = da.rename({'lev':'plev'})
+            da.assign_coords(plev=plevs)
         else:
-            plevs = ds.a*ds.p0 + ds.b*ds.ps
-            ds = ds.rename({'lev':'plev'})
-    return plevs
+            plevs = ds.a*ds.p0 + ds.b*ds.ps                                                         # has time
+            da = da.rename({'lev':'plev'})
+            print(plevs.shape)
+    return da
 
-def get_cmip_data(source, var, model, experiment, switch = {'ocean': False}):
+def get_cmip_data(var, source, model, experiment, switch = {'ocean': False}):
     ''' concatenates file data and interpolates grid to common grid if needed'''
     ensemble =     ensemble_folder(source, model, experiment)
     project =      'CMIP' if experiment == 'historical'  else 'ScenarioMIP'
     timeInterval = 'day'  if mV.timescales[0] == 'daily' else 'Amon'
-    path_folder =  var_folder(model, ensemble, project , timeInterval)
-    ds =           concat_files(path_folder, experiment)                                                                # picks out lat: [-35, 35]
-    plevs =        p_coords(model, ds)            if any(dim in ds.dims for dim in ['plev', 'lev', 'presnivs']) else '' # particularly cloud fraction is converted to pressure coordinates
+    path_folder =  var_folder(var, model, experiment, ensemble, project, timeInterval)
+    ds =           concat_files(path_folder, experiment)
     da =           ds[var]
-    da, plevs =    hor_interpolate(ds, da, plevs) if mV.resolutions[0] == 'regridded'                           else da # horizontally interpolate
-    da =           vert_interpolate(da, plevs)    if 'plev' in da.dims                                          else da # vertically interpolate (some models have different number of vertical levels)
-    da =           pick_ocean_region(da)          if switch['ocean']                                            else da # pick ocean region (specifically for stability calculation)
-    ds = xr.Dataset(data_vars = {f'{var}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)                                # if regridded it should already be lat: [-30,30]
+    da =           p_coords(model, var, ds, da)         if any(dim in ds.dims for dim in ['plev', 'lev', 'presnivs']) else [ds, da, ''] # particularly cloud fraction is converted to pressure coordinates
+    da =           vert_interp(da)                      if 'plev' in da.dims                                          else da           # vertically interpolate (some models have different number of vertical levels)
+    da, plevs =    hor_interp(ds, da, plevs)            if mV.resolutions[0] == 'regridded'                           else da           # horizontally interpolate
+    da =           pick_ocean_region(da)                if switch['ocean']                                            else da           # pick ocean region (specifically for stability calculation)
+    ds = xr.Dataset(data_vars = {f'{var}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)                                                # if regridded it should already be lat: [-30,30]
     return ds
 
 
@@ -210,74 +228,74 @@ def get_var_data(source, dataset, experiment, var_name, switch):
 
     # Precipitation
     if var_name == 'pr':
-        da = get_cmip_data('pr', dataset, experiment, switch)['pr']*60*60*24 if source in ['cmip5', 'cmip6'] else da
-        da = get_gpcp()['pr']                                                if dataset == 'GPCP'            else da
+        da = get_cmip_data('pr', source, dataset, experiment, switch)['pr']*60*60*24 if source in ['cmip5', 'cmip6'] else da
+        da = get_gpcp()['pr']                                                         if dataset == 'GPCP'            else da
         da.attrs['units'] = r'mm day$^-1$'
 
     # Temperature
     if var_name == 'tas':
-        da = get_cmip_data('tas', dataset, experiment, switch)['tas']-273.15  if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('tas', source, dataset, experiment, switch)['tas']-273.15  if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'$\degree$C'
     if var_name == 'ta':
-        da = get_cmip_data('ta', dataset, experiment, switch)['ta']           if source in ['cmip5', 'cmip6'] else da
-        da = get_era5_monthly('t')['t']                                       if dataset == 'ERA5' else da
+        da = get_cmip_data('ta', source, dataset, experiment, switch)['ta']           if source in ['cmip5', 'cmip6'] else da
+        da = get_era5_monthly('t')['t']                                               if dataset == 'ERA5' else da
         da.attrs['units'] = 'K'
 
     # Humidity
     if var_name == 'hur':
-        da = get_cmip_data('hur', dataset, experiment, switch)['hur']  if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hur', source, dataset, experiment, switch)['hur']  if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = '%'
     if var_name == 'hus':
-        da = get_cmip_data('hus', dataset, experiment, switch)['hus'] if source in ['cmip5', 'cmip6'] else da
-        da = get_era5_monthly('q')['q']                                if dataset == 'ERA5' else da
+        da = get_cmip_data('hus', source, dataset, experiment, switch)['hus'] if source in ['cmip5', 'cmip6'] else da
+        da = get_era5_monthly('q')['q']                                       if dataset == 'ERA5' else da
         da.attrs['units'] = ''
 
     # Circulation
     if var_name == 'wap':
-        da = get_cmip_data('wap', dataset, experiment, switch)['wap']*60*60*24/100 if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('wap', source, dataset, experiment, switch)['wap']*60*60*24/100 if source in ['cmip5', 'cmip6'] else da
         da = da * 1000 if dataset == 'IITM-ESM' else da
         da.attrs['units'] = r'hPa day$^-1$'
 
     # Longwave radiation
     if var_name == 'rlds':
-        da = get_cmip_data('rlds', dataset, experiment, switch)['rlds'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlds', source, dataset, experiment, switch)['rlds'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rlus':
-        da = get_cmip_data('rlus', dataset, experiment, switch)['rlus'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlus', source, dataset, experiment, switch)['rlus'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rlut':
-        da = get_cmip_data('rlut', dataset, experiment, switch)['rlut'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlut', source, dataset, experiment, switch)['rlut'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
 
     # Shortwave radiation
     if var_name == 'rsdt':
-        da = get_cmip_data('rsdt', dataset, experiment, switch)['rsdt'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsdt', source, dataset, experiment, switch)['rsdt'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsds':
-        da = get_cmip_data('rsds', dataset, experiment, switch)['rsds'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsds', source, dataset, experiment, switch)['rsds'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsus':
-        da = get_cmip_data('rsus', dataset, experiment, switch)['rsus'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsus', source, dataset, experiment, switch)['rsus'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsut':
-        da = get_cmip_data('rsut', dataset, experiment, switch)['rsut'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsut', source, dataset, experiment, switch)['rsut'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
 
     # Clouds
     if var_name == 'cl':
-        da = get_cmip_data('cl', dataset, experiment, switch)['cl'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('cl', source, dataset, experiment, switch)['cl'] if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = '%'
 
     # Height coords
     if var_name == 'zg':
-        da = get_cmip_data('zg', dataset, experiment, switch)['zg'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('zg', source, dataset, experiment, switch)['zg'] if source in ['cmip5', 'cmip6'] else da
         # da.attrs['units'] = ''
 
     # Surface fluexes
     if var_name == 'hfls':
-        da = get_cmip_data('hfls', dataset, experiment, switch)['hfls'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hfls', source, dataset, experiment, switch)['hfls'] if source in ['cmip5', 'cmip6'] else da
     if var_name == 'hfss':
-        da = get_cmip_data('hfss', dataset, experiment, switch)['hfss'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hfss', source, dataset, experiment, switch)['hfss'] if source in ['cmip5', 'cmip6'] else da
 
     return da
 
@@ -296,7 +314,6 @@ def run_var_data(switch_var, switch, source, dataset, experiment):
     for var_name in [k for k, v in switch_var.items() if v] : # loop over true keys
         ds = xr.Dataset(data_vars = {var_name: get_var_data(source, dataset, experiment, var_name, switch)})
         save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] and ds[var_name].any() else None
-
 
 # --------------------------------------------------------------------------------------------- run variable ----------------------------------------------------------------------------------------------------- #
 def run_experiment(switch_var, switch, source, dataset):
@@ -326,11 +343,11 @@ if __name__ == '__main__':
     switch_var = {
         'pr':   False,                                                                          # Precipitation
         'tas':  False, 'ta':            False,                                                  # Temperature
-        'wap':  True,                                                                           # Circulation
+        'wap':  False,                                                                           # Circulation
         'hur':  False, 'hus' :          False,                                                  # Humidity                   
         'rlds': False, 'rlus':          False, 'rlut': False, 'netlw': False,                   # Longwave radiation
         'rsdt': False, 'rsds':          False, 'rsus': False, 'rsut':  False, 'netsw': False,   # Shortwave radiation
-        'cl':   False, 'p_hybridsigma': False,                                                  # Cloudfraction
+        'cl':   True, 'p_hybridsigma': False,                                                  # Cloudfraction
         'zg':   False,                                                                          # Height coordinates
         'hfss': False, 'hfls':          False,                                                  # Surface fluxes
         }
