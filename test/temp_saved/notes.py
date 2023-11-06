@@ -128,3 +128,46 @@
 #     return ds_cl, ds_p_hybridsigma
 
 
+
+
+
+
+# --------------------------------------------------------------- Taking mean of levels falling in fixed ranges (height and then pressure) (not used) ----------------------------------------------------------------------------------------------------- #
+# @mF.timing_decorator
+# def convert_to_p(da, z, z_new):
+#     print(f'Column cloud fraction value before interp pressure conversion:\n {da.isel(time=0, lat = int(len(ds.lat)/2), lon = 5).values} \n at coordinate: \n {da.lev.values}')
+#     print(f'at height coordinates: \n', z.isel(lat = int(len(ds.lat)/2), lon = 5).values)
+#     interpolated_data = np.zeros(shape = (len(da['time']), len(z_new), len(da['lat']), len(da['lon'])))
+#     da_z_fixed = xr.DataArray(interpolated_data, dims = ('time', 'lev', 'lat', 'lon'), coords = {'time':da.time.data, 'lev': z_new.data, 'lat': da.lat.data, 'lon': da.lon.data})
+#     for i in range(len(z_new)-1):
+#         z_section = z.where((z >= z_new[i]) & (z < z_new[i+1]))                   # values not in the section are NaN
+#         da_z_section = da * ~np.isnan(z_section)                                  # cloudfraction and NaNs
+#         da_z_slice = da_z_section.where(da_z_section != 0).mean(dim='lev')                                 # .where(da_z_section != 0)
+#         da_z_fixed[:, i+1] = da_z_slice                                           # First level is zero m, so assigning mean values to level above as first value
+#     da_z_fixed[:, 0] = np.nan
+#     print(f'Column cloud fraction value after interp pressure conversion:\n {da_z_fixed.isel(time=0, lat = int(len(ds.lat)/2), lon = 5).values}, \n interp heights: \n {da_z_fixed.lev.values}') #int(len(ds.lon)/2)
+#     da_z_fixed['lev'] = 101325*(1-((2.25577e-5)*da_z_fixed['lev']))**(5.25588)    # convert new heights to pressure
+#     da_z_fixed = da_z_fixed.rename({'lev':'plev'})
+#     print('interp pressure levels: \n', da_z_fixed.plev.values)
+#     return da_z_fixed
+
+# @mF.timing_decorator
+# def interp_vert_p(da, p_new):   
+#     interpolated_data = np.zeros(shape = (len(da['time']), len(p_new), len(da['lat']), len(da['lon'])))
+#     da_p_fixed = xr.DataArray(interpolated_data, dims = ('time', 'plev', 'lat', 'lon'), coords = {'time':da.time.data, 'plev': p_new.data, 'lat': da.lat.data, 'lon': da.lon.data})
+#     for i in range(len(p_new)-1):
+#         plevs = da.plev
+#         da_p_section = da.where((plevs <= p_new[i]) & (plevs > p_new[i+1]))
+#         da_p_slice = da_p_section.mean(dim='plev')
+#         da_p_fixed[:, i] = da_p_slice
+#     da_p_fixed[:, -1] = np.nan
+#     print(f'Column cloud fraction after pressure interp:\n {da_p_fixed.isel(time=0, lat = int(len(ds.lat)/2), lon = int(len(ds.lon)/2)).values}, \n interp pressures: \n {da_p_fixed.plev.values}')
+
+#     calc_by_mean = False
+#     if calc_by_mean:
+#         da = convert_to_p(da, z, z_new) # takes: ~ 2 min
+#         da = interp_vert_p(da, p_new)   # takes: ~ 0.15 min
+
+
+
+
