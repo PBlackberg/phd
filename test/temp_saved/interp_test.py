@@ -4,7 +4,7 @@ import xarray as xr
 
 x = [100, 90, 80, 70, 60, 50]
 y = [10, 8, 20, 10, 30, 20]
-x_interp = [95, 75, 65]
+x_interp = [95, 85, 75, 65]
 
 data = xr.DataArray(y, coords={'x': x}, dims='x')
 

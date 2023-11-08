@@ -265,12 +265,12 @@ if __name__ == '__main__':
     switch_metric = {
         # choose metric
         'pr':                             True,
-        'pr_90':                          True,
-        'pr_95':                          True,
-        'pr_97':                          True,
-        'pr_99':                          True,
-        'pr_rx1day':                      True,
-        'pr_rx5day':                      True,
+        'pr_90':                          False,
+        'pr_95':                          False,
+        'pr_97':                          False,
+        'pr_99':                          False,
+        'pr_rx1day':                      False,
+        'pr_rx5day':                      False,
         'pr_o':                           False,
         }
     
@@ -290,7 +290,7 @@ if __name__ == '__main__':
         'gadi_data':                      False,
 
         # conv_threshold
-        'fixed_area':                     True,
+        'fixed_area':                     False,
 
         # save
         'save':                           True,

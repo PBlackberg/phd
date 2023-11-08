@@ -73,6 +73,8 @@ if plot_res:
     mF.move_row(ax, moveby = 0.1)
     mF.move_row(ax, moveby = 0.065)
 
+    plt.axhline(y=2.5, color='k', linestyle='--')
+
     plt.show() if switch['show'] else None
     mF.save_figure(fig, f'{home}/Desktop', 'test.pdf') if switch['save_to_desktop'] else None
     print('finished')

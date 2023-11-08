@@ -22,7 +22,13 @@ def load_data(switch, source, dataset, experiment, var):
     if switch['constructed_fields']:
         da = cF.var3D
     if switch['sample_data']:
-        da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
+        if var in ['lcf', 'hcf']:
+            da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/cl/{source}/{dataset}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['cl']
+            da = da.sel(plev = slice(1000e2, 600e2)).max(dim = 'plev') if var == 'lcf' else da
+            da = da.sel(plev = slice(400e2, 0)).max(dim = 'plev')      if var == 'hcf' else da # can also do 250 up (in schiro spread paper)
+        else:
+            da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
+
     if switch['gadi_data']:
         if var == 'hur_calc':                                                         # Relative humidity (calculated from tempearture and specific humidity)
                 q = gD.get_var_data(source, dataset, experiment, 'hus', switch)       # unitless (kg/kg)
@@ -40,13 +46,6 @@ def load_data(switch, source, dataset, experiment, var):
             da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))]
             w1, w2 = ~np.isnan(da1) * da1['plev'], ~np.isnan(da2) * da2['plev']         # Where there are no temperature values, exclude the associated pressure levels from the weights
             da = ((da1 * w1).sum(dim='plev') / w1.sum(dim='plev')) - ((da2 * w2).sum(dim='plev') / w2.sum(dim='plev'))
-
-        elif var in ['lcf', 'hcf']:
-            p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma', switch)
-            da = gD.get_var_data(source, dataset, experiment, 'cl', switch)
-            plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
-            da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if var == 'hcf' else da
-            da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if var == 'lcf' else da
 
         elif var == 'netlw':    
             rlds = gD.get_var_data(source, dataset, experiment, 'rlds', switch) 
@@ -212,13 +211,13 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                                      # choose metric type (can choose multiple)
-        'snapshot': True, 'tMean': False, 'sMean': False, 'area': False,                             # type 
+        'snapshot': True, 'tMean': True, 'sMean': True, 'area': False,                               # type 
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                        # data to use
-        '250hpa':             False, '500hpa':      False, '700hpa':    False, 'vMean': False,       # mask: vertical (only affects wap, hur)
-        'ascent':             False, 'descent':     False, 'ocean': False,                           # mask: horizontal (can apply both ocean and ascent/descent together)
+        'constructed_fields': False, 'sample_data': True, 'gadi_data': False,                        # data to use
+        '250hpa':             False, '500hpa':      False, '700hpa':   False, 'vMean': False,        # mask: vertical (only affects wap, hur)
+        'ascent':             False, 'descent':     False, 'ocean':    False,                        # mask: horizontal (can apply both ocean and ascent/descent together)
         'save_to_desktop':    False, 'save':        True,                                            # save
         }
     run_large_scale_state_metrics(switch_var, switchM, switch)

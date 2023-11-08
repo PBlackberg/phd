@@ -180,3 +180,12 @@
 
 
 
+
+
+# previous way of getting low clouds and high clouds
+        # elif var in ['lcf', 'hcf']:
+        #     p_hybridsigma = gD.get_var_data(source, dataset, experiment, 'p_hybridsigma', switch)
+        #     da = gD.get_var_data(source, dataset, experiment, 'cl', switch)
+        #     plevs1, plevs2 = [250e2, 0], [1500e2, 600e2]
+        #     da = da.where((p_hybridsigma <= plevs1[0]) & (p_hybridsigma >= plevs1[1]), 0).max(dim='lev') if var == 'hcf' else da
+        #     da = da.where((p_hybridsigma <= plevs2[0]) & (p_hybridsigma >= plevs2[1]), 0).max(dim='lev') if var == 'lcf' else da
