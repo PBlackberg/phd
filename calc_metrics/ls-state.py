@@ -66,6 +66,9 @@ def load_data(switch, source, dataset, experiment, var):
             zg = gD.get_var_data(source, dataset, experiment, 'zg', switch) 
             hus = gD.get_var_data(source, dataset, experiment,'hus', switch) 
             da = c_p*ta + zg + L_v*hus
+
+        elif var == 'pe':
+
         else:
             da = gD.get_var_data(source, dataset, experiment, var, switch)
     return da
@@ -172,7 +175,7 @@ def run_variable(switch_var, switchM, switch, source, dataset, experiment):
             if not mV.data_available(source, dataset, experiment, var):                     # skips calc for models that do not have variable
                 continue
             da =           load_data(switch, source, dataset, experiment, var)
-            da, vert_reg = pick_vert_reg(switch, dataset, da) if var in ['hur', 'wap', 'mse'] else [da, ''] 
+            da, vert_reg = pick_vert_reg(switch, dataset, da)
             da, hor_reg  = pick_hor_reg(switch, source, dataset, experiment, da)
             run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, hor_reg)
 
@@ -201,6 +204,7 @@ def run_large_scale_state_metrics(switch_var, switchM, switch):
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_var = {                                                                                   # choose variable (can choose multiple)
+        'pr':    False, 'pe':        True,
         'wap':   False,                                                                              # circulation
         'hur':   False, 'hur_calc':  False, 'hus':       False,                                      # humidity
         'tas':   False, 'stability': False,                                                          # temperature
@@ -221,4 +225,13 @@ if __name__ == '__main__':
         'save_to_desktop':    False, 'save':        True,                                            # save
         }
     run_large_scale_state_metrics(switch_var, switchM, switch)
+
+
+
+
+# add in precipitation efficiency
+
+
+
+
 
