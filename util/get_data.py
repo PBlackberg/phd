@@ -228,74 +228,78 @@ def get_var_data(source, dataset, experiment, var_name, switch):
 
     # Precipitation
     if var_name == 'pr':
-        da = get_cmip_data('pr', source, dataset, experiment, switch)['pr']*60*60*24 if source in ['cmip5', 'cmip6'] else da
-        da = get_gpcp()['pr']                                                         if dataset == 'GPCP'            else da
+        da = get_cmip_data('pr', source, dataset, experiment, switch)['pr']*60*60*24        if source in ['cmip5', 'cmip6'] else da
+        da = get_gpcp()['pr']                                                               if dataset == 'GPCP'            else da
         da.attrs['units'] = r'mm day$^-1$'
 
     # Temperature
     if var_name == 'tas':
-        da = get_cmip_data('tas', source, dataset, experiment, switch)['tas']-273.15  if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('tas', source, dataset, experiment, switch)['tas']-273.15        if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'$\degree$C'
     if var_name == 'ta':
-        da = get_cmip_data('ta', source, dataset, experiment, switch)['ta']           if source in ['cmip5', 'cmip6'] else da
-        da = get_era5_monthly('t')['t']                                               if dataset == 'ERA5' else da
+        da = get_cmip_data('ta', source, dataset, experiment, switch)['ta']                 if source in ['cmip5', 'cmip6'] else da
+        da = get_era5_monthly('t')['t']                                                     if dataset == 'ERA5' else da
         da.attrs['units'] = 'K'
 
     # Humidity
     if var_name == 'hur':
-        da = get_cmip_data('hur', source, dataset, experiment, switch)['hur']  if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hur', source, dataset, experiment, switch)['hur']               if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = '%'
     if var_name == 'hus':
-        da = get_cmip_data('hus', source, dataset, experiment, switch)['hus'] if source in ['cmip5', 'cmip6'] else da
-        da = get_era5_monthly('q')['q']                                       if dataset == 'ERA5' else da
+        da = get_cmip_data('hus', source, dataset, experiment, switch)['hus']               if source in ['cmip5', 'cmip6'] else da
+        da = get_era5_monthly('q')['q']                                                     if dataset == 'ERA5' else da
         da.attrs['units'] = ''
+    if var_name == 'clwvi':
+        da = get_cmip_data('clwvi', source, dataset, experiment, switch)['clwvi']           if source in ['cmip5', 'cmip6'] else da
+        da = get_gpcp()['pr']                                                               if dataset == 'GPCP'            else da
+        da.attrs['units'] = r'mm day$^-1$'
 
     # Circulation
     if var_name == 'wap':
-        da = get_cmip_data('wap', source, dataset, experiment, switch)['wap']*60*60*24/100 if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('wap', source, dataset, experiment, switch)['wap']*60*60*24/100  if source in ['cmip5', 'cmip6'] else da
         da = da * 1000 if dataset == 'IITM-ESM' else da
         da.attrs['units'] = r'hPa day$^-1$'
 
     # Longwave radiation
     if var_name == 'rlds':
-        da = get_cmip_data('rlds', source, dataset, experiment, switch)['rlds'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlds', source, dataset, experiment, switch)['rlds']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rlus':
-        da = get_cmip_data('rlus', source, dataset, experiment, switch)['rlus'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlus', source, dataset, experiment, switch)['rlus']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rlut':
-        da = get_cmip_data('rlut', source, dataset, experiment, switch)['rlut'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rlut', source, dataset, experiment, switch)['rlut']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
 
     # Shortwave radiation
     if var_name == 'rsdt':
-        da = get_cmip_data('rsdt', source, dataset, experiment, switch)['rsdt'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsdt', source, dataset, experiment, switch)['rsdt']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsds':
-        da = get_cmip_data('rsds', source, dataset, experiment, switch)['rsds'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsds', source, dataset, experiment, switch)['rsds']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsus':
-        da = get_cmip_data('rsus', source, dataset, experiment, switch)['rsus'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsus', source, dataset, experiment, switch)['rsus']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
     if var_name == 'rsut':
-        da = get_cmip_data('rsut', source, dataset, experiment, switch)['rsut'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('rsut', source, dataset, experiment, switch)['rsut']             if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = r'W m$^-2$'
 
     # Clouds
     if var_name == 'cl':
-        da = get_cmip_data('cl', source, dataset, experiment, switch)['cl'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('cl', source, dataset, experiment, switch)['cl']                 if source in ['cmip5', 'cmip6'] else da
         da.attrs['units'] = '%'
 
     # Height coords
     if var_name == 'zg':
-        da = get_cmip_data('zg', source, dataset, experiment, switch)['zg'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('zg', source, dataset, experiment, switch)['zg']                 if source in ['cmip5', 'cmip6'] else da
         # da.attrs['units'] = ''
 
     # Surface fluexes
     if var_name == 'hfls':
-        da = get_cmip_data('hfls', source, dataset, experiment, switch)['hfls'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hfls', source, dataset, experiment, switch)['hfls']             if source in ['cmip5', 'cmip6'] else da
     if var_name == 'hfss':
-        da = get_cmip_data('hfss', source, dataset, experiment, switch)['hfss'] if source in ['cmip5', 'cmip6'] else da
+        da = get_cmip_data('hfss', source, dataset, experiment, switch)['hfss']             if source in ['cmip5', 'cmip6'] else da
 
     return da
 

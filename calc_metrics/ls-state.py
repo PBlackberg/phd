@@ -68,6 +68,8 @@ def load_data(switch, source, dataset, experiment, var):
             da = c_p*ta + zg + L_v*hus
 
         elif var == 'pe':
+            pr =  gD.get_var_data(source, dataset, experiment, 'pr', switch) 
+            pr =  gD.get_var_data(source, dataset, experiment, 'clwvi', switch) 
 
         else:
             da = gD.get_var_data(source, dataset, experiment, var, switch)
