@@ -73,12 +73,14 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
 switch_subset = {
     'exclude':         True,  'only_include':      False,                            
     'similar_version': False, 'high_res_version':  False,
-    'no_clouds':       False,
+    'no_clouds':       True,
     'no_stability':    False, 'stability_no_land': False,
     'no_orig_ocean':   False,
     'not_in_schiro':   False, 
     'res_versions':    False,
     'threshold_res':   False,                                   # Threshold: 2.5 degrees dlat x dlon
+    'unrealistic_org': False,                                   # Threshold: qualitative for noew
+    'org_insensitive': False,                                   # Threshold: qualitative for noew
     }
 
 
@@ -151,7 +153,7 @@ def exclude_models(models_cmip6, switch_subset):
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])
 
     if switch_subset['no_clouds']:
-        models_exclude = ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3',  'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4', 'UKESM1-0-LL', 'KACE-1-0-G', 'ACCESS-CM2', 'ACCESS-ESM1-5'] # 'GFDL-ESM4' ps missing from pressure calc, calculation of cloud variable was just different in UK model and access # 'CNRM-CM6-1-HR' no future scenario
+        models_exclude = ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3',  'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4'] # 'GFDL-ESM4' ps missing from pressure calc, calculation of cloud variable was just different in UK model # 'CNRM-CM6-1-HR' no future scenario
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])
 
     if switch_subset['no_orig_ocean']:
@@ -178,8 +180,137 @@ def exclude_models(models_cmip6, switch_subset):
     if switch_subset['threshold_res']:
         models_exclude = ['MIROC-ES2L', 'CanESM5', 'GFDL-CM4', 'NorESM2-LM', 'FGOALS-g3', 'NESM3', 'KIOST-ESM', 'MPI-ESM1-2-LR', 'IITM-ESM', 'IPSL-CM6A-LR', 'INM-CM5-0', 'INM-CM4-8'] # in order from lowest to highest res (currently: 2.5 degree res threshold) (first 4 the ones that really stand out)
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])                            
-                                                   
 
+    if switch_subset['unrealistic_org']: # qualitative for now (based on PWAD and ROME frequency of occurance)
+        models_exclude = ['INM-CM5-0', 'FGOALS-g3', 'INM-CM4-8', 'MPI-ESM1-2-LR', 'KIOST-ESM', 'BCC-CSM2-MR', 'NESM3', 'CNRM-ESM2-1', 'CNRM-CM6-1', 'CNRM-CM6-1-HR', 'IPSL-CM6A-LR', 'CanESM5', 'NorESM2-LM', 'GFDL-CM4', 'KACE-1-0-G', 'ACCESS-CM2', 'UKESM1-0-LL', 'MIROC6', 'GFDL-ESM4'] 
+        models_excluded.extend([m for m in models_exclude if m not in models_excluded])     
+
+## Unrealistic organization behaviour
+# models that stand out in PWAD:
+# INM-CM5-0         (second most, in small objects)                     1
+# FGOALS-g3         (a little bit, small objects)                       2
+# INM-CM4-8         (second most tied, small)                           3
+# MPI-ESM1-2-LR     (largest objects)                                   4
+# KIOST-ESM         (stand out a little bit with large objects)         5
+# BCC-CSM2-MR       (somewhat small objects)                            6
+# GFDL-ESM4         (somwhat small objects)                             7
+# GFDL-CM4          (somewhat small objects)                    
+# CMCC-CM2-SR5      (a little bit, small objects)
+# CMCC-ESM2         (a little bit)
+# NESM              (somewhat large objects, second largest)            8
+# CNRM-ESM2-1       (somewhat small objects, smaller than CMCC)         9
+# CNRM-CM5-1        (somewhat small)                                    10
+# CNRM-CM6-1-HR     (somewhat small)                                    11
+# KACE-1-0-G        (a little bit small)                                12
+# IPSL-CM6A-LR      (somewhat small, third smallest)                    13
+# CanESM5           (stands out the most in small objects)              14
+# UKESM1-0-LL       (stands out slightly in small)
+
+
+# Models that stand out in ROME:
+# INM-CM5-0         (second group, small)
+# FGOALS            Second most in small ROME
+# INM-CM4-8         (second group)
+# MPI-ESM1-2-LR     (largest group)
+# KIOST-ESM         (largest group)
+# BCC-CSM2-MR       (second smallest group)
+# GFDL-ESM4         (second smallest group)
+# Nor-ESM2-LM       (largest group)
+# GFDL-CM4          (second smallest group)
+# NESM3             (largest group)
+# CNRM-ESM2-1       (second smallest group)
+# CNRM-CM6-1        (second smallest group)
+# CNRM-CM6-1-HR     (smallest group)
+# KACE-1-0-G        (second smallest group)
+# IPSL-CM6A-LR      (second smallest)
+# ACCESS-CM2        (edge of second smallest group, closest to obs)
+# CanESM5           (smallest group, smallest)
+# UKESM-1-0-LL      (second smallest group)
+
+    if switch_subset['org_insensitive']: # based on correlation with large-scale state in current climate conditions
+        models_exclude = ['CanESM5', 'INM-CM4-8', 'INM-CM5-0', 'BCC-CSM2-MR', 'MPI-ESM1-2-LR', 'NESM3', 'FGOALS-g3', 'IITM-ESM']
+        models_excluded.extend([m for m in models_exclude if m not in models_excluded]) 
+
+
+
+# org - large-scale state sensitivity: (lowest corr at top)
+# pr_99                 
+# CanESM5           
+# INM-CM4-8         
+# INM-CM5-0
+# BCC-CSM2-MR
+# ACCESS-ESM1-
+# CNEM-CM6-1-HR
+# IPSL-CM6A-LR
+# MIROC6
+# CNRM-ESM2-1
+# FGOALS-g3
+# KACE-1-0-G
+# MIROC-ES2L
+# NESM3
+# KIOST
+# ...
+#
+# (highest) 
+# NorESM2-LM
+# ITM-ESM
+# TaiESM
+# CESM2-WACCM
+# NorESM2-MM
+
+
+# relative humidity
+# CanESM5
+# INM-CM4-8
+# FGOALS-g3
+# MPI-ESM1-2-LR
+# NESM3
+# INM-CM5-0
+# IITM-EMS
+# KACE-1-0-G
+# KIOST-ESM
+# BCC-CSM2-MR
+# GFDL-ESM4
+# MRI-ESM2-0
+# IPSL-CM6A-LR
+#
+# ..
+# (highest)
+# CMCC-CM2-SR5
+# ACCESS-CM2
+# NorESM2-MM
+# NorESM2-LM
+# CMCC-ESM2
+# CESM2-WACCM
+# TaiESM1
+
+
+
+# OLR
+# MPI-ESM1-2-LR
+# FGOALS-g3
+# IITM-ESM
+# INM-CM5-)
+# NESM3
+# KIOST-ESM
+# INM-CM4-8
+# CanESM5
+# BCC-CSM2-MR
+# 
+# ..
+# (highest)
+# GFDL-CM4
+# CMCC-CM2-SR5
+# CMCC-ESM2
+# NorESM2-LM
+# CESM2-WACCM
+# TaiESM1
+# Nor-ESM2-MM
+
+
+
+
+    # print(models_excluded)
     models_cmip6 = list(filter(lambda x: x not in models_excluded, models_cmip6)) if switch_subset['exclude']      else models_cmip6
     models_cmip6 = models_excluded                                                if switch_subset['only_include'] else models_cmip6
     return models_cmip6, models_excluded
@@ -200,8 +331,8 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
     # No clouds
     if var in ['lcf', 'hcf', 'cl', 'ds_cl', 'cl_p_hybrid', 'p_hybrid'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4']: # 'UKESM1-0-LL',
         print(f'No {var} data for this dataset')
-        return False
-    
+        return False                                                                   
+
     # No original grid ocean mask
     for mask_type in [k for k, v in switch.items() if v]:
         if mask_type == 'ocean_mask' and resolution == 'orig'and dataset in ['IITM-ESM', 'BCC-CSM2-MR', 'NESM3', 'UKESM1-0-LL', 'CNRM-ESM2-1']: 
@@ -239,7 +370,7 @@ def find_ifWithObs(datasets, observations):
             return '_withObs'
     return ''
 
-def get_ds_highlight(switch_highlight, datasets, switch_exclude= {'a':False}, func = exclude_models):
+def get_ds_highlight(switch_highlight, datasets, switch_subset= {'a':False}, func = exclude_models):
     dataset_highlight = []
     for item in [k for k, v in switch_highlight.items() if v]:
         if  item == 'by_dTas':
@@ -249,8 +380,8 @@ def get_ds_highlight(switch_highlight, datasets, switch_exclude= {'a':False}, fu
         if  item == 'by_obs_sim':
             dataset_highlight = ['MIROC6', 'TaiESM1']
         if  item == 'by_excluded':
-            switch_exclude['only_include'] = True
-            _, dataset_highlight = func(datasets, switch_exclude)
+            switch_subset['only_include'] = True
+            _, dataset_highlight = func(datasets, switch_subset)
             # dataset_highlight = ['NorESM2-LM', 'NorESM2-MM', 'CNRM-CM6-1', 'CNRM-CM6-1-HR']
     return dataset_highlight
 
@@ -461,6 +592,43 @@ institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
 
-# exclude_list =  ['INM-CM5-0', 'IITM-ESM', 'MPI-ESM1-2-LR', 'KIOST-ESM', 'BCC-CSM2-MR', 'NorESM2-LM', 'NorESM2-MM', 'CMCC-CM2-SR5', 'CMCC-ESM2', 'NESM3', 'EC-Earth3', 'TaiESM1', 'CanESM5'] 
-# filtered_list = [item for item in main_list if item not in exclude_list]
-# print(filtered_list)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -52,12 +52,12 @@ def haversine_dist(lat1, lon1, lat2, lon2):
 def find_limits(switchM, datasets, metric_class, func = haversine_dist, # dummy function (use metric function when calling in plot script)
                 quantileWithin_low = 0, quantileWithin_high = 1, 
                 quantileBetween_low = 0, quantileBetween_high=1, 
-                vmin = '', vmax = ''):    
+                vmin = '', vmax = ''): #, *args, **kwargs):    
     ''' If vmin and vmax is not set, the specified quantile values are used as limits '''
     if vmin == '' and vmax == '':
         vmin_list, vmax_list = [], []
         for dataset in datasets:
-            data, _, _ = func(switchM, dataset, metric_class)
+            data, _, _ = func(switchM, dataset, metric_class) #, *args, **kwargs)
             vmin_list, vmax_list = np.append(vmin_list, np.nanquantile(data, quantileWithin_low)), np.append(vmax_list, np.nanquantile(data, quantileWithin_high))
         return np.nanquantile(vmin_list, quantileBetween_low), np.nanquantile(vmax_list, quantileBetween_high)
     else:

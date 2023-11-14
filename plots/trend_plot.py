@@ -130,7 +130,7 @@ def plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_cl
     width, height = [12, 8.5]   if nrows == 5 else [12, 8.5] 
     width, height = [12, 10]    if nrows == 6 else [width, height]
     width, height = [12, 11.5]  if nrows == 7 else [width, height]
-
+    width, height = [12, 11.5]  if nrows == 8 else [width, height]
 
     fig, axes = mF.create_figure(width = 12, height = 8.5, nrows=nrows, ncols=ncols)
     num_subplots = len(mV.datasets)
@@ -139,7 +139,7 @@ def plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_cl
         col = i % ncols   # determine col index
         ax = axes.flatten()[i]
 
-        dataset_highlight = mV.get_ds_highlight(switch_highlight, mV.datasets)
+        dataset_highlight = mV.get_ds_highlight(switch_highlight, mV.datasets, switch_subset= mV.switch_subset)
         highlight_subplot_frame(ax, color = 'b') if dataset in dataset_highlight else None
         highlight_subplot_frame(ax, color = 'r') if mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations) in ['obs'] else None
 
@@ -163,9 +163,12 @@ def plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_cl
         mF.move_row(ax, -0.0195+0.025)         if row == 3 else None
         mF.move_row(ax, -0.05+0.025)           if row == 4 else None
         mF.move_row(ax, -0.05+0.01)            if row == 5 else None
+        mF.move_row(ax, -0.05+0.01)            if row == 6 else None
+        mF.move_row(ax, -0.05+0.01)            if row == 7 else None
 
         mF.scale_ax_x(ax, 0.9)
-        mF.scale_ax_y(ax, 0.95)
+        # mF.scale_ax_y(ax, 0.95)
+        mF.scale_ax_y(ax, 0.85)
 
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -198,8 +201,8 @@ def plot_trend(switchX, switchY, switch_highlight, switch, metric_classX, metric
     if len(mV.datasets) == 1:
         xmin, xmax = get_limits(switchX, metric_classX, [mV.datasets[0]])
         ymin, ymax = get_limits(switchY, metric_classY, [mV.datasets[0]])
-        fig, title = plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
-        filename = f'{mV.datasets[0]}{title}'
+        fig, fig_title = plot_one_dataset(switchX, switchY, switch, metric_classX, metric_classY, xmin, xmax, ymin, ymax)
+        filename = f'{mV.datasets[0]}{fig_title}'
     else:
         xmin, xmax = get_limits(switchX, metric_classX, mV.datasets)
         ymin, ymax = get_limits(switchY, metric_classY, mV.datasets)
@@ -263,12 +266,12 @@ if __name__ == '__main__':
 # ---------------------------------------------------------------------------------- y-metric ----------------------------------------------------------------------------------------------------- #
     switch_metricY = {                                                                                        # pick y-metrics (Can pick multiple)
         'rome':       False, 'ni':        False, 'areafraction': False, 'F_pr10':     False,                  # organization
-        'pr':         False, 'pr_99':     False,'pr_97':         False, 'pr_95':     False, 'pr_90': False,                                                             # precipitation percentiles
+        'pr':         False, 'pr_99':     False, 'pr_97':         False, 'pr_95':     False, 'pr_90': False,                                                             # precipitation percentiles
         'pr_rx1day':  False, 'pr_rx5day': False,                                                              # precipitation extremes
         'wap':        False,                                                                                  # circulation
-        'hur':        False,                                                                                  # humidity
+        'hur':        True,                                                                                  # humidity
         'tas':        False, 'stability': False,                                                              # temperature
-        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': True,    # LW
+        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
         'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':       False,                                                              # cloudfraction
         'ws_lc':      False, 'ws_hc':     False,                                                              # weather states
@@ -277,7 +280,7 @@ if __name__ == '__main__':
     
     switchY = {                                                                                               # choose seetings for y-metrics
         '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
-        'descent':    True, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
+        'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
         'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
         'sMean':      True, 'area':      False,                                                              # metric type
         'anomalies':  True,                                                                                   # calc type
@@ -285,7 +288,7 @@ if __name__ == '__main__':
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch_highlight = {                                                                                      # models to highlight
-        'by_dTas':           False, 'by_org_hur_corr':     False, 'by_obs_sim':      False,
+        'by_dTas':           False, 'by_org_hur_corr':     False, 'by_excluded':      True,
         }
     
     switch = {                                                                                                # overall settings
