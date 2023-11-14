@@ -95,7 +95,7 @@ observations = [
 
 # -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
 models_dyamond = [
-    'winter',
+    # 'winter',
 ]
 
 
@@ -151,7 +151,7 @@ def exclude_models(models_cmip6, switch_subset):
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])
 
     if switch_subset['no_clouds']:
-        models_exclude = ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3',  'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4', 'UKESM1-0-LL', 'KACE-1-0-G', 'ACCESS-CM2', 'ACCESS-ESM1-5'] # 'GFDL-ESM4' ps missing from pressure calc, calculation of cloud variable was just different in UK model # 'CNRM-CM6-1-HR' no future scenario
+        models_exclude = ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3',  'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4', 'UKESM1-0-LL', 'KACE-1-0-G', 'ACCESS-CM2', 'ACCESS-ESM1-5'] # 'GFDL-ESM4' ps missing from pressure calc, calculation of cloud variable was just different in UK model and access # 'CNRM-CM6-1-HR' no future scenario
         models_excluded.extend([m for m in models_exclude if m not in models_excluded])
 
     if switch_subset['no_orig_ocean']:
@@ -198,7 +198,7 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
         return False
     
     # No clouds
-    if var in ['lcf', 'hcf'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'UKESM1-0-LL', 'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4']:
+    if var in ['lcf', 'hcf', 'cl', 'ds_cl', 'cl_p_hybrid', 'p_hybrid'] and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4']: # 'UKESM1-0-LL',
         print(f'No {var} data for this dataset')
         return False
     
