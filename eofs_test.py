@@ -6,6 +6,7 @@ from scipy.signal import detrend
 from eofs.xarray import Eof
 import pandas as pd
 
+# ONI calc
 # used data from here: https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html
 # url = 'http://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/noaa.ersst.v5/sst.mnmean.nc'
 # ds = xr.open_dataset(url)
@@ -83,7 +84,7 @@ ds = -1*ds
 plot = True
 if plot:
     # pc1.sel(mode=0).plot(label='PC mode 0')
-    ds.sst_anom.plot(label='ONI website')
+    ds.sst_anom.plot(label='- ONI website')
     (-oni).plot(label='- ONI calc')
     plt.axhline(0.5, linestyle = '--')
     plt.axhline(-0.5, linestyle = '--')

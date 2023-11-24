@@ -1,5 +1,4 @@
 import xarray as xr
-from matplotlib import pyplot as plt
 import numpy as np
 from scipy.signal import detrend
 from eofs.xarray import Eof
@@ -14,6 +13,7 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV
 import myClasses as mC
 import myFuncs as mF
+from matplotlib import pyplot as plt
 
 
 
@@ -46,8 +46,8 @@ def calc_oni(da):
     sst_clim = da.groupby('time.month').mean(dim='time')
     sst_anom = da.groupby('time.month') - sst_clim
     sst_anom_detrended = xr.apply_ufunc(detrend, sst_anom.fillna(0), kwargs={'axis': 0}).where(~sst_anom.isnull())
-    # sst_anom_nino34 = sst_anom_detrended.sel(lat=slice(5, -5), lon=slice(190, 240))
-    sst_anom_nino34 = sst_anom_detrended.sel(lat=slice(-5, 5), lon=slice(190, 240))
+    sst_anom_nino34 = sst_anom_detrended.sel(lat=slice(5, -5), lon=slice(190, 240))
+    # sst_anom_nino34 = sst_anom_detrended.sel(lat=slice(-5, 5), lon=slice(190, 240))
     sst_anom_nino34_mean = sst_anom_nino34.mean(dim=('lon', 'lat'))
     oni = sst_anom_nino34_mean.rolling(time=3, center=True).mean()
 
@@ -78,6 +78,40 @@ def calc_eof(da):
     return pc1
 
 
+def compare_with_noaa_website(switch, da):
+    # nino 3.4 index (ONI, from website)
+    df = pd.read_csv('/Users/cbla0002/Documents/data/sample_data/tas/obs/oni_index.csv', delim_whitespace=True)
+    # print(df)
+    season_to_month = {
+        'DJF': '01-01', 
+        'JFM': '02-01', 
+        'FMA': '03-01', 
+        'MAM': '04-01',
+        'AMJ': '05-01', 
+        'MJJ': '06-01', 
+        'JJA': '07-01', 
+        'JAS': '08-01', 
+        'ASO': '09-01', 
+        'SON': '10-01',
+        'OND': '11-01',
+        'NDJ': '12-01'
+    }
+    df['time'] = pd.to_datetime(df['YR'].astype(str) + '-' + df['SEAS'].map(season_to_month))
+    ds = df.set_index('time').to_xarray()
+    ds = ds.rename({'ANOM': 'sst_anom'})
+    ds = ds.sel(time=slice('1998', '2022'))
+    ds = -1*ds
+    # print(ds)
+    # pc1.sel(mode=0).plot(label='PC mode 0')
+    ds.sst_anom.plot(label='- ONI website')
+    (-oni).plot(label='- ONI calc')
+    plt.axhline(0.5, linestyle = '--')
+    plt.axhline(-0.5, linestyle = '--')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+
 
 # ------------------------
 #   Run / save metric
@@ -95,7 +129,7 @@ def get_metric(switch, source, dataset, experiment, da, metric):
 
     mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'tas', metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                       if switch['save']            else None
     mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop'] else None
-
+    return da_calc
 
 # -------------------------------------------------------------------------------------------- Get metric and save ----------------------------------------------------------------------------------------------------- #
 def run_metric(switch_var, switch, source, dataset, experiment, da):
@@ -108,7 +142,9 @@ def run_experiment(switch_var, switch, source, dataset):
             continue
         print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
         da = load_data(switch, source, dataset, experiment) if source not in ['obs'] else load_obs_data(switch, source, dataset, experiment)
-        run_metric(switch_var, switch, source, dataset, experiment, da)
+        da_calc = run_metric(switch_var, switch, source, dataset, experiment, da)
+        compare_with_noaa_website(switch, da_calc)
+
 
 def run_dataset(switch_var, switch):
     for dataset in mV.datasets:
@@ -133,8 +169,8 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data': True, 'gadi_data': False,                        # data to use
-        'save_to_desktop':    False, 'save':        True                                             # save
+        'constructed_fields': False, 'sample_data':       True, 'gadi_data': False,                  # data to use
+        'compare':            True, 'save_to_desktop':    False, 'save':     True                    # save
         }
 
     run_nino_metrics(switch_var, switch)
