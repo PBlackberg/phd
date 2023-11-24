@@ -30,6 +30,7 @@ class variable_class():
 # ------------------------------------------------------------------ Gives dimension specs ----------------------------------------------------------------------------------------------------- #
 class dims_class():
     R = 6371
+    g = 9.81
     def __init__(self, da):
         self.lat, self.lon       = da['lat'].data, da['lon'].data
         self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
