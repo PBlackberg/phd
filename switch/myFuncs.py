@@ -292,7 +292,7 @@ def plot_scatter(ax, x, y, metric_class):
     return h
 
 def plot_ax_datapointDensity(ax, x, y, metric_class):
-    h = ax.hist2d(x,y,[20,20], cmap = metric_class.cmap)
+    h = ax.hist2d(x,y,[20,20], range=[[np.nanmin(x), np.nanmax(x)], [np.nanmin(y), np.nanmax(y)]], cmap = metric_class.cmap)
     return h
 
 def plot_ax_line(ax, x, y, metric_class):

@@ -140,7 +140,7 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
     var_type, name, label, cmap, color = ['ecs',       'ecs',                                                       'ECS [K]',                          'Reds',     'r']      if metric in ['ecs']            else [var_type, name, label, cmap, color]
     var_type, name, label, cmap, color = ['tas',       f'tas{h_reg(switch)}{m_type(switch)}',                       r'tas [$\degree$C]',                'Reds',     'r']      if metric in ['tas']            else [var_type, name, label, cmap, color]
     var_type, name, label, cmap, color = ['stability', f'stability{h_reg(switch)}{m_type(switch)}',                 r'stability [K]',                   'Reds',     'k']      if metric in ['stability']      else [var_type, name, label, cmap, color]
-
+    var_type, name, label, cmap, color = ['tas',       f'oni',                                                      r'oni [$\degree$C]',                'Reds',     'r']      if metric in ['oni']            else [var_type, name, label, cmap, color]
 
 # --------------------------------------------------------------------- Circulation ----------------------------------------------------------------------------------------------------- #
     var_type, name, label, cmap, color = ['wap',       f'wap{v_reg(switch)}{h_reg(switch)}{m_type(switch)}',        r'wap [hPa day$^{-1}$]',              'RdBu_r',   'k']      if metric in ['wap']          else [var_type, name, label, cmap, color]
@@ -173,8 +173,8 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
 
 # --------------------------------------------------------------------------- Other ----------------------------------------------------------------------------------------------------- #
     var_type, name, label, cmap, color = ['res',        'res',                                                      r'dlat x dlon [$\degree$]',            'Greys',    'k']     if metric in ['res']          else [var_type, name, label, cmap, color]
-    var_type, name, label, cmap, color = ['dlat',       'dlat',                                                     r'dlat [$\degree$]',                   'Greys',    'k']     if metric in ['dlat']          else [var_type, name, label, cmap, color]
-    var_type, name, label, cmap, color = ['dlon',       'dlon',                                                     r'dlon [$\degree$]',                   'Greys',    'k']     if metric in ['dlon']          else [var_type, name, label, cmap, color]
+    var_type, name, label, cmap, color = ['dlat',       'dlat',                                                     r'dlat [$\degree$]',                   'Greys',    'k']     if metric in ['dlat']         else [var_type, name, label, cmap, color]
+    var_type, name, label, cmap, color = ['dlon',       'dlon',                                                     r'dlon [$\degree$]',                   'Greys',    'k']     if metric in ['dlon']         else [var_type, name, label, cmap, color]
 
 
 # ------------------------------------------------------------------- Exceptions / set manually ----------------------------------------------------------------------------------------------------- #

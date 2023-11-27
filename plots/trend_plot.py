@@ -147,6 +147,8 @@ def plot_multiple_datasets(switchX, switchY, switch_highlight, switch, metric_cl
         y, metric_title, axtitle = get_list(switchY, dataset, metric_classY)
         fig_title = f'{metric_classX.name} and {metric_classY.name} ({metric_title})'
         x = x.assign_coords(time=y.time)
+        x, y = x.dropna(dim='time', how='any'), y.dropna(dim='time', how='any')
+        x, y = xr.align(x, y)
         h_points, h_pcm, h_line, cbar = plot_axTrend(switch, fig, ax, x, y, metric_classY)
         res= stats.pearsonr(x,y)
         placement = (0.675, 0.05) if res[0]>0 else (0.675, 0.85) 
@@ -247,7 +249,7 @@ if __name__ == '__main__':
         'pr':         False, 'pr99':      False, 'pr_rx1day':    False, 'pr_rx5day': False,                   # precipitation
         'wap':        False,                                                                                  # circulation
         'hur':        False,                                                                                  # humidity
-        'tas':        False, 'stability': False,                                                              # temperature
+        'tas':        False, 'stability': False, 'oni':          False,                                       # temperature
         'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
         'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':       False,                                                              # cloudfraction
@@ -260,17 +262,17 @@ if __name__ == '__main__':
         'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
         'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
         'sMean':      False,                                                                                  # metric type
-        'anomalies':  True,                                                                                   # calc type
+        'anomalies':  True,                                                                                  # calc type
         }
 
 # ---------------------------------------------------------------------------------- y-metric ----------------------------------------------------------------------------------------------------- #
     switch_metricY = {                                                                                        # pick y-metrics (Can pick multiple)
-        'rome':       False, 'ni':        False, 'areafraction': False, 'F_pr10':     False,                  # organization
-        'pr':         False, 'pr_99':     False, 'pr_97':         False, 'pr_95':     False, 'pr_90': False,                                                             # precipitation percentiles
+        'rome':       False, 'ni':        False, 'areafraction': False, 'F_pr10':    False,                   # organization
+        'pr':         False, 'pr_99':     False, 'pr_97':        False, 'pr_95':     False, 'pr_90': False,   # precipitation percentiles
         'pr_rx1day':  False, 'pr_rx5day': False,                                                              # precipitation extremes
         'wap':        False,                                                                                  # circulation
-        'hur':        True,                                                                                  # humidity
-        'tas':        False, 'stability': False,                                                              # temperature
+        'hur':        False,                                                                                  # humidity
+        'tas':        False, 'stability': False, 'oni': True,                                                # temperature
         'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
         'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':       False,                                                              # cloudfraction
@@ -282,13 +284,13 @@ if __name__ == '__main__':
         '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
         'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
         'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
-        'sMean':      True, 'area':      False,                                                              # metric type
-        'anomalies':  True,                                                                                   # calc type
+        'sMean':      False, 'area':      False,                                                              # metric type
+        'anomalies':  True,                                                                                  # calc type
         }
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch_highlight = {                                                                                      # models to highlight
-        'by_dTas':           False, 'by_org_hur_corr':     False, 'by_excluded':      True,
+        'dTas':              False, 'subset_switch':       False, 'custom':          True,
         }
     
     switch = {                                                                                                # overall settings
@@ -299,13 +301,6 @@ if __name__ == '__main__':
     
 # ----------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #
     run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch_highlight, switch)
-
-
-
-
-
-
-
 
 
 
