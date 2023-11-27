@@ -3,6 +3,8 @@ import numpy as np
 from scipy.signal import detrend
 from eofs.xarray import Eof
 import pandas as pd
+import datetime
+import cftime
 import os
 import sys
 home = os.path.expanduser("~")
@@ -42,7 +44,6 @@ def load_obs_data(switch, source, dataset, experiment):
 # ------------------------
 #    Calculate metrics
 # ------------------------
-import datetime
 def convert_to_datetime(cftime_dates):
     return [datetime.datetime(date.year, date.month, date.day) for date in cftime_dates]
 
@@ -58,7 +59,7 @@ def calc_oni(da):
 
     plot = True
     if plot:
-        time_values = convert_to_datetime(oni.time.values)
+        time_values = convert_to_datetime(oni.time.values) if isinstance(oni.time.values[0], cftime.datetime) else oni.time.values
         plt.figure()
         plt.plot(time_values, oni.data)
         plt.axhline(0.5, linestyle = '--')
@@ -161,13 +162,13 @@ def run_nino_metric(switch_var, switch):
 if __name__ == '__main__':
 
     switch_var = {                                                                                   # choose variable (can choose multiple)
-        'oni':    True, 'eof':    False,
+        'oni': True, 'eof': False,
         }
 
     switch = {                                                                                       # choose data to use and mask
         'constructed_fields': False, 'sample_data':       True, 'gadi_data': False,                  # data to use
         'compare':            False,                                                                  # compare calculation to saved variable
-        'save_to_desktop':    False, 'save':     False                                               # save
+        'save_to_desktop':    False, 'save':              False                                      # save
         }
 
     run_nino_metric(switch_var, switch)
