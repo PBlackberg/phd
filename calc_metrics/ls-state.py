@@ -30,14 +30,14 @@ def load_data(switch, source, dataset, experiment, var):
             da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
 
     if switch['gadi_data']:
-        if var == 'hur_calc':                                                         # Relative humidity (calculated from tempearture and specific humidity)
-                q = gD.get_var_data(source, dataset, experiment, 'hus', switch)       # unitless (kg/kg)
-                T = gD.get_var_data(source, dataset, experiment, 'ta', switch)        # degrees Kelvin
-                p = T['plev']                                                         # Pa 
-                r = q / (1 - q)                                                       # q = r / (1+r)
-                e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))                      # saturation water vapor pressure (also: e_s = 2.53*10^11 * np.exp(-B/T) (both from lecture notes), the Goff-Gratch Equation:  10^(10.79574 - (1731.464 / (T + 233.426)))
-                r_s = 0.622 * e_s/(p-e_s)                                             # from book
-                da = (r/r_s)*((1+(r_s/0.622)) / (1+(r/0.622)))*100                    # relative humidity (from book)
+        if var == 'hur_calc':                                                           # Relative humidity (calculated from tempearture and specific humidity)
+                q = gD.get_var_data(source, dataset, experiment, 'hus', switch)         # unitless (kg/kg)
+                T = gD.get_var_data(source, dataset, experiment, 'ta', switch)          # degrees Kelvin
+                p = T['plev']                                                           # Pa 
+                r = q / (1 - q)                                                         # q = r / (1+r)
+                e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))                        # saturation water vapor pressure (also: e_s = 2.53*10^11 * np.exp(-B/T) (both from lecture notes), the Goff-Gratch Equation:  10^(10.79574 - (1731.464 / (T + 233.426)))
+                r_s = 0.622 * e_s/(p-e_s)                                               # from book
+                da = (r/r_s)*((1+(r_s/0.622)) / (1+(r/0.622)))*100                      # relative humidity (from book)
 
         elif var == 'stability':                                                        # Calculated as differnece in potential temperature between two height sections
             da = gD.get_var_data(source, dataset, experiment, 'ta', switch)             # Temperature at pressure levels (K)
@@ -68,9 +68,20 @@ def load_data(switch, source, dataset, experiment, var):
             da = c_p*ta + zg + L_v*hus
 
         elif var == 'pe':
-            pr =  gD.get_var_data(source, dataset, experiment, 'pr', switch) 
-            pr =  gD.get_var_data(source, dataset, experiment, 'clwvi', switch) 
+            pr =                 gD.get_var_data(source, dataset, experiment, 'pr', switch)     # mm/m^2/day
+            pr =                 pr.where(pr >= np.percentile(pr, 2), np.nan)
+            
+            ice_mass =           gD.get_var_data(source, dataset, experiment, 'clivi', switch)  # kg/m^2 (column integrated)
+            ice_mass_fraction =  gD.get_var_data(source, dataset, experiment, 'cli', switch)    # kg/kg (vertical levels)
+            w =                  ~np.isnan(ice_mass_fraction) * ice_mass_fraction['plev']       # Where there are no values, exclude the associated pressure levels from the weights
+            ice_mass_fraction =  (ice_mass_fraction * w).sum(dim='plev') / w.sum(dim='plev')    # weighted mean mass fraction
+            
+            dims =               mC.dims_class()
+            dry_atm_mass =       (w.mean(dim='time') * dims.aream) / dims.g
 
+            clwvi = (ice_mass / ice_mass_fraction) - dry_atm_mass                               # liquid and ice water mass
+            clwvi = clwvi.where(clwvi <= np.percentile(clwvi, 98), np.nan)
+            da = pr / clwvi
         else:
             da = gD.get_var_data(source, dataset, experiment, var, switch)
     return da
@@ -106,7 +117,7 @@ def pick_hor_reg(switch, source, dataset, experiment, da):
         da = da.where(wap500>0) if switch['descent'] else da.where(wap500<0)
 
     if switch['ocean']:
-        region = f'_o{region}' # gD.get_var_data() deals with picking out the ocean
+        region = f'_o{region}'                            # gD.get_var_data() in load_data() deals with picking out the ocean
     return da, region
 
 
@@ -221,7 +232,7 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data': True, 'gadi_data': False,                        # data to use
+        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                        # data to use
         '250hpa':             False, '500hpa':      False, '700hpa':   False, 'vMean': False,        # mask: vertical (only affects wap, hur)
         'ascent':             False, 'descent':     False, 'ocean':    False,                        # mask: horizontal (can apply both ocean and ascent/descent together)
         'save_to_desktop':    False, 'save':        True,                                            # save
@@ -229,9 +240,6 @@ if __name__ == '__main__':
     run_large_scale_state_metrics(switch_var, switchM, switch)
 
 
-
-
-# add in precipitation efficiency
 
 
 

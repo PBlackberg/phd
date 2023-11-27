@@ -135,7 +135,6 @@ def get_metric(switch, source, dataset, experiment, da, metric):
 def run_metric(switch_var, switch, source, dataset, experiment, da):
     for metric in [k for k, v in switch_var.items() if v]:
         get_metric(switch, source, dataset, experiment, da, metric)
-
 def run_experiment(switch_var, switch, source, dataset):
     for experiment in mV.experiments:
         if not mV.data_available(source, dataset, experiment, var = '', switch = switch):   # skips invalid experiment combinations (like obs, or cmip5 model with ssp585)
