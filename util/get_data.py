@@ -223,7 +223,7 @@ def get_era5_monthly(var):
 #    Loading variable
 # ------------------------
 # -------------------------------------------------------------------------- pick out variable data array ----------------------------------------------------------------------------------------------------- #
-def get_var_data(source, dataset, experiment, var_name, switch):
+def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False}):
     da = None
 
     # Precipitation

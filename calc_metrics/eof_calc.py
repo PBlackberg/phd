@@ -29,7 +29,7 @@ def load_model_data(switch, source, dataset, experiment):
     if switch['sample_data']:
         da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/tas/{source}/{dataset}_tas_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['tas']
     if switch['gadi_data']:
-        da = gD.get_var_data(source, dataset, experiment, 'tas', switch)
+        da = gD.get_var_data(source, dataset, experiment, 'tas')
     return da
 
 def load_obs_data(switch, source, dataset, experiment):
@@ -57,14 +57,15 @@ def calc_oni(da):
     sst_anom_nino34_mean = sst_anom_nino34.mean(dim=('lon', 'lat'))
     oni = sst_anom_nino34_mean.rolling(time=3, center=True).mean()
 
-    plot = True
+    plot = False
     if plot:
         time_values = convert_to_datetime(oni.time.values) if isinstance(oni.time.values[0], cftime.datetime) else oni.time.values
-        plt.figure()
+        fig = plt.figure()
         plt.plot(time_values, oni.data)
         plt.axhline(0.5, linestyle = '--')
         plt.axhline(-0.5, linestyle = '--')
         plt.show()
+        fig.savefig(f'{os.getcwd()}/supercomp/plot_test/test.png')
     return oni
 
 def calc_eof(da):
@@ -166,30 +167,12 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data':       True, 'gadi_data': False,                  # data to use
+        'constructed_fields': False, 'sample_data':       False, 'gadi_data': True,                  # data to use
         'compare':            False,                                                                  # compare calculation to saved variable
-        'save_to_desktop':    False, 'save':              False                                      # save
+        'save_to_desktop':    False, 'save':              True                                      # save
         }
 
     run_nino_metric(switch_var, switch)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
