@@ -21,6 +21,7 @@ import myClasses as mC
 def get_list(switchM, dataset, metric_class):
     source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
     timescale = 'daily' if metric_class.var_type in ['pr', 'org', 'hus', 'ws'] else 'monthly'
+    timescale = 'daily' if dataset == 'NOAA' else timescale
     experiment  = '' if source == 'obs' else mV.experiments[0]
     # dataset = 'GPCP_1998-2009' if source == 'obs' and metric_class.var_type in ['pr', 'org'] else dataset
     dataset = 'GPCP_2010-2022' if source == 'obs' and metric_class.var_type in ['pr', 'org'] else dataset # pick a time range
@@ -272,11 +273,11 @@ if __name__ == '__main__':
         'pr_rx1day':  False, 'pr_rx5day': False,                                                              # precipitation extremes
         'wap':        False,                                                                                  # circulation
         'hur':        False,                                                                                  # humidity
-        'tas':        False, 'stability': False, 'oni': True,                                                # temperature
+        'tas':        False, 'stability': False, 'oni': False,                                                # temperature
         'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
         'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
         'lcf':        False, 'hcf':       False,                                                              # cloudfraction
-        'ws_lc':      False, 'ws_hc':     False,                                                              # weather states
+        'ws_lc':      True, 'ws_hc':      False,                                                              # weather states
         'hus':        False,                                                                                  # moist static energy
         }
     
@@ -284,7 +285,7 @@ if __name__ == '__main__':
         '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
         'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
         'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
-        'sMean':      False, 'area':      False,                                                              # metric type
+        'sMean':      True, 'area':      False,                                                              # metric type
         'anomalies':  True,                                                                                  # calc type
         }
 

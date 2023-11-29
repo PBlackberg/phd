@@ -1,6 +1,9 @@
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import cftime
+import datetime
 import os
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
@@ -118,11 +121,11 @@ def save_figure(figure, folder = '', filename = '', path = ''):
     os.remove(path) if os.path.exists(path) else None
     figure.savefig(path)
 
-def save_plot(switch, fig, home, filename):
+def save_plot(switch, fig, home, filename = 'test'):
     for save_type in [k for k, v in switch.items() if v]:
-        save_figure(fig, f'{home}/Desktop',            'test.pdf')                if save_type == 'save_test_desktop'   else None
-        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')          if save_type == 'save_folder_desktop' else None
-        save_figure(fig, f'{os.getcwd()}/supercomp/plot_test', f'{filename}.png') if save_type == 'save_folder_cwd'     else None
+        save_figure(fig, f'{home}/Desktop',            'test.pdf')              if save_type == 'save_test_desktop'   else None
+        save_figure(fig, f'{home}/Desktop/plots',     f'{filename}.pdf')        if save_type == 'save_folder_desktop' else None
+        save_figure(fig, f'{os.getcwd()}/test/plot_test', f'{filename}.png')    if save_type == 'save_folder_cwd'     else None
 
 
 # --------------------------------------------------------------------------------------- Loading --------------------------------------------------------------------------------------------------- #
@@ -131,6 +134,27 @@ def load_metric(metric_class, folder_save, source, dataset, timescale = 'daily',
     # print(path)
     ds = xr.open_dataset(path)     
     return ds
+
+def convert_to_datetime(dates, data):
+    ''' Some models have cftime datetime format which isn't very nice for plotting.
+        Further, models have different calendars. When converting to datetime objects only standard calendar dates are valid.
+        In some models the extra day in leap-years is missing. In some models all months have 30 days.
+        Calling this function removes the extra days with invalid datetime days.
+    '''
+    if isinstance(dates[0], cftime.datetime):
+        dates_new, data_new = [], []
+        for i, date in enumerate(dates):
+            year, month, day = date.year, date.month, date.day
+            if month == 2 and day > 29:
+                continue
+            if not (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)) and day > 28: # not leapyear
+                continue
+            dates_new.append(datetime.datetime(year, month, day))
+            data_new.append(data[i])
+        data = xr.DataArray(data_new, coords={'time': dates_new}, dims=['time'])
+    else:
+        dates_new = pd.to_datetime(dates)
+    return dates_new, data
 
 
 # --------------------------------------------------------------------------------------- Decorators --------------------------------------------------------------------------------------------------- #

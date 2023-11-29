@@ -3,7 +3,6 @@ import numpy as np
 from scipy.signal import detrend
 from eofs.xarray import Eof
 import pandas as pd
-import datetime
 import cftime
 import os
 import sys
@@ -44,9 +43,6 @@ def load_obs_data(switch, source, dataset, experiment):
 # ------------------------
 #    Calculate metrics
 # ------------------------
-def convert_to_datetime(cftime_dates):
-    return [datetime.datetime(date.year, date.month, date.day) for date in cftime_dates]
-
 def calc_oni(da):
     ''' Monthly anomalies in surface temperature for the nino3.4 region '''
     da.load()                                                                                                       # loads all data into memory which makes calculation quicker
@@ -59,7 +55,7 @@ def calc_oni(da):
 
     plot = False
     if plot:
-        time_values = convert_to_datetime(oni.time.values) if isinstance(oni.time.values[0], cftime.datetime) else oni.time.values
+        time_values = mF.convert_to_datetime(oni.time.values) if isinstance(oni.time.values[0], cftime.datetime) else oni.time.values
         fig = plt.figure()
         plt.plot(time_values, oni.data)
         plt.axhline(0.5, linestyle = '--')
@@ -167,7 +163,7 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data':       False, 'gadi_data': True,                  # data to use
+        'constructed_fields': False, 'sample_data':       True, 'gadi_data': False,                  # data to use
         'compare':            False,                                                                  # compare calculation to saved variable
         'save_to_desktop':    False, 'save':              True                                      # save
         }
