@@ -82,10 +82,10 @@ observations = [
     # 'GPCP',               # for precipitation and organization index (from project al33 on gadi)
     # 'GPCP_1998-2009',     # GPCP section 1: high offset in high percentile precipitation
     # 'GPCP_2010-2022',     # GPCP section 2: low offset in high percentile precipitation
-    # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
+    'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
     # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
-    'NOAA'                  # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
+    # 'NOAA'                  # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
     ]
 
 
@@ -100,7 +100,7 @@ timescales = [
     ]
 
 experiments = [
-    'historical',       # current climate conditions simulation        
+    # 'historical',       # current climate conditions simulation        
     # 'rcp85',          # warm scenario for cmip5
     # 'ssp585',         # warm scenario for cmip6
     ''                  # observations
@@ -113,7 +113,7 @@ resolutions = [
 
 conv_percentiles = [    # threshold for precipitation rate considered to be assocaited with convection
     # '90',
-    # '95',             # default
+    '95',             # default
     # '97'
     ]
 

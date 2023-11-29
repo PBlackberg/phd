@@ -1,7 +1,13 @@
+''' This script plots a bar plot of each model's resolution '''
+
+
+
+# ------------------------
+#       Packages
+# ------------------------
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
-
 import os
 import sys
 home = os.path.expanduser("~")
@@ -9,8 +15,13 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV
 import myFuncs as mF
 
+
+
+# ------------------------
+#       Get list
+# ------------------------
 switch = {'show': False, 'save_to_desktop': True}
-# -------------------------------------------------------------------------------------- Get resolution ----------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------- Get resolution ----------------------------------------------------------------------------------------------------- #
 dlats, dlons, res, model_list = [], [], [], []
 for model in mV.datasets:
     # print(model)
@@ -28,7 +39,11 @@ dlons = xr.DataArray(data = dlons, dims = ['model'], coords={'model': model_list
 res = xr.DataArray(data = res, dims = ['model'], coords={'model': model_list})
 
 
-# -------------------------------------------------------------------------------------- plot bar ----------------------------------------------------------------------------------------------------- #
+
+# ------------------------
+#         Plot
+# ------------------------
+# ------------------------------------------------------------------------------------------- bar plot ----------------------------------------------------------------------------------------------------- #
 plot_lon = False
 if plot_lon:
     fig = plt.figure(figsize = (10, 5))
