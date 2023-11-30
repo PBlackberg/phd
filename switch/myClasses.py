@@ -29,8 +29,10 @@ class variable_class():
 
 # ------------------------------------------------------------------ Gives dimension specs ----------------------------------------------------------------------------------------------------- #
 class dims_class():
-    R = 6371
-    g = 9.81
+    R = 6371        # radius of earth
+    g = 9.81        # gravitaional constant
+    c_p = 1.005     # specific heat capacity
+    L_v = 2.256e6   # latent heat of vaporization
     def __init__(self, da):
         self.lat, self.lon       = da['lat'].data, da['lon'].data
         self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
