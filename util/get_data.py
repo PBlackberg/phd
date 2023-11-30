@@ -16,16 +16,16 @@ import myFuncs as mF
 def concat_files(path_folder, experiment):
     ''' Concatenates files of monthly or daily data between specified years '''
     files = [f for f in os.listdir(path_folder) if f.endswith('.nc')]
-    year1, year2 = (1970, 1999)                      if experiment == 'historical' else (2070, 2099)            # range of years to concatenate files for
-    fileYear1_charStart, fileYear1_charEnd = (13, 9) if 'Amon' in path_folder      else (17, 13)                # character index range for starting year of file (counting from the end)
-    fileYear2_charStart, fileYear2_charEnd = (6, 2)  if 'Amon' in path_folder      else (8, 4)                  #                             end
+    year1, year2 = (1970, 1999)                      if experiment == 'historical' else (2070, 2099)                # range of years to concatenate files for
+    fileYear1_charStart, fileYear1_charEnd = (13, 9) if 'Amon' in path_folder      else (17, 13)                    # character index range for starting year of file (counting from the end)
+    fileYear2_charStart, fileYear2_charEnd = (6, 2)  if 'Amon' in path_folder      else (8, 4)                      #                             end
     files = sorted(files, key=lambda x: x[x.index(".nc")-fileYear1_charStart:x.index(".nc")-fileYear1_charEnd])
     files = [f for f in files if int(f[f.index(".nc")-fileYear1_charStart : f.index(".nc")-fileYear1_charEnd]) <= int(year2) and int(f[f.index(".nc")-fileYear2_charStart : f.index(".nc")-fileYear2_charEnd]) >= int(year1)]
     paths = []
     for file in files:
         paths = np.append(paths, os.path.join(path_folder, file))
-    # print(paths[0])                                                                                              # for debugging
-    ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35)) # take out a little bit wider range to not exclude data when interpolating grid
+    # print(paths[0])                                                                                                 # for debugging
+    ds = xr.open_mfdataset(paths, combine='by_coords').sel(time=slice(str(year1), str(year2)),lat=slice(-35,35))    # take out a little bit wider range to not exclude data when interpolating grid
     return ds
 
 
@@ -33,11 +33,11 @@ def concat_files(path_folder, experiment):
 def regrid_hor(ds, da): 
     ''' Regrid to common horizontal grid '''
     import regrid_xesmf as regrid
-    regridder = regrid.regrid_conserv_xesmf(ds)  # define regridder based of grid from other model (FGOALS-g2 from cmip5 currently)
+    regridder = regrid.regrid_conserv_xesmf(ds) # define regridder based of grid from other model (FGOALS-g2 from cmip5 currently)
     da = regridder(da)
     return da
 
-def interp_p_to_p_new_xr(da, p_new):     # does the same thing as scipy.interp1d, but quicker (can only be applied for models with 1D pressure coordinate)
+def interp_p_to_p_new_xr(da, p_new):            # does the same thing as scipy.interp1d, but quicker (can only be applied for models with 1D pressure coordinate)
     ''' Interpolate to common pressure levels (cloud fraction is dealt with separately)'''
     import warnings
     warnings.filterwarnings("ignore", category=FutureWarning, module="xarray")
@@ -128,12 +128,12 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
         ds =            concat_files(path_folder, experiment)      
         da =            ds[var_name]      
         if 'plev' in       da.dims:
-            da['plev'] =   da['plev'].round(0)                if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else da['plev']             # plev coordinate is specified to a higher number of significant figures in these models
+            da['plev'] =   da['plev'].round(0)                if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else da['plev']           # plev coordinate is specified to a higher number of significant figures in these models
             p_new =        np.array([100000, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000, 500, 100])   
-            da =           interp_p_to_p_new_xr(da, p_new)                                                                            # vertically interpolate (some models have different number of vertical levels)
-        da =               regrid_hor(ds, da)                 if mV.resolutions[0] == 'regridded'                           else da   # horizontally interpolate
+            da =           interp_p_to_p_new_xr(da, p_new)                                                                          # vertically interpolate (some models have different number of vertical levels)
+        da =               regrid_hor(ds, da)                 if mV.resolutions[0] == 'regridded'                           else da # horizontally interpolate
 
-    if var_name in ['ds_cl', 'cl_p_hybrid', 'p_hybrid']:                                                                               # vertical interpolation of cloud fraction dealt with in separate script                                                                                  
+    if var_name in ['ds_cl', 'cl_p_hybrid', 'p_hybrid']:                                                                            # vertical interpolation of cloud fraction dealt with in separate script                                                                                  
         path_folder =  var_folder('cl', model, experiment, ensemble, project, timeInterval)
         ds =           concat_files(path_folder, experiment) 
         if var_name == 'ds_cl':
@@ -143,11 +143,11 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
         if var_name == 'p_hybrid':
             da =       get_p_hybrid(model, ds)
             if model in ['IITM-ESM', 'IPSL-CM6A-LR']:
-                return xr.Dataset(data_vars = {f'{var_name}': da}, attrs = ds.attrs)                                                  # no lat, lon for vertical coordiante for these models
-        da =           regrid_hor(ds, da)                     if mV.resolutions[0] == 'regridded'                           else da   # horizontally interpolate
+                return xr.Dataset(data_vars = {f'{var_name}': da}, attrs = ds.attrs)                                                # no lat, lon for vertical coordiante for these models
+        da =           regrid_hor(ds, da)                     if mV.resolutions[0] == 'regridded'                           else da # horizontally interpolate
  
-    da =               pick_ocean_region(da)                  if switch['ocean']                                            else da   # pick ocean region (specifically for stability calculation)
-    ds =               xr.Dataset(data_vars = {f'{var_name}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)                           # if regridded it should already be lat: [-30,30]
+    da =               pick_ocean_region(da)                  if switch['ocean']                                            else da # pick ocean region (specifically for stability calculation)
+    ds =               xr.Dataset(data_vars = {f'{var_name}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)                         # if regridded it should already be lat: [-30,30]
     return ds
 
 
@@ -159,7 +159,7 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
 def get_gpcp():
     ''' Observations from the Global Precipitation Climatology Project (GPCP) '''
     path_gen = '/g/data/ia39/aus-ref-clim-data-nci/gpcp/data/day/v1-3'
-    years = range(1997,2022)                                                    # there is a constant shift in high percentile precipitation rate trend from around (2009-01-2009-06) forward
+    years = range(1997,2022)                                                # there is a constant shift in high percentile precipitation rate trend from around (2009-01-2009-06) forward
     folders = [f for f in os.listdir(path_gen) if (f.isdigit() and int(f) in years)]
     folders = sorted(folders, key=int)
 
@@ -175,12 +175,12 @@ def get_gpcp():
     ds = ds.rename({'latitude': 'lat', 'longitude': 'lon'})
     ds = ds.sel(lat=slice(-35,35))
     da = ds['precip']
-    valid_range = [0, 10000]                                                    # There are some e+33 values in the dataset
+    valid_range = [0, 10000]                                                # There are some e+33 values in the dataset
     da = da.where((da >= valid_range[0]) & (da <= valid_range[1]), np.nan)
-    da = da.dropna('time', how='all')                                           # drop days where all values are NaN (one day)
+    da = da.dropna('time', how='all')                                       # drop days where all values are NaN (one day)
 
-    da, _ = regrid_hor(ds, da) if mV.resolutions[0] == 'regridded' else da # horizontally interpolate
-    da =    pick_ocean_region(da)   if switch['ocean']             else da # pick ocean region if needed
+    da, _ = regrid_hor(ds, da) if mV.resolutions[0] == 'regridded' else da  # horizontally interpolate
+    da =    pick_ocean_region(da)   if switch['ocean']             else da  # pick ocean region if needed
     ds = xr.Dataset(data_vars = {'pr': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
     return ds
 
@@ -291,13 +291,13 @@ def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False
 
     # Clouds
     if var_name in ['cl', 'cl_p_hybrid', 'p_hybrid', 'ds_cl']:   
-        if var_name == 'cl':                # cloud fraction on interpolated pressure levels
+        if var_name == 'cl':            # cloud fraction on interpolated pressure levels
             da = get_cmip_data('cl', source, dataset, experiment, switch)['cl']                   if source in ['cmip5', 'cmip6'] else da
-        if var_name == 'cl_p_hybrid':       # cloud fraction on original vertical grid
+        if var_name == 'cl_p_hybrid':   # cloud fraction on original vertical grid
             da = get_cmip_data('cl_p_hybrid', source, dataset, experiment, switch)['cl_p_hybrid'] if source in ['cmip5', 'cmip6'] else da
-        if var_name == 'p_hybrid':          # vertical levels for original grid  
+        if var_name == 'p_hybrid':      # vertical levels for original grid  
             da = get_cmip_data('p_hybrid', source, dataset, experiment, switch)['p_hybrid']       if source in ['cmip5', 'cmip6'] else da
-        if var_name == 'ds_cl':             # original dataset with data and levels     
+        if var_name == 'ds_cl':         # original dataset with data and levels     
             da = get_cmip_data('ds_cl', source, dataset, experiment, switch)                      if source in ['cmip5', 'cmip6'] else da
 
     # Height coords
@@ -360,21 +360,21 @@ def run_get_data(switch_var, switch):
 if __name__ == '__main__':
 
     switch_var = {
-        'pr':    False,                                                                                  # Precipitation
-        'tas':   False, 'ta':             False,                                                         # Temperature
-        'wap':   False,                                                                                  # Circulation
-        'hur':   False, 'hus' :           False,                                                         # Humidity                   
-        'rlds':  False, 'rlus':           False, 'rlut':     False, 'netlw': False,                      # Longwave radiation
-        'rsdt':  False, 'rsds':           False, 'rsus':     False, 'rsut':  False, 'netsw': False,      # Shortwave radiation
-        'cl':    False, 'cl_p_hybrid':    False, 'p_hybrid': False, 'ds_cl': False,                      # Cloudfraction (ds_cl is for getting pressure levels)
-        'zg':    False,                                                                                  # Height coordinates
-        'hfss':  False, 'hfls':           False,                                                         # Surface fluxes
-        'clwvi': False, 'clivi':          False,  'cli':      True, 
+        'pr':       False,                                                                                      # Precipitation
+        'tas':      False, 'ta':            False,                                                               # Temperature
+        'wap':      False,                                                                                      # Circulation
+        'hur':      True, 'hus' :          False,                                                              # Humidity                   
+        'rlds':     False, 'rlus':          False,  'rlut':     False,  'netlw':    False,                      # Longwave radiation
+        'rsdt':     False, 'rsds':          False,  'rsus':     False,  'rsut':     False,  'netsw':    False,  # Shortwave radiation
+        'cl':       False, 'cl_p_hybrid':   False,  'p_hybrid': False,  'ds_cl':    False,                      # Cloudfraction (ds_cl is for getting pressure levels)
+        'zg':       False,                                                                                      # Height coordinates
+        'hfss':     False, 'hfls':          False,                                                              # Surface fluxes
+        'clwvi':    False, 'clivi':         False,  'cli':      False,                                          # precipitation efficiency variables
         }
 
     switch = {
-        'ocean':         False,                                                                         # mask
-        'save_sample':   False                                                                          # save
+        'ocean':         False, # mask
+        'save_sample':   False  # save
         }
 
     run_get_data(switch_var, switch)

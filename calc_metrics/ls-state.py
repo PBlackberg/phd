@@ -59,13 +59,29 @@ def load_data(switch, source, dataset, experiment, var):
             rsus = gD.get_var_data(source, dataset, experiment, 'rsus', switch) 
             rsut = gD.get_var_data(source, dataset, experiment, 'rsut', switch) 
             da = rsdt - rsds + rsus - rsut
+                        
+        elif var == 'h':
+            c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
+            ta =    gD.get_var_data(source, dataset, experiment, 'ta', switch) 
+            zg =    gD.get_var_data(source, dataset, experiment, 'zg', switch) 
+            hus =   gD.get_var_data(source, dataset, experiment, 'hus', switch) 
+            da =    c_p*ta + zg + L_v*hus
 
-        elif var == 'mse':   
-            c_p, L_v = 1.005, 2.256e6
-            ta = gD.get_var_data(source, dataset, experiment, 'ta', switch) 
-            zg = gD.get_var_data(source, dataset, experiment, 'zg', switch) 
-            hus = gD.get_var_data(source, dataset, experiment,'hus', switch) 
-            da = c_p*ta + zg + L_v*hus
+        elif var == 'h_anom2':   
+            c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
+            ta =        gD.get_var_data(source, dataset, experiment, 'ta', switch) 
+            zg =        gD.get_var_data(source, dataset, experiment, 'zg', switch) 
+            hus =       gD.get_var_data(source, dataset, experiment, 'hus', switch) 
+            da =        c_p*ta + zg + L_v*hus
+            da, _ =     pick_vert_reg({'vMean':True, '250hpa':False, '700hpa':False, '500hpa':False}, dataset, da)
+            da_sMean =  calc_sMean(da)
+            da_anom =   da - da_sMean
+            da = da_anom**2
+            # print(da)
+            # plot_object = da.isel(time=0).plot()
+            # fig = plot_object.figure
+            # fig.savefig(f'{os.getcwd()}/test/plot_test/test.png')
+            # print(da.isel(time=0))
 
         elif var == 'pe':
             pr =                 gD.get_var_data(source, dataset, experiment, 'pr', switch)     # mm/m^2/day
@@ -216,26 +232,28 @@ def run_large_scale_state_metrics(switch_var, switchM, switch):
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    switch_var = {                                                                                   # choose variable (can choose multiple)
-        'pr':    False, 'pe':        True,
-        'wap':   False,                                                                              # circulation
-        'hur':   False, 'hur_calc':  False, 'hus':       False,                                      # humidity
-        'tas':   False, 'stability': False,                                                          # temperature
-        'netlw': False, 'rlds':      False, 'rlus': False, 'rlut': False,                            # longwave radiation
-        'netsw': False, 'rsdt':      False, 'rsds': False, 'rsus': False, 'rsut': False,             # shortwave radiation
-        'lcf':   False, 'hcf':       False,                                                          # cloud fraction
-        'mse':   False, 'zg':        False, 'hfss': False, 'hfls': False,                            # moist static energy
+    switch_var = {                                                                                  # choose variable (can choose multiple)
+        'pr':       False,  'pe':           False,
+        'wap':      False,                                                                          # circulation
+        'hur':      False,  'hur_calc':     False,  'hus':  False,                                  # humidity
+        'tas':      False,  'stability':    False,                                                  # temperature
+        'netlw':    False,  'rlds':         False,  'rlus': False,  'rlut': False,                  # longwave radiation
+        'netsw':    False,  'rsdt':         False,  'rsds': False,  'rsus': False,  'rsut': False,  # shortwave radiation
+        'lcf':      False,  'hcf':          False,                                                  # cloud fraction
+        'zg':       False,                                                                          # geopotential height
+        'hfss':     False,  'hfls':         False,                                                  # surface fluxes
+        'h':        False,  'h_anom2':      True,                                                  # Moist Static Energy
         }
     
     switchM = {                                                                                      # choose metric type (can choose multiple)
-        'snapshot': True, 'tMean': True, 'sMean': True, 'area': False,                               # type 
+        'snapshot': True,   'tMean':    True,   'sMean':    True,   'area': False,                   # type 
         }
 
-    switch = {                                                                                       # choose data to use and mask
-        'constructed_fields': False, 'sample_data': False, 'gadi_data': True,                        # data to use
-        '250hpa':             False, '500hpa':      False, '700hpa':   False, 'vMean': False,        # mask: vertical (only affects wap, hur)
-        'ascent':             False, 'descent':     False, 'ocean':    False,                        # mask: horizontal (can apply both ocean and ascent/descent together)
-        'save_to_desktop':    False, 'save':        True,                                            # save
+    switch = {                                                                                              # choose data to use and mask
+        'constructed_fields':   False,  'sample_data':  False,  'gadi_data':    True,                      # data to use
+        '250hpa':               False,  '500hpa':       False,  '700hpa':       False,  'vMean':    False,  # mask: vertical (only affects wap, hur)
+        'ascent':               False,  'descent':      False,  'ocean':        False,                      # mask: horizontal (can apply both ocean and ascent/descent together)
+        'save_to_desktop':      False,  'save':         True,                                              # save
         }
     run_large_scale_state_metrics(switch_var, switchM, switch)
 
