@@ -154,16 +154,21 @@ def get_metric_class(metric, switch = {'a':False}, prctile = '95'):
 
 
 # ----------------------------------------------------------------------- Radiation ----------------------------------------------------------------------------------------------------- #
-    var_type, name, label, cmap, color = ['rlds',      f'rlds{h_reg(switch)}{m_type(switch)}',                      r'LW dwel. surf. [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rlds']         else [var_type, name, label, cmap, color]       
-    var_type, name, label, cmap, color = ['rlus',      f'rlus{h_reg(switch)}{m_type(switch)}',                      r'LW upwel. surf. [W m$^{-2}$]',      'Purples',  'purple'] if metric in ['rlus']         else [var_type, name, label, cmap, color]       
-    var_type, name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',  'purple'] if metric in ['rlut']         else [var_type, name, label, cmap, color]    
-    var_type, name, label, cmap, color = ['netlw',     f'netlw{h_reg(switch)}{m_type(switch)}',                     r'NetlW [W m$^{-2}$]',                'Purples',  'purple'] if metric in ['netlw']        else [var_type, name, label, cmap, color]    
+    var_type, name, label, cmap, color = ['rlds',      f'rlds{h_reg(switch)}{m_type(switch)}',                      r'LW dwel. surf. [W m$^{-2}$]',       'Purples',    'purple'] if metric in ['rlds']         else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['rlus',      f'rlus{h_reg(switch)}{m_type(switch)}',                      r'LW upwel. surf. [W m$^{-2}$]',      'Purples',    'purple'] if metric in ['rlus']         else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['rlut',      f'rlut{h_reg(switch)}{m_type(switch)}',                      r'OLR [W m$^{-2}$]',                  'Purples',    'purple'] if metric in ['rlut']         else [var_type, name, label, cmap, color]    
+    var_type, name, label, cmap, color = ['netlw',     f'netlw{h_reg(switch)}{m_type(switch)}',                     r'NetlW [W m$^{-2}$]',                'Purples',    'purple'] if metric in ['netlw']        else [var_type, name, label, cmap, color]    
 
-    var_type, name, label, cmap, color = ['rsdt',      f'rsdt{h_reg(switch)}{m_type(switch)}',                      r'SW dwel TOA [W m$^{-2}$]',          'Purples',  'purple'] if metric in ['rsdt']         else [var_type, name, label, cmap, color]       
-    var_type, name, label, cmap, color = ['rsds',      f'rsds{h_reg(switch)}{m_type(switch)}',                      r'SW dwel surf. [W m$^{-2}$]',        'Purples',  'purple'] if metric in ['rsds']         else [var_type, name, label, cmap, color]       
-    var_type, name, label, cmap, color = ['rsus',      f'rsus{h_reg(switch)}{m_type(switch)}',                      r'SW upwel surf. [W m$^{-2}$]',       'Purples',  'purple'] if metric in ['rsus']         else [var_type, name, label, cmap, color] 
-    var_type, name, label, cmap, color = ['rsut',      f'rsut{h_reg(switch)}{m_type(switch)}',                      r'SW upwel TOA [W m$^{-2}$]',         'Purples',  'purple'] if metric in ['rsut']         else [var_type, name, label, cmap, color]       
-    var_type, name, label, cmap, color = ['netsw',     f'netsw{h_reg(switch)}{m_type(switch)}',                     r'NetSW [W m$^{-2}$]',                'Purples',  'purple'] if metric in ['netsw']        else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['rsdt',      f'rsdt{h_reg(switch)}{m_type(switch)}',                      r'SW dwel TOA [W m$^{-2}$]',          'Purples',    'purple'] if metric in ['rsdt']         else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['rsds',      f'rsds{h_reg(switch)}{m_type(switch)}',                      r'SW dwel surf. [W m$^{-2}$]',        'Purples',    'purple'] if metric in ['rsds']         else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['rsus',      f'rsus{h_reg(switch)}{m_type(switch)}',                      r'SW upwel surf. [W m$^{-2}$]',       'Purples',    'purple'] if metric in ['rsus']         else [var_type, name, label, cmap, color] 
+    var_type, name, label, cmap, color = ['rsut',      f'rsut{h_reg(switch)}{m_type(switch)}',                      r'SW upwel TOA [W m$^{-2}$]',         'Purples',    'purple'] if metric in ['rsut']         else [var_type, name, label, cmap, color]       
+    var_type, name, label, cmap, color = ['netsw',     f'netsw{h_reg(switch)}{m_type(switch)}',                     r'NetSW [W m$^{-2}$]',                'Purples',    'purple'] if metric in ['netsw']        else [var_type, name, label, cmap, color]       
+
+
+# -------------------------------------------------------------------- Moist Static Energy ----------------------------------------------------------------------------------------------------- #
+    var_type, name, label, cmap, color = ['h',        f'h{m_type(switch)}',                                     r'h []',                            'viridis',              'b'] if metric in ['h']          else [var_type, name, label, cmap, color]
+    var_type, name, label, cmap, color = ['h_anom2',  f'h_anom2{m_type(switch)}',                               r'h []',                            'viridis_r',              'b'] if metric in ['h_anom2']    else [var_type, name, label, cmap, color]
 
 
 # ------------------------------------------------------------------------- Clpids ----------------------------------------------------------------------------------------------------- #

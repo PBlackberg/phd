@@ -39,27 +39,27 @@ models_cmip5 = [
 
 # -------------------------------------------------------------------------  CMIP6 ----------------------------------------------------------------------------------------------------- #
 models_cmip6 = [         # Models ordered by change in temperature with warming
-    # 'INM-CM5-0',         # 1
-    # 'IITM-ESM',          # 2
-    # 'FGOALS-g3',         # 3    
-    # 'INM-CM4-8',         # 4                                
-    # 'MIROC6',            # 5                                      
-    # 'MPI-ESM1-2-LR',     # 6                         
-    # 'KIOST-ESM',         # 7    
-    # 'BCC-CSM2-MR',       # 8              
-    # 'GFDL-ESM4',         # 9         
-    # 'MIROC-ES2L',        # 10   
-    # 'NorESM2-LM',        # 11      
-    # 'NorESM2-MM',        # 12                                      
-    # 'MRI-ESM2-0',        # 13                                  
-    # 'GFDL-CM4',          # 14      
-    # 'CMCC-CM2-SR5',      # 15                
-    # 'CMCC-ESM2',         # 16                                    
-    # 'NESM3',             # 17     
-    # 'ACCESS-ESM1-5',     # 18   
-    # 'CNRM-ESM2-1',       # 19   
-    # 'EC-Earth3',         # 20
-    # 'CNRM-CM6-1',        # 21  
+    'INM-CM5-0',         # 1
+    'IITM-ESM',          # 2
+    'FGOALS-g3',         # 3    
+    'INM-CM4-8',         # 4                                
+    'MIROC6',            # 5                                      
+    'MPI-ESM1-2-LR',     # 6                         
+    'KIOST-ESM',         # 7    
+    'BCC-CSM2-MR',       # 8              
+    'GFDL-ESM4',         # 9         
+    'MIROC-ES2L',        # 10   
+    'NorESM2-LM',        # 11      
+    'NorESM2-MM',        # 12                                      
+    'MRI-ESM2-0',        # 13                                  
+    'GFDL-CM4',          # 14      
+    'CMCC-CM2-SR5',      # 15                
+    'CMCC-ESM2',         # 16                                    
+    'NESM3',             # 17     
+    'ACCESS-ESM1-5',     # 18   
+    'CNRM-ESM2-1',       # 19   
+    'EC-Earth3',         # 20
+    'CNRM-CM6-1',        # 21  
     # 'CNRM-CM6-1-HR',     # 22   
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
