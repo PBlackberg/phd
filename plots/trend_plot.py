@@ -245,59 +245,61 @@ def run_trend_plot(switch_metricX, switch_metricY, switchX, switchY, switch_high
 # ------------------------
 if __name__ == '__main__':
 # ---------------------------------------------------------------------------------- x-metric ----------------------------------------------------------------------------------------------------- #
-    switch_metricX = {                                                                                        # pick x-metric (pick one)
-        'rome':       True,  'ni':        False, 'areafraction': False, 'F_pr10':    False,                  # organization
-        'pr':         False, 'pr99':      False, 'pr_rx1day':    False, 'pr_rx5day': False,                   # precipitation
-        'wap':        False,                                                                                  # circulation
-        'hur':        False,                                                                                  # humidity
-        'tas':        False, 'stability': False, 'oni':          False,                                       # temperature
-        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
-        'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
-        'lcf':        False, 'hcf':       False,                                                              # cloudfraction
-        'ws_lc':      False, 'ws_hc':     False,                                                              # weather states
-        'hus':        False,                                                                                  # moist static energy
+    switch_metricX = {                                                                                                  # pick x-metrics (Can pick multiple)
+        'rome':         True,  'ni':           False,  'areafraction': False,  'F_pr10':   False,                      # organization
+        'pr':           False,  'pr_99':        False,  'pr_97':        False,  'pr_95':    False,  'pr_90':    False,  # precipitation percentiles
+        'pr_rx1day':    False,  'pr_rx5day':    False,                                                                  # precipitation extremes
+        'wap':          False,                                                                                          # circulation
+        'hur':          False,  'hus':          False,                                                                  # humidity
+        'tas':          False,  'stability':    False,  'oni':          False,                                          # temperature
+        'netlw':        False,  'rlut':         False,  'rlds':         False,  'rlus':     False,  'rlut':     False,  # LW
+        'netsw':        False,  'rsdt':         False,  'rsds':         False,  'rsus':     False,  'rsut':     False,  # SW
+        'lcf':          False,  'hcf':          False,                                                                  # cloudfraction
+        'ws_lc':        False,   'ws_hc':        False,                                                                  # weather states
+        'h':            False,   'h_anom2':      False,                                                                  # moist static energy
         }
     
-    switchX = {                                                                                               # choose seetings for x-metric
-        '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
-        'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
-        'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
-        'sMean':      False,                                                                                  # metric type
-        'anomalies':  True,                                                                                  # calc type
+    switchX = {                                                                         # choose seetings for y-metrics
+        '250hpa':       False,  '500hpa':   False,  '700hpa':   False,                  # mask: vertical
+        'descent':      False,  'ascent':   False,  'ocean':    False,                  # mask: horizontal
+        'fixed area':   False,  '90':       False,  '95':       False,  '97':   False,  # conv threshold (95th default)
+        'sMean':        False,   'area':     False,                                      # metric type
+        'anomalies':    True,                                                           # calc type
         }
+    
 
 # ---------------------------------------------------------------------------------- y-metric ----------------------------------------------------------------------------------------------------- #
-    switch_metricY = {                                                                                        # pick y-metrics (Can pick multiple)
-        'rome':       False, 'ni':        False, 'areafraction': False, 'F_pr10':    False,                   # organization
-        'pr':         False, 'pr_99':     False, 'pr_97':        False, 'pr_95':     False, 'pr_90': False,   # precipitation percentiles
-        'pr_rx1day':  False, 'pr_rx5day': False,                                                              # precipitation extremes
-        'wap':        False,                                                                                  # circulation
-        'hur':        False,                                                                                  # humidity
-        'tas':        False, 'stability': False, 'oni': False,                                                # temperature
-        'netlw':      False, 'rlut':      False, 'rlds':         False, 'rlus':      False, 'rlut': False,    # LW
-        'netsw':      False, 'rsdt':      False, 'rsds':         False, 'rsus':      False, 'rsut': False,    # SW
-        'lcf':        False, 'hcf':       False,                                                              # cloudfraction
-        'ws_lc':      True, 'ws_hc':      False,                                                              # weather states
-        'hus':        False,                                                                                  # moist static energy
+    switch_metricY = {                                                                                                  # pick y-metrics (Can pick multiple)
+        'rome':         False,  'ni':           False,  'areafraction': False,  'F_pr10':   False,                      # organization
+        'pr':           False,  'pr_99':        False,  'pr_97':        False,  'pr_95':    False,  'pr_90':    False,  # precipitation percentiles
+        'pr_rx1day':    False,  'pr_rx5day':    False,                                                                  # precipitation extremes
+        'wap':          False,                                                                                          # circulation
+        'hur':          False,  'hus':          False,                                                                  # humidity
+        'tas':          False,  'stability':    False,  'oni':          False,                                          # temperature
+        'netlw':        False,  'rlut':         False,  'rlds':         False,  'rlus':     False,  'rlut':     False,  # LW
+        'netsw':        False,  'rsdt':         False,  'rsds':         False,  'rsus':     False,  'rsut':     False,  # SW
+        'lcf':          False,  'hcf':          False,                                                                  # cloudfraction
+        'ws_lc':        False,   'ws_hc':       False,                                                                  # weather states
+        'h':            False,   'h_anom2':     True,                                                                  # moist static energy
         }
     
-    switchY = {                                                                                               # choose seetings for y-metrics
-        '250hpa':     False, '500hpa':    False, '700hpa':       False,                                       # mask: vertical
-        'descent':    False, 'ascent':    False, 'ocean':        False,                                       # mask: horizontal
-        'fixed area': False, '90':        False, '95':           False, '97':        False,                   # conv threshold (95th default)
-        'sMean':      True, 'area':      False,                                                              # metric type
-        'anomalies':  True,                                                                                  # calc type
+    switchY = {                                                                         # choose seetings for y-metrics
+        '250hpa':       False,  '500hpa':   False,  '700hpa':   False,                  # mask: vertical
+        'descent':      False,  'ascent':   False,  'ocean':    False,                  # mask: horizontal
+        'fixed area':   False,  '90':       False,  '95':       False,  '97':   False,  # conv threshold (95th default)
+        'sMean':        True,   'area':     False,                                      # metric type
+        'anomalies':    True,                                                           # calc type
         }
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
-    switch_highlight = {                                                                                      # models to highlight
-        'dTas':              False, 'subset_switch':       False, 'custom':          True,
+    switch_highlight = {                                                                    # models to highlight
+        'dTas':              False, 'subset_switch':       False, 'custom':          False, # higlight models
         }
     
-    switch = {                                                                                                # overall settings
-        'scatter':           False, 'bins':                True,                                              # plot type
-        'show':              False,                                                                           # show
-        'save_test_desktop': True,  'save_folder_desktop': False, 'save_folder_cwd': False,                  # save
+    switch = {                                                                              # overall settings
+        'scatter':           False, 'bins':                True,                            # plot type
+        'show':              False,                                                         # show
+        'save_test_desktop': True,  'save_folder_desktop': False, 'save_folder_cwd': False, # save
         }
     
 # ----------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #
