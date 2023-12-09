@@ -1,140 +1,124 @@
+'''
+# ------------------------
+#   Large-scale state
+# ------------------------
+In this script, key variables' spatial and temporal means are calculated.
+
+'''
+
+
+# -------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
 import numpy as np
 import xarray as xr
+
+
+# ----------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
-home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/util')
-import constructed_fields as cF
-import get_data as gD
+home = os.path.expanduser("~")                                        
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV
+import myVars as mV                                 
 import myClasses as mC
-import myFuncs as mF
+import myFuncs as mF     
 
 
 
 # ------------------------
 #       Get data
 # ------------------------
-# ---------------------------------------------------------------------------------------- load data ----------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------- pick region ----------------------------------------------------------------------------------------------------- #
+def calc_vMean(da, dataset = '', plevs0 = 850e2, plevs1 = 0):       # free troposphere (as most values at 1000 hPa  and 925 hPa over land are NaN)                              
+    plevs = slice(plevs0, plevs1) if not dataset == 'ERA5' else slice(plevs1, plevs0)
+    da = da.sel(plev=plevs)
+    w = ~np.isnan(da) * da['plev']                                  # Where there are no values, exclude the associated pressure levels from the weights
+    da = (da * w).sum(dim='plev') / w.sum(dim='plev') 
+    return da
+
+def pick_vert_reg(switch, dataset, da):
+    da, region = da, ''
+    for met_type in [k for k, v in switch.items() if v]:
+        da, region = [da.sel(plev = 700e2), '_700hpa']  if met_type == '700hpa'                         else [da, region]
+        da, region = [da.sel(plev = 500e2), '_500hpa']  if met_type == '500hpa'                         else [da, region]
+        da, region = [da.sel(plev = 250e2), '_250hpa']  if met_type == '250hpa'                         else [da, region]
+        da, region = [calc_vMean(da, dataset), '']      if met_type == 'vMean' and 'plev' in da.dims    else [da, region]
+    return da, region
+
+def pick_hor_reg(switch, dataset, experiment, da):
+    ''' Ascent/descent region based on 500 hPa vertical pressure velocity (wap)'''
+    da, region = da, ''
+    for met_type in [k for k, v in switch.items() if v]:
+        wap500 = mF.load_variable(switch, 'wap', dataset, experiment).sel(plev = 500e2) if ('descent' in switch and switch['descent']) or ('ascent' in switch and switch['ascent']) else None
+        da, region = [da.where(wap500 > 0), '_d']  if met_type == 'descent' else [da, region]
+        da, region = [da.where(wap500 < 0), '_a']  if met_type == 'ascent'  else [da, region]
+        region = f'_o{region}' if met_type == 'ocean' else region   # loading data deals with picking out ocean (as it can be done before or after interpolation)                         
+    return da, region
+
+
+# -------------------------------------------------------------------------------------- Get variable ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
-def load_data(switch, source, dataset, experiment, var):
-    if switch['constructed_fields']:
-        da = cF.var3D
-    if switch['sample_data']:
-        if var in ['lcf', 'hcf']:
-            da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/cl/{source}/{dataset}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')['cl']
-            da = da.sel(plev = slice(1000e2, 600e2)).max(dim = 'plev') if var == 'lcf' else da
-            da = da.sel(plev = slice(400e2, 0)).max(dim = 'plev')      if var == 'hcf' else da # can also do 250 up (in schiro spread paper)
-        else:
-            da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']
+def get_variable(switch, dataset, experiment, var):
+    if var in ['lcf', 'hcf']:
+        da = mF.load_variable(switch, 'cl', dataset, experiment)
+        da = da.sel(plev = slice(1000e2, 600e2)).max(dim = 'plev') if var == 'lcf' else da
+        da = da.sel(plev = slice(400e2, 0)).max(dim = 'plev')      if var == 'hcf' else da  # can also do 250 up (in schiro 'spread paper')
 
-    if switch['gadi_data']:
-        if var == 'hur_calc':                                                           # Relative humidity (calculated from tempearture and specific humidity)
-                q = gD.get_var_data(source, dataset, experiment, 'hus', switch)         # unitless (kg/kg)
-                T = gD.get_var_data(source, dataset, experiment, 'ta', switch)          # degrees Kelvin
-                p = T['plev']                                                           # Pa 
-                r = q / (1 - q)                                                         # q = r / (1+r)
-                e_s = 611.2 * np.exp(17.67*(T-273.15)/(T-29.66))                        # saturation water vapor pressure (also: e_s = 2.53*10^11 * np.exp(-B/T) (both from lecture notes), the Goff-Gratch Equation:  10^(10.79574 - (1731.464 / (T + 233.426)))
-                r_s = 0.622 * e_s/(p-e_s)                                               # from book
-                da = (r/r_s)*((1+(r_s/0.622)) / (1+(r/0.622)))*100                      # relative humidity (from book)
+    elif var == 'hur_calc':                                                                 # Relative humidity (calculated from tempearture and specific humidity)
+        q = mF.load_variable(switch, 'hus', dataset, experiment)                            # unitless (kg/kg)
+        ta = mF.load_variable(switch, 'ta', dataset, experiment)                            # degrees Kelvin
+        p = ta['plev']                                                                      # Pa 
+        r = q / (1 - q)                                                                     # q = r / (1+r)
+        e_s = 611.2 * np.exp(17.67*(ta-273.15)/(ta-29.66))                                  # saturation water vapor pressure (also: e_s = 2.53*10^11 * np.exp(-B/T) (both from lecture notes), the Goff-Gratch Equation:  10^(10.79574 - (1731.464 / (T + 233.426)))
+        r_s = 0.622 * e_s/(p-e_s)                                                           # from book
+        da = (r/r_s)*((1+(r_s/0.622)) / (1+(r/0.622)))*100                                  # relative humidity (from book)
 
-        elif var == 'stability':                                                        # Calculated as differnece in potential temperature between two height sections
-            da = gD.get_var_data(source, dataset, experiment, 'ta', switch)             # Temperature at pressure levels (K)
-            theta =  da * (1000e2 / da['plev'])**(287/1005) 
-            plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]
-            da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))]
-            w1, w2 = ~np.isnan(da1) * da1['plev'], ~np.isnan(da2) * da2['plev']         # Where there are no temperature values, exclude the associated pressure levels from the weights
-            da = ((da1 * w1).sum(dim='plev') / w1.sum(dim='plev')) - ((da2 * w2).sum(dim='plev') / w2.sum(dim='plev'))
+    elif var == 'stability':                                                                # Differnece in potential temperature between two vertical sections
+        da = mF.load_variable(switch, 'ta', dataset, experiment)                            # Temperature at pressure levels (K)
+        theta =  da * (1000e2 / da['plev'])**(287/1005) 
+        plevs1, plevs2 = [400e2, 250e2], [925e2, 700e2]
+        da1, da2 = [theta.sel(plev=slice(plevs1[0], plevs1[1])), theta.sel(plev=slice(plevs2[0], plevs2[1]))]
+        w1, w2 = ~np.isnan(da1) * da1['plev'], ~np.isnan(da2) * da2['plev']                 # Where there are no temperature values, exclude the associated pressure levels from the weights
+        da = ((da1 * w1).sum(dim='plev') / w1.sum(dim='plev')) - ((da2 * w2).sum(dim='plev') / w2.sum(dim='plev'))
 
-        elif var == 'netlw':    
-            rlds = gD.get_var_data(source, dataset, experiment, 'rlds', switch) 
-            rlus = gD.get_var_data(source, dataset, experiment, 'rlus', switch) 
-            rlut = gD.get_var_data(source, dataset, experiment, 'rlut', switch) 
-            da = -rlds + rlus - rlut
+    elif var == 'netlw':    
+        rlds, rlus, rlut = [mF.load_variable(switch, var, dataset, experiment) for var in ['rlds', 'rlus', 'rlut']]
+        da = -rlds + rlus - rlut
 
-        elif var == 'netsw':   
-            rsdt = gD.get_var_data(source, dataset, experiment, 'rsdt', switch) 
-            rsds = gD.get_var_data(source, dataset, experiment, 'rsds', switch) 
-            rsus = gD.get_var_data(source, dataset, experiment, 'rsus', switch) 
-            rsut = gD.get_var_data(source, dataset, experiment, 'rsut', switch) 
-            da = rsdt - rsds + rsus - rsut
-                        
-        elif var == 'h':
-            c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
-            ta =    gD.get_var_data(source, dataset, experiment, 'ta', switch) 
-            zg =    gD.get_var_data(source, dataset, experiment, 'zg', switch) 
-            hus =   gD.get_var_data(source, dataset, experiment, 'hus', switch) 
-            da =    c_p*ta + zg + L_v*hus
+    elif var == 'netsw':           
+        rsdt, rsds, rsus, rsut = [mF.load_variable(switch, var, dataset, experiment) for var in ['rsdt', 'rsds', 'rsus', 'rsut']]
+        da = rsdt - rsds + rsus - rsut
+                    
+    elif var == 'h':                                                                        # h - Moist Static Energy (MSE)
+        c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
+        ta, zg, hus = [mF.load_variable(switch, var, dataset, experiment) for var in ['ta', 'zg', 'hus']]
+        da = c_p * ta + zg + L_v * hus
 
-        elif var == 'h_anom2':   
-            c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
-            ta =        gD.get_var_data(source, dataset, experiment, 'ta', switch) 
-            zg =        gD.get_var_data(source, dataset, experiment, 'zg', switch) 
-            hus =       gD.get_var_data(source, dataset, experiment, 'hus', switch) 
-            da =        c_p*ta + zg + L_v*hus
-            da, _ =     pick_vert_reg({'vMean':True, '250hpa':False, '700hpa':False, '500hpa':False}, dataset, da)
-            da_sMean =  calc_sMean(da)
-            da_anom =   da - da_sMean
-            da = da_anom**2
-            # print(da)
-            # plot_object = da.isel(time=0).plot()
-            # fig = plot_object.figure
-            # fig.savefig(f'{os.getcwd()}/test/plot_test/test.png')
-            # print(da.isel(time=0))
+    elif var == 'h_anom2':                                                                  # MSE variance from the tropical mean
+        c_p, L_v = mC.dims_class.c_p, mC.dims_class.L_v
+        ta, zg, hus = [mF.load_variable(switch, var, dataset, experiment) for var in ['ta', 'zg', 'hus']]
+        da = c_p * ta + zg + L_v * hus
+        da, _ = pick_vert_reg(switch, dataset, da)
+        da_sMean = get_sMean(da)
+        da_anom = da - da_sMean
+        da = da_anom**2
 
-        elif var == 'pe':
-            pr =                 gD.get_var_data(source, dataset, experiment, 'pr', switch)     # mm/m^2/day
-            pr =                 pr.where(pr >= np.percentile(pr, 2), np.nan)
-            
-            ice_mass =           gD.get_var_data(source, dataset, experiment, 'clivi', switch)  # kg/m^2 (column integrated)
-            ice_mass_fraction =  gD.get_var_data(source, dataset, experiment, 'cli', switch)    # kg/kg (vertical levels)
-            w =                  ~np.isnan(ice_mass_fraction) * ice_mass_fraction['plev']       # Where there are no values, exclude the associated pressure levels from the weights
-            ice_mass_fraction =  (ice_mass_fraction * w).sum(dim='plev') / w.sum(dim='plev')    # weighted mean mass fraction
-            
-            dims =               mC.dims_class()
-            dry_atm_mass =       (w.mean(dim='time') * dims.aream) / dims.g
-
-            clwvi = (ice_mass / ice_mass_fraction) - dry_atm_mass                               # liquid and ice water mass
-            clwvi = clwvi.where(clwvi <= np.percentile(clwvi, 98), np.nan)
-            da = pr / clwvi
-        else:
-            da = gD.get_var_data(source, dataset, experiment, var, switch)
+    elif var == 'pe':
+        pr = da = mF.load_variable(switch, 'pr', dataset, experiment)       # mm/m^2/day
+        pr = pr.where(pr > np.percentile(pr, 1), np.nan)
+        clwvi = da = mF.load_variable(switch, 'clwvi', dataset, experiment) # liquid and ice water mass
+        clwvi = clwvi.where(clwvi < np.percentile(clwvi, 99), np.nan)
+        da = pr / clwvi
+    else:
+        da = mF.load_variable(switch, var, dataset, experiment)
     return da
 
 
-# ----------------------------------------------------------------------------------------- pick region ----------------------------------------------------------------------------------------------------- #
-def pick_vert_reg(switch, dataset, da):
-    region = ''
-    if switch['250hpa']:
-        region = '_250hpa'
-        da = da.sel(plev = 250e2)
-    if switch['500hpa']:
-        region = '_500hpa'
-        da = da.sel(plev = 500e2)
-    if switch['700hpa']:
-        region = '_700hpa'
-        da = da.sel(plev = 700e2)
-    if switch['vMean']:
-        region = ''
-        plevs = [850e2, 0]                                # free troposphere (as most values at 1000 hPa  and 925 hPa over land are NaN)
-        plevs = slice(plevs[0], plevs[1]) if not dataset == 'ERA5' else slice(plevs[1], plevs[0])
-        da = da.sel(plev=plevs)
-        w = ~np.isnan(da) * da['plev']                    # Where there are no values, exclude the associated pressure levels from the weights
-        da = (da * w).sum(dim='plev') / w.sum(dim='plev') 
-    return da, region
-
-def pick_hor_reg(switch, source, dataset, experiment, da):
-    ''' Ascent/descent region based on 500 hPa vertical pressure velocity (wap)'''
-    region = ''
-    if switch['descent'] or switch['ascent']:
-        wap500 = load_data(switch, source, dataset, experiment, 'wap').sel(plev = 500e2)
-        region = '_d'           if switch['descent'] else '_a'
-        da = da.where(wap500>0) if switch['descent'] else da.where(wap500<0)
-
-    if switch['ocean']:
-        region = f'_o{region}'                            # gD.get_var_data() in load_data() deals with picking out the ocean
-    return da, region
+# ------------------------------------------------------------------------------------- Get data ----------------------------------------------------------------------------------------------------- #
+def get_data(switch_var, switch, dataset, experiment):
+    for var in [k for k, v in switch_var.items() if v]:
+        da = get_variable(switch, dataset, experiment, var)
+        da, vert_reg = pick_vert_reg(switch, dataset, da)
+        da, hor_reg  = pick_hor_reg(switch, dataset, experiment, da)
+        yield var, da, f'{vert_reg}{hor_reg}'
 
 
 
@@ -143,26 +127,26 @@ def pick_hor_reg(switch, source, dataset, experiment, da):
 # ------------------------
 @mF.timing_decorator
 def get_snapshot(da):
-    snapshot = da.isel(time=0)
-    return snapshot
+    plot = False
+    if plot:
+        for timestep in np.arange(0, len(da.time.data)):
+            fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+            mF.cycle_plot(fig)
+    return da.isel(time=0)
 
 @mF.timing_decorator
 def get_tMean(da):
-    tMean = da.mean(dim='time', keep_attrs=True)
-    return tMean 
+    return da.mean(dim='time', keep_attrs=True) 
 
 @mF.timing_decorator
-def calc_sMean(da):
-    aWeights = np.cos(np.deg2rad(da.lat))
-    sMean = da.weighted(aWeights).mean(dim=('lat','lon'), keep_attrs=True).compute() # dask objects require the compute part
-    return sMean
+def get_sMean(da):
+    return da.weighted(np.cos(np.deg2rad(da.lat))).mean(dim=('lat','lon'), keep_attrs=True).compute() # dask objects require the compute part
 
 @mF.timing_decorator
-def calc_area(da):
-    ''' Area covered in domain [% of domain] '''
-    dim = mC.dims_class(da)
-    mask = xr.where(da>0, 1, 0)
-    area = ((mask*dim.aream).sum(dim=('lat','lon')) / dim.aream.sum(dim=('lat','lon'))) * 100
+def get_area(da, dim):
+    ''' Area covered in domain [% of domain]. Used for area of ascent and descent (wap) '''
+    mask = xr.where(da > 0, 1, 0)
+    area = ((mask*dim.aream).sum(dim=('lat','lon')) / np.sum(dim.aream)) * 100
     return area
 
 
@@ -170,92 +154,65 @@ def calc_area(da):
 # ------------------------
 #   Run / save metric
 # ------------------------
-# -------------------------------------------------------------------------------------------- Get metric and save ----------------------------------------------------------------------------------------------------- #
-def get_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_reg, metric):
-    da_calc, metric_name = None, None
-    if metric == 'snapshot':
-        metric_name =f'{var}{vert_reg}{hor_reg}_snapshot' 
-        da_calc = get_snapshot(da)
+# ------------------------------------------------------------------------------------ Get metric and metric name ----------------------------------------------------------------------------------------------------- #
+def calc_metric(switchM, da, var, region):
+        dim = mC.dims_class(da)
+        for metric_name in [k for k, v in switchM.items() if v]:
+            metric = None
+            metric = get_snapshot(da)   if metric_name == 'snapshot'    else metric
+            metric = get_tMean(da)      if metric_name == 'tMean'       else metric
+            metric = get_sMean(da)      if metric_name == 'sMean'       else metric
+            metric = get_area(da, dim)  if metric_name == 'sMean'       else metric
 
-    if metric == 'tMean':
-        metric_name =f'{var}{vert_reg}{hor_reg}_tMean'
-        da_calc = get_tMean(da)
-
-    if metric == 'sMean':
-        metric_name =f'{var}{vert_reg}{hor_reg}_sMean' 
-        da_calc = calc_sMean(da)
-
-    if metric == 'area':
-        metric_name =f'{var}{vert_reg}{hor_reg}_area'
-        da_calc = calc_area(da)
-
-    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', var, metric_name, source, dataset, mV.timescales[0], experiment, mV.resolutions[0])                       if switch['save'] else None
-    mF.save_file(xr.Dataset(data_vars = {metric_name: da_calc}), f'{home}/Desktop/{metric_name}', f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop'] else None
+            metric_name =f'{var}{region}_{metric_name}' 
+            yield metric, metric_name
 
 
-# ------------------------------------------------------------------------------------------------- run metric ----------------------------------------------------------------------------------------------------- #
-def run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, hor_region):
-    for metric in [k for k, v in switchM.items() if v]:
-            get_metric(switch, source, dataset, experiment, var, da, vert_reg, hor_region, metric)
-
-def run_variable(switch_var, switchM, switch, source, dataset, experiment):
-    for var in [k for k, v in switch_var.items() if v]:
-            print(f'\t\t\t{var}')
-            if not mV.data_available(source, dataset, experiment, var):                     # skips calc for models that do not have variable
-                continue
-            da =           load_data(switch, source, dataset, experiment, var)
-            da, vert_reg = pick_vert_reg(switch, dataset, da)
-            da, hor_reg  = pick_hor_reg(switch, source, dataset, experiment, da)
-            run_metric(switchM, switch, source, dataset, experiment, var, da, vert_reg, hor_reg)
-
-def run_experiment(switch_var, switchM, switch, source, dataset):
-    for experiment in mV.experiments:
-        if not mV.data_available(source, dataset, experiment, var = '', switch = switch):   # skips invalid experiment combinations (like obs, or cmip5 model with ssp585)
-            continue
-        print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
-        run_variable(switch_var, switchM, switch, source, dataset, experiment)
-
-def run_dataset(switch_var, switchM, switch):
-    for dataset in mV.datasets:
-        source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        print(f'\t{dataset} ({source})')
-        run_experiment(switch_var, switchM, switch, source, dataset)
-
+# ------------------------------------------------------------------------------------ Get dataset and save metric ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
-def run_large_scale_state_metrics(switch_var, switchM, switch):
-    print(f'Running {mV.resolutions[0]} {mV.timescales[0]} data')
-    print(f'metric: {[key for key, value in switch_var.items() if value]}')
-    print(f'metric_type: {[key for key, value in switchM.items() if value]}')
+def run_ls_metrics(switch_var, switchM, switch):
+    print(f'variable: {mV.resolutions[0]} {mV.timescales[0]} data \n {[key for key, value in switch_var.items() if value]}')
+    print(f'metric: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
-    run_dataset(switch_var, switchM, switch)
+    for dataset, experiment in mF.run_dataset():
+        for var, da, region in get_data(switch_var, switch, dataset, experiment):
+            for metric, metric_name in calc_metric(switchM, da, var, region):
+                mF.save_structured(dataset, experiment, metric, metric_name, 'metrics', var)                                                                                                            if switch['save']               else None
+                mF.save_file(xr.Dataset({metric_name: metric}), folder = f'{home}/Desktop/{metric_name}', filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop']    else None
 
 
-# ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    switch_var = {                                                                                  # choose variable (can choose multiple)
-        'pr':       False,  'pe':           False,
-        'wap':      False,                                                                          # circulation
-        'hur':      False,  'hur_calc':     False,  'hus':  False,                                  # humidity
-        'tas':      False,  'stability':    False,                                                  # temperature
-        'netlw':    False,  'rlds':         False,  'rlus': False,  'rlut': False,                  # longwave radiation
-        'netsw':    False,  'rsdt':         False,  'rsds': False,  'rsus': False,  'rsut': False,  # shortwave radiation
-        'lcf':      False,  'hcf':          False,                                                  # cloud fraction
-        'zg':       False,                                                                          # geopotential height
-        'hfss':     False,  'hfls':         False,                                                  # surface fluxes
-        'h':        False,  'h_anom2':      True,                                                  # Moist Static Energy
+    switch_var = {                                                                                  # Choose variable (can choose multiple)
+        'pr':       False,  'pe':           False,                                                  # Precipitation
+        'wap':      False,                                                                          # Circulation
+        'hur':      True,  'hur_calc':     False,                                                  # Relative humidity
+        'hus':      False,                                                                          # Specific humidity                               
+        'tas':      False,                                                                          # Surface temperature
+        'ta':       False,  'stability':    False,                                                  # Air temperature
+        'netlw':    False,  'rlds':         False,  'rlus': False,  'rlut': False,                  # Longwave radiation
+        'netsw':    False,  'rsdt':         False,  'rsds': False,  'rsus': False,  'rsut': False,  # Shortwave radiation
+        'lcf':      False,  'hcf':          False,                                                  # Cloud fraction
+        'zg':       False,                                                                          # Geopotential height
+        'hfss':     False,  'hfls':         False,                                                  # Surface fluxes
+        'h':        False,  'h_anom2':      False,                                                  # Moist Static Energy
         }
     
-    switchM = {                                                                                      # choose metric type (can choose multiple)
-        'snapshot': True,   'tMean':    True,   'sMean':    True,   'area': False,                   # type 
+    switchM = {                                                                                     # choose metric type (can choose multiple)
+        'snapshot': True,   'tMean':    False,   'sMean':    False,   'area':   False,              # type 
         }
 
     switch = {                                                                                              # choose data to use and mask
-        'constructed_fields':   False,  'sample_data':  False,  'gadi_data':    True,                      # data to use
-        '250hpa':               False,  '500hpa':       False,  '700hpa':       False,  'vMean':    False,  # mask: vertical (only affects wap, hur)
-        'ascent':               False,  'descent':      False,  'ocean':        False,                      # mask: horizontal (can apply both ocean and ascent/descent together)
+        'constructed_fields':   False,  'sample_data':  True,  'gadi_data':    False,                      # data to use
+
+        '250hpa':               False,  '500hpa':       False,  '700hpa':       False,  'vMean':    True,  # mask data: vertical (only affects wap, hur)
+        'ascent':               False,  'descent':      False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)
+        'ascent':               False,  'descent':      False,                                              # mask data: horizontal 
+        
         'save_to_desktop':      False,  'save':         True,                                              # save
         }
-    run_large_scale_state_metrics(switch_var, switchM, switch)
+    
+    run_ls_metrics(switch_var, switchM, switch)
 
 
 

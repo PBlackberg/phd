@@ -1,8 +1,22 @@
+'''
+# ------------------------
+#        Regrid
+# ------------------------
+This script conservatively horizontally interpolates a dataset using raw calculation
+'''
+
+
+
+# -------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import numpy as np
 
-# ------------------------------------------------------------------------------------ regrid function ----------------------------------------------------------------------------------------------------- #
 
+
+# ------------------------
+#        Regrid
+# ------------------------
+# --------------------------------------------------------------------------------------- regrid ----------------------------------------------------------------------------------------------------- #
 def regrid_conserv(M_in):
     # dimensions of model to regrid to
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
@@ -153,8 +167,8 @@ def regrid_conserv(M_in):
     return M_n
 
 
-# ------------------------------------------------------------------- Get the data from the dataset, regrid, and save ----------------------------------------------------------------------------------------------------- #
 
+# ------------------------------------------------------------------------------------ run / save ----------------------------------------------------------------------------------------------------- #
 def run_regridder(switch, dataset):
     print(f'Running regridder')
     print(f'switch: {[key for key, value in switch.items() if value]}')
@@ -176,29 +190,14 @@ def run_regridder(switch, dataset):
 
 
 
-# --------------------------------------------------------------------------------- Choose what to regrid ----------------------------------------------------------------------------------------------------- #
-
+# ------------------------------------------------------------------------------- Choose dataset to regrid ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
+    switch = {                      # Chose observation to regrid
+        'rlut': True,               # variable
+        'show': True, 'save': True  # show / save
+        }
 
-    import sys
-    import os
-    home = os.path.expanduser("~")
-    folder_code = f'{home}/Documents/code/phd'
-    sys.path.insert(0, f'{folder_code}/functions')
-    import switch.myFuncs as mF # imports common operators
-    import switch.myVars as mV # imports common variables
-
-    # Chose observation to regrid
-    switch = {
-        'rlut': True,
-
-        'show': True,
-        'save': True
-    }
-
-    run_regridder(switch, 
-                  dataset = 'CERES', 
-                  )
+    run_regridder(switch, dataset = 'CERES')
 
 
 

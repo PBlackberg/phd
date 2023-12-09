@@ -1,3 +1,13 @@
+''' 
+# ------------------------
+#   Cl_vert_interp
+# ------------------------
+This script interpolates cloud fraction data from the original grid (on hybrid-sigma pressure coordinates) to pressure levels on a coarser grid 
+'''
+
+
+
+# --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import numpy as np
 from scipy.interpolate import interp1d
@@ -16,9 +26,9 @@ import get_data as gD
 
 
 # -----------------------------------
-#  Vertically interp. cloud fraction
+#         calc interpolation
 # -----------------------------------
-# ---------------------------------------------------------------------------------------- With scipy.interp1d() ----------------------------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------- With scipy.interp1d() ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator
 def interp_z_to_p(switch, da, z, z_new): 
     ''' From hybrid-sigma pressure levels to height coordinates [m], later converted to pressure [hPa] 
@@ -175,8 +185,9 @@ def run_dataset(switch):
 
 
 # ----------------------------------
-#  Choose settings and run script
+#           run script
 # ----------------------------------
+# ---------------------------------------------------------------------------------------------- Choose settings ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
 
     switch = {
