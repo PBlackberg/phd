@@ -177,6 +177,16 @@ def calc_pr_o_sMean(switch, da):
 
 
 
+# -------------------------------------------------------------------------------------------- Other ----------------------------------------------------------------------------------------------------- #
+# @mF.timing_decorator
+# def calc_F_pr10(da):
+#     ''' Frequency of gridboxes exceeding 10 mm/day on monthly [% of domain]'''
+#     da = da.resample(time='1MS').mean(dim='time')
+#     mask = xr.where(da>10,1,0)
+#     F_pr10 = (mask.sum(dim=('lat','lon')) / (len(da['lat']) * len(da['lon']))) * 100
+#     return F_pr10
+
+
 # ------------------------
 #   Run / save metrics
 # ------------------------
@@ -262,20 +272,19 @@ def run_pr_metrics(switch_metric, switchM, switch):
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    switch_metric = {
-        # choose metric
-        'pr':                             True,
-        'pr_90':                          False,
-        'pr_95':                          False,
-        'pr_97':                          False,
-        'pr_99':                          False,
-        'pr_rx1day':                      False,
-        'pr_rx5day':                      False,
-        'pr_o':                           False,
+    switch_metric = {                                       # metric
+        'pr':           True,
+        'pr_90':        False,
+        'pr_95':        False,
+        'pr_97':        False,
+        'pr_99':        False,
+        'pr_rx1day':    False,
+        'pr_rx5day':    False,
+        'pr_o':         False,  
+        'F_pr10':       True,   # organization proxy
         }
     
-    switchM = {
-        # choose type of metric
+    switchM = {                                         # metric tyoe
         'snapshot':                       True,
         'sMean':                          False,
         'tMean':                          False,
@@ -283,18 +292,10 @@ if __name__ == '__main__':
         '':                               False,
         }
     
-    switch = {
-        # Type of dataset
-        'constructed_fields':             False, 
-        'sample_data':                    True,
-        'gadi_data':                      False,
-
-        # conv_threshold
-        'fixed_area':                     False,
-
-        # save
-        'save':                           True,
-        'save_to_desktop':                False
+    switch = {                                                                              # settings
+        'constructed_fields':   False,  'sample_data':      True,   'gadi_data':    False,  # dataset type
+        'fixed_area':           False,                                                      # conv_threshold
+        'save':                 True,   'save_to_desktop':  False                           # save
         }
     
     run_pr_metrics(switch_metric, switchM, switch)

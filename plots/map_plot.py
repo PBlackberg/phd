@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import xarray as xr
 import numpy as np
+import warnings
+from shapely.errors import ShapelyDeprecationWarning
+warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 import os
 import sys
 home = os.path.expanduser("~")
@@ -8,9 +11,7 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV
 import myClasses as mC
 import myFuncs as mF
-import warnings
-from shapely.errors import ShapelyDeprecationWarning
-warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+
 
 
 

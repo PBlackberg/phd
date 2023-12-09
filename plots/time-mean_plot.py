@@ -1,3 +1,11 @@
+''' 
+
+
+On scatter plots, can colour different sections of models
+
+'''
+
+
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt

@@ -1,6 +1,22 @@
+'''
+# ------------------------
+#    Get ocean mask
+# ------------------------
+This script grabs the ocean mask from FGOALS-g2 (cmip5), to be used for common masking between models
+'''
+
+
+
+# ------------------------------------------------------------------------------------ Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import xesmf as xe
 
+
+
+# ------------------------
+#    Get ocean mask
+# ------------------------
+# --------------------------------------------------------------------------------- Choose ocean mask --------------------------------------------------------------------------------------------------------- #
 def find_ocean_mask():
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/fx/ocean/fx/r0i0p0/v20161204/sftof'
     filename = 'sftof_fx_FGOALS-g2_historical_r0i0p0.nc'
@@ -14,6 +30,11 @@ def find_ocean_mask():
     return da.sel(lat=slice(-30,30))
 
 
+
+# ------------------------
+#          Run
+# ------------------------
+# ----------------------------------------------------------------------------------- run and save --------------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     da = find_ocean_mask()
     ds = xr.Dataset(data_vars = {'ocean_mask': da}) 
