@@ -155,7 +155,8 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
         return get_cmip_cl_data(var_name, model, experiment, ensemble, project, timeInterval)
     else:                                                                                                       # all other 2D or 3D pressure level variables     
         path_folder = var_folder(var_name, model, experiment, ensemble, project, timeInterval)
-        ds = concat_files(path_folder, experiment)      
+        # path_folder = '/g/data/oi10/replicas/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical/r11i1p1f1/Amon/clwvi/gr/v20200201/'
+        ds = concat_files(path_folder, experiment)    
         da = ds[var_name]      
         da = regrid_vert(da, model)                         if 'plev' in da.dims                       else da # vertically interpolate (some models have different number of vertical levels)
         da = regrid_hor(ds, da)                             if mV.resolutions[0] == 'regridded'         else da # horizontally interpolate
@@ -165,7 +166,7 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
 
 
 # --------------------------
-#  Observational data (NCI)
+#    Get obs data (NCI)
 # --------------------------
 # -------------------------------------------------------------------------------------- GPCP ----------------------------------------------------------------------------------------------------------#
 def get_gpcp():
@@ -208,6 +209,7 @@ def get_era5_monthly(var):
         files = sorted(files, key=lambda x: x[x.index("l_")+1:x.index("-")])
         for file in files:
             path_fileList = np.append(path_fileList, os.path.join(path_folder, file))
+    # print(path_fileList[0])
     ds = xr.open_mfdataset(path_fileList, combine='by_coords')
     # print(ds)
     ds = ds.rename({'latitude': 'lat', 'longitude': 'lon'})
@@ -229,62 +231,21 @@ def get_era5_monthly(var):
 # ----------------------------
 # -------------------------------------------------------------------------------- pick out variable data ----------------------------------------------------------------------------------------------------- #
 def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False}):
+    print(var_name)
     da = None
-    # Precipitation
-    da = get_cmip_data('pr', source, dataset, experiment, switch)['pr']*60*60*24            if var_name == 'pr' and source in ['cmip5', 'cmip6']            else da
-    da = get_gpcp()['pr']                                                                   if var_name == 'pr' and dataset == 'GPCP'                       else da
-    da.attrs['units'] = r'mm day$^-1$'                                                      if var_name == 'pr'                                             else da
+    if source in ['cmip5', 'cmip6']:
+        da = get_cmip_data(var_name, source, dataset, experiment, switch)[var_name]         if var_name not in ['pr', 'tas', 'wap']         else da # no need to change units
+        da = get_cmip_data('pr', source, dataset, experiment, switch)['pr']*60*60*24        if var_name == 'pr'                             else da # Precipitation [r'mm day$^-1$']
+        da = get_cmip_data('tas', source, dataset, experiment, switch)['tas']-273.15        if var_name == 'tas'                            else da # Surface temperature [r'$\degree$C'] (air temperature (ta) is in K)
+        da = get_cmip_data('wap', source, dataset, experiment, switch)['wap']*60*60*24/100  if var_name == 'wap'                            else da # Vertical pressure velocity [r'hPa day^-1']
+        da = da * 1000                                                                      if var_name == 'wap' and dataset == 'IITM-ESM'  else da # one model is off by a factor of 100
 
-    # precipitation efficiency
-    da = get_cmip_data('clwvi', source, dataset, experiment, switch)['clwvi']               if var_name == 'clwvi' and source in ['cmip5', 'cmip6']         else da
+    elif source in ['obs']:
+        da = get_gpcp()['pr']                                                               if var_name == 'pr'     and dataset == 'GPCP'   else da
 
-    # Surface temperature
-    da = get_cmip_data('tas', source, dataset, experiment, switch)['tas']-273.15            if var_name == 'tas' and source in ['cmip5', 'cmip6']           else da
-    da.attrs['units'] = r'$\degree$C'                                                       if var_name == 'tas'                                            else da
-
-    # Air temperature
-    da = get_cmip_data('ta', source, dataset, experiment, switch)['ta']                     if var_name == 'ta' and source in ['cmip5', 'cmip6']            else da
-    da = get_era5_monthly('t')['t']                                                         if var_name == 'ta' and dataset == 'ERA5'                       else da
-    da.attrs['units'] = 'K'                                                                 if var_name == 'ta'                                             else da
-
-    # Humidity
-    da = get_cmip_data('hur', source, dataset, experiment, switch)['hur']                   if var_name == 'hur' and source in ['cmip5', 'cmip6']           else da
-    da.attrs['units'] = '%'                                                                 if var_name == 'hur' and source in ['cmip5', 'cmip6']           else da
-
-    da = get_cmip_data('hus', source, dataset, experiment, switch)['hus']                   if var_name == 'hus' and source in ['cmip5', 'cmip6']           else da
-    da = get_era5_monthly('q')['q']                                                         if var_name == 'hus' and dataset == 'ERA5'                      else da
-    da.attrs['units'] = ''                                                                  if var_name == 'hus'                                            else da
-
-    # Circulation
-    da = get_cmip_data('wap', source, dataset, experiment, switch)['wap']*60*60*24/100      if var_name == 'wap' and source in ['cmip5', 'cmip6']           else da
-    da = da * 1000                                                                          if var_name == 'wap' and dataset == 'IITM-ESM'                  else da
-    da.attrs['units'] = r'hPa day$^-1$'                                                     if var_name == 'wap'                                            else da
-
-    # Longwave radiation
-    da = get_cmip_data('rlds', source, dataset, experiment, switch)['rlds']                 if var_name == 'rlds' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('rlus', source, dataset, experiment, switch)['rlus']                 if var_name == 'rlus' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('rlut', source, dataset, experiment, switch)['rlut']                 if var_name == 'rlut' and source in ['cmip5', 'cmip6']          else da
-    da.attrs['units'] = r'W m$^-2$'                                                         if var_name == ['rlut', 'rlus', 'rlds']                         else da
-
-    # Shortwave radiation
-    da = get_cmip_data('rsdt', source, dataset, experiment, switch)['rsdt']                 if var_name == 'rsdt' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('rsds', source, dataset, experiment, switch)['rsds']                 if var_name == 'rsds' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('rsus', source, dataset, experiment, switch)['rsus']                 if var_name == 'rsus' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('rsut', source, dataset, experiment, switch)['rsut']                 if var_name == 'rsut' and source in ['cmip5', 'cmip6']          else da
-    da.attrs['units'] = r'W m$^-2$'                                                         if var_name == ['rsut', 'rsus', 'rsds', 'rsdt']                 else da
-
-    # Clouds     
-    da = get_cmip_data('cl', source, dataset, experiment, switch)['cl']                     if var_name == 'cl' and source in ['cmip5', 'cmip6']            else da # cloud fraction on interpolated pressure levels
-    da = get_cmip_data('cl_p_hybrid', source, dataset, experiment, switch)['cl_p_hybrid']   if var_name == 'cl_p_hybrid' and source in ['cmip5', 'cmip6']   else da # cloud fraction on original vertical grid
-    da = get_cmip_data('p_hybrid', source, dataset, experiment, switch)['p_hybrid']         if var_name == 'p_hybrid' and source in ['cmip5', 'cmip6']      else da # vertical levels for original grid           
-    da = get_cmip_data('ds_cl', source, dataset, experiment, switch)                        if var_name == 'ds_cl' and source in ['cmip5', 'cmip6']         else da # original dataset with data and levels 
-
-    # Height coords
-    da = get_cmip_data('zg', source, dataset, experiment, switch)['zg']                     if var_name == 'zg' and source in ['cmip5', 'cmip6']            else da
-
-    # Surface fluexes
-    da = get_cmip_data('hfls', source, dataset, experiment, switch)['hfls']                 if var_name == 'hfls' and source in ['cmip5', 'cmip6']          else da
-    da = get_cmip_data('hfss', source, dataset, experiment, switch)['hfss']                 if var_name == 'hfss' and source in ['cmip5', 'cmip6']          else da
+        da = get_era5_monthly('t')['t']                                                     if var_name == 'ta'     and dataset == 'ERA5'   else da
+        da = get_era5_monthly('q')['q']                                                     if var_name == 'hus'    and dataset == 'ERA5'   else da
+        da = get_era5_monthly('r')['r']                                                     if var_name == 'hur'    and dataset == 'ERA5'   else da
     return da
 
 
@@ -300,26 +261,51 @@ def save_sample(source, dataset, experiment, ds, var_name):
 
 
 # --------------------------------------------------------------------------------- run variable ----------------------------------------------------------------------------------------------------- #
+def find_source(dataset, models_cmip5 = mV.models_cmip5, models_cmip6 = mV.models_cmip6, observations = mV.observations):
+    '''Determining source of dataset '''
+    source = 'cmip5' if np.isin(models_cmip5, dataset).any() else None      
+    source = 'cmip6' if np.isin(models_cmip6, dataset).any() else source         
+    source = 'test'  if np.isin(mV.test_fields, dataset).any()        else source     
+    source = 'obs'   if np.isin(observations, dataset).any() else source
+    return source
+
+def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}, resolution = 'regridded'):
+    ''' Check if dataset has variable. Returning False skips the loop in calc '''
+    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
+        return  False
+    if not experiment and not source in ['obs', 'test']:                                          # only run obs or test data for experiment == ''
+        return False
+    if experiment and source in ['obs']:                                                          # only run models when experiment ~= '' 
+        return False
+    
+    if var in ['lcf', 'hcf', 'cl', 
+               'ds_cl', 'cl_p_hybrid', 'p_hybrid'] \
+        and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 
+                        'CNRM-CM6-1-HR', 'GFDL-ESM4']:                                            # Some models do not have cloud variable
+        print(f'No {var} data for this dataset')
+        return False                                                                   
+    return True
+
 def run_var_data(switch_var, switch, source, dataset, experiment):
     for var_name in [k for k, v in switch_var.items() if v]:
-        if not mV.data_available(source, dataset, experiment, var = var_name):
+        if not data_available(source, dataset, experiment, var = var_name):
             continue
         da = get_var_data(source, dataset, experiment, var_name, switch)
         ds = xr.Dataset(data_vars = {var_name: da}) if not var_name == 'ds_cl' else da
         # print(ds)
-        # print(ds[f'{var_name}'])
+        print(ds[f'{var_name}'])
         save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] else None
 
 def run_experiment(switch_var, switch, source, dataset):
     for experiment in mV.experiments:
-        if not mV.data_available(source, dataset, experiment):
+        if not data_available(source, dataset, experiment):
             continue
         print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
         run_var_data(switch_var, switch, source, dataset, experiment)
 
 def run_dataset(switch_var, switch):
     for dataset in mV.datasets:
-        source = mV.find_source(dataset, mV.models_cmip5, mV.models_cmip6, mV.observations)
+        source = find_source(dataset)
         print(f'\t{dataset} ({source})')
         run_experiment(switch_var, switch, source, dataset)
 

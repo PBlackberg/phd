@@ -1,30 +1,9 @@
-# Initial setup
-example_list = [None] * 10  # A list pre-filled with None
-small_list_1 = [1, 2, 3]
-small_list_2 = [4, 5]
-
-
-idx = 0
-print(idx)
-print(idx + len(small_list_1))
-example_list[idx:idx + len(small_list_1)] = small_list_1
-idx += len(small_list_1)  # idx is now 3
-
-
-print(idx)
-print(idx + len(small_list_2))
-example_list[idx:idx + len(small_list_2)] = small_list_2
-idx += len(small_list_2)  # idx is now 5
-print(idx)
-
-
-print(example_list)
 
 
 
+import xarray as xr
 
-# print(da)
-# plot_object = da.isel(time=0).plot()
-# fig = plot_object.figure
-# fig.savefig(f'{os.getcwd()}/test/plot_test/test.png')
-# print(da.isel(time=0))
+
+a = xr.open_dataset('/g/data/k10/cb4968/data/sample_data/clwvi/cmip6/EC-Earth3_clwvi_monthly_historical_regridded.nc')
+print(a['clwvi'])
+
