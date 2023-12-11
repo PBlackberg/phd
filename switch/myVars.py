@@ -57,13 +57,13 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'NESM3',             # 17     
     # 'ACCESS-ESM1-5',     # 18   
     # 'CNRM-ESM2-1',       # 19   
-    # 'EC-Earth3',         # 20
+    # 'EC-Earth3',         # 20 # pe test
     # 'CNRM-CM6-1',        # 21  
     # 'CNRM-CM6-1-HR',     # 22   
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
     # 'ACCESS-CM2',        # 25   
-    # 'TaiESM1',           # 26 # test                           
+    'TaiESM1',           # 26 # test                           
     # 'CESM2-WACCM',       # 27   
     # 'CanESM5',           # 28  
     # 'UKESM1-0-LL',       # 29  
@@ -83,7 +83,7 @@ observations = [
     # 'GPCP_2010-2022',     # GPCP section 2: low offset in high percentile precipitation
     # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
-    'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
+    # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
     # 'NOAA'                  # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
     ]
 
@@ -98,10 +98,10 @@ timescales = [
     ]
 
 experiments = [
-    # 'historical',       # current climate conditions simulation        
+    'historical',       # current climate conditions simulation        
     # 'rcp85',          # warm scenario for cmip5
     # 'ssp585',         # warm scenario for cmip6
-    ''                # observations
+    # ''                # observations
     ]
 
 resolutions = [

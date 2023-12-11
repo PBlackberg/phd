@@ -91,7 +91,7 @@ def data_available(source = '', dataset = '', experiment = '', var = '', switch 
     return True
 
 def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'gadi_data': False}, var = 'pr', 
-                    dataset = 'random', experiment = mV.experiments[0]):
+                    dataset = 'random', experiment = mV.experiments[0], timescale = mV.timescales[0]):
     ''' Loading variable data.
 
         Sometimes sections of years of a dataset will be used instead of the full data ex: if dataset = GPCP_1998-2010 (for obsservations) 
@@ -102,7 +102,7 @@ def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'g
 
     source = find_source(dataset_alt)                                                            
     da = cF.get_cF_var(dataset_alt, var)                                                                                                                            if switch['constructed_fields']             else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']    if switch['sample_data']                    else da  
+    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
     da = gD.get_var_data(source, dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
     if '_' in dataset:                                                  
         start_year, end_year = dataset.split('_')[1].split('-')
@@ -418,7 +418,7 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     # scene = conv_regions.isel(time=1)
     # mF.plot_one_scene(scene)
 
-def cycle_plot(fig):
+def cycle_plot(fig, cycle_time = 0.5):
     plt.ion()
     plt.show()
     plt.pause(0.5)

@@ -1,9 +1,13 @@
 
-
-
 import xarray as xr
 
 
-a = xr.open_dataset('/g/data/k10/cb4968/data/sample_data/clwvi/cmip6/EC-Earth3_clwvi_monthly_historical_regridded.nc')
-print(a['clwvi'])
+a = xr.open_dataset('/Users/cbla0002/Desktop/sample_data/zg/cmip6/TaiESM1_zg_monthly_historical_regridded.nc')
+print(a)
+
+
+
+
+
+
 
