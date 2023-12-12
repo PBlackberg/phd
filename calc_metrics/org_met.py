@@ -16,7 +16,6 @@ import numpy as np
 import skimage.measure as skm
 
 
-
 # ----------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
@@ -205,6 +204,7 @@ def calc_o_area(da, dim):
     
 
 # ------------------------------------------------------------------------------------------- Object heatmap ----------------------------------------------------------------------------------------------------- #
+@mF.timing_decorator
 def calc_o_heatmap(da):
     ''' Frequency of occurence of objects in individual gridboxes in tropical scene '''
     return da.sum(dim= 'time') / len(da.time.data)
@@ -255,12 +255,12 @@ def run_org_metrics(switch_metric, switch):
 # ---------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_metric = {                                                               # metric
-        'obj_snapshot': False,   'conv_snapshot':    True,   'areafraction': False,   # conceptual visualization of data
+        'obj_snapshot': False,   'conv_snapshot':    False,   'areafraction': False,   # conceptual visualization of data
         'ni':           False,                                                       # Number index
         'o_area_mean':  False,                                                       # object mean area                     
         'rome':         False,   'rome_n':           False,                           # ROME
         'o_area':       False,                                                       # object area 
-        'o_heatmap':    False,                                                       # object location
+        'o_heatmap':    True,                                                       # object location
         }
 
     switch = {                                                                              # settings
@@ -271,15 +271,3 @@ if __name__ == '__main__':
     
     run_org_metrics(switch_metric, switch)
     
-
-
-
-
-
-
-
-
-
-
-
-
