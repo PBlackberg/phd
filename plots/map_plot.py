@@ -160,7 +160,7 @@ def plot_scenes(switchM, metric_name, vmin = None, vmax = None):
 #     Run / save plot
 # ------------------------
 # ----------------------------------------------------------------------------------------- get scene and run ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator(show_time = True)
 def run_map_plot(switch_metric, switchM, switch):
     print(f'{len(mV.datasets)} datasets with {mV.timescales[0]} {mV.resolutions[0]} data')
     print(f'metric: {[key for key, value in switch_metric.items() if value]}')

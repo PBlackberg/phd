@@ -109,7 +109,7 @@ def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'g
         da = da.sel(time= slice(start_year, end_year))
     return da
 
-def load_metric(metric_class, folder_load = mV.folder_save[0], source = find_source(''), dataset = 'random', timescale = mV.timescales[0], experiment = mV.experiments[0], resolution = mV.resolutions[0]):
+def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experiments[0], timescale = mV.timescales[0], resolution = mV.resolutions[0], folder_load = mV.folder_save[0]):
     experiment = '' if find_source(dataset) in ['obs'] else experiment
     path = f'{folder_load}/metrics/{metric_class.var_type}/{metric_class.name}/{find_source(dataset)}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
     # print(path)   # for debugging
