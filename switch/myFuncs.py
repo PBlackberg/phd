@@ -26,6 +26,7 @@ import warnings
 from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
+
 # ------------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
@@ -64,7 +65,7 @@ def find_list_source(datasets, models_cmip5 = mV.models_cmip5, models_cmip6 = mV
     list_source = 'mixed' if 'cmip5' in sources and 'cmip6' in sources else list_source
     return list_source
 
-def find_ifWithObs(datasets, observations):
+def find_ifWithObs(datasets, observations= mV.observations):
     ''' Indicate if there is observations in the dataset list (for plots) '''
     for dataset in datasets:
         if dataset in observations:
@@ -73,15 +74,15 @@ def find_ifWithObs(datasets, observations):
 
 
 # --------------------------------------------------------------------------------------- Loading --------------------------------------------------------------------------------------------------- #
-def data_available(source = '', dataset = '', experiment = '', var = '', switch = {'ocean_mask': False}, resolution = 'regridded'):
+def data_available(var = '', dataset = mV.datasets[0], experiment = mV.experiments[0]):
     ''' Check if dataset has variable. Returning False skips the loop in calc '''
+    source = find_source(dataset)
     if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
         return  False
     if not experiment and not source in ['obs', 'test']:                                          # only run obs or test data for experiment == ''
         return False
     if experiment and source in ['obs']:                                                          # only run models when experiment ~= '' 
         return False
-    
     if var in ['lcf', 'hcf', 'cl', 
                'ds_cl', 'cl_p_hybrid', 'p_hybrid'] \
         and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 
@@ -99,18 +100,18 @@ def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'g
     dataset_alt = dataset.split('_')[0] if '_' in dataset else dataset    
     var = 'pr'  if var == 'var_2d' else var # for testing
     var = 'hur' if var == 'var_3d' else var # for testing
-
-    source = find_source(dataset_alt)                                                            
+                                                   
     da = cF.get_cF_var(dataset_alt, var)                                                                                                                            if switch['constructed_fields']             else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
-    da = gD.get_var_data(source, dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{find_source(dataset)}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
+    da = gD.get_var_data(find_source(dataset), dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
     if '_' in dataset:                                                  
         start_year, end_year = dataset.split('_')[1].split('-')
         da = da.sel(time= slice(start_year, end_year))
     return da
 
 def load_metric(metric_class, folder_load = mV.folder_save[0], source = find_source(''), dataset = 'random', timescale = mV.timescales[0], experiment = mV.experiments[0], resolution = mV.resolutions[0]):
-    path = f'{folder_load}/metrics/{metric_class.var_type}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
+    experiment = '' if find_source(dataset) in ['obs'] else experiment
+    path = f'{folder_load}/metrics/{metric_class.var_type}/{metric_class.name}/{find_source(dataset)}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
     # print(path)   # for debugging
     ds = xr.open_dataset(path)     
     da = ds[f'{metric_class.name}']
@@ -137,17 +138,17 @@ def convert_to_datetime(dates, data):
         dates_new = pd.to_datetime(dates)
     return dates_new, data
 
-def run_experiment(dataset, var = 'pr'):
+def run_experiment(var, dataset):
     for experiment in mV.experiments:
-        if not data_available(find_source(dataset), dataset, experiment, var):
+        if not data_available(var, dataset, experiment):
             continue
-        print(f'\t\t {experiment}') if experiment else print(f'\t observational dataset')
+        print(f'\t\t {dataset} ({find_source(dataset)}) {experiment}') if experiment else print(f'\t {dataset} ({find_source(dataset)}) observational dataset')
         yield dataset, experiment
         
-def run_dataset(var = 'pr'):
+def run_dataset(var = ''):
     for dataset in mV.datasets:
         print(f'\t{dataset} ({find_source(dataset)})')
-        yield from run_experiment(dataset, var = '')
+        yield from run_experiment(var, dataset)
 
 
 # --------------------------------------------------------------------------------------- Saving --------------------------------------------------------------------------------------------------- #
@@ -159,10 +160,10 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path)
 
-def save_structured(dataset, experiment, da, metric_name, folder, var):
+def save_structured(var_name, dataset, experiment, metric, metric_name, folder):
     ''' Saves in variable/metric specific folders '''
-    ds = xr.Dataset(data_vars = {metric_name: da})
-    folder = f'{mV.folder_save[0]}/{folder}/{var}/{metric_name}/{find_source(dataset)}'
+    ds = xr.Dataset(data_vars = {metric_name: metric})
+    folder = f'{mV.folder_save[0]}/{folder}/{var_name}/{metric_name}/{find_source(dataset)}'
     filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
     save_file(ds, folder, filename)
 
@@ -184,19 +185,21 @@ def save_plot(switch= {'save_test_desktop': True, 'save_folder_desktop': False, 
 
 
 # --------------------------------------------------------------------------------------- Decorators --------------------------------------------------------------------------------------------------- #
-def timing_decorator(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        ''' prints start and end of function call, with time taken for the function to finish '''
-        print(f'{func.__name__} started')
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        time_taken = end_time - start_time
-        print(f'{func.__name__} took {time_taken/60:.2f} minutes')
-        return result
-    return wrapper
-
+def timing_decorator(show_time = False):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            ''' prints start and optionally end of function call, with time taken for the function to finish '''
+            print(f'{func.__name__} started')
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            if show_time:
+                end_time = time.time()
+                time_taken = end_time - start_time
+                print(f'{func.__name__} took {time_taken/60:.2f} minutes')
+            return result
+        return wrapper
+    return decorator
 
 
 # ------------------------
@@ -268,14 +271,14 @@ def resample_timeMean(da, timeMean_option=''):
 #         Plots
 # ------------------------
 # ------------------------------------------------------------------------------------------ Limits --------------------------------------------------------------------------------------------------- #
-def find_limits(switchM, datasets, metric_class, func = haversine_dist, # dummy function (use metric function when calling in plot script)
+def find_limits(switchM, metric_class, func = haversine_dist,   # dummy function (use metric function when calling in plot script)
                 quantileWithin_low = 0, quantileWithin_high = 1, 
                 quantileBetween_low = 0, quantileBetween_high=1, 
                 vmin = '', vmax = ''): # could pot use , *args, **kwargs):    
     ''' If vmin and vmax is not set, the specified quantile values are used as limits '''
     if vmin == '' and vmax == '':
         vmin_list, vmax_list = [], []
-        for dataset in datasets:
+        for dataset in mV.datasets:
             data, _, _ = func(switchM, dataset, metric_class) #, *args, **kwargs)
             vmin_list, vmax_list = np.append(vmin_list, np.nanquantile(data, quantileWithin_low)), np.append(vmax_list, np.nanquantile(data, quantileWithin_high))
         return np.nanquantile(vmin_list, quantileBetween_low), np.nanquantile(vmax_list, quantileBetween_high)

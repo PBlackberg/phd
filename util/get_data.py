@@ -11,6 +11,7 @@ This script loads and interpolates data from supercomputor storage (gadi, levant
 # -------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import numpy as np
+import warnings
 
 
 # ----------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
@@ -19,7 +20,6 @@ import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV
-
 
 
 # ------------------------
@@ -54,7 +54,7 @@ def regrid_vert(da, model = ''):                                                
     ''' Interpolate to common pressure levels (cloud fraction is dealt with separately)'''
     da['plev'] = da['plev'].round(0)                if model in ['ACCESS-ESM1-5', 'ACCESS-CM2'] else da['plev'] # plev coordinate is specified to a higher number of significant figures in these models
     p_new = np.array([100000, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000, 500, 100])      
-    import warnings
+
     warnings.filterwarnings("ignore", category=FutureWarning, module="xarray")
     da_p_new = da.interp(plev=p_new, method='linear', kwargs={'bounds_error':False, "fill_value": 0})    
     warnings.resetwarnings()
@@ -79,8 +79,8 @@ def get_p_hybrid(model, ds):
 def get_cmip_cl_data(var_name, model, experiment, ensemble, project, timeInterval): 
     ''' For hybrid-sigma pressure coordinates interpolation to pressure coordinates '''       
     if var_name in ['cl']:                                  # interpolation takes a long time, so stored locally       
-        path = f'/g/data/k10/cb4968/data/sample_data/cl/{mV.find_source(model)}/{model}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'                                                                                            
-        da = xr.open_dataset(path)['cl']           
+        path = f'/g/data/k10/cb4968/data/sample_data/cl/{find_source(model)}/{model}_cl_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'                                                                                            
+        return xr.open_dataset(path) #['cl']         
     else:                                                   # for interpolation in 'cl_vert_interp' in util folder (could extend to other variables on hybrid-sigma pressure coordinates)
         path_folder = var_folder('cl', model, experiment, ensemble, project, timeInterval)
         ds = concat_files(path_folder, experiment) 
@@ -196,7 +196,7 @@ def get_gpcp():
 
 
 # --------------------------------------------------------------------------------------- ERA5 ----------------------------------------------------------------------------------------------------------#
-def get_era5_monthly(var):
+def get_era5_monthly(var, switch = {'ocean': False}):
     ''' Reanalysis data from ERA5 '''
     path_gen = f'/g/data/rt52/era5/pressure-levels/monthly-averaged/{var}'
     years = range(1998,2022)                                                # same years as for GPCP obs
@@ -231,7 +231,7 @@ def get_era5_monthly(var):
 # ----------------------------
 # -------------------------------------------------------------------------------- pick out variable data ----------------------------------------------------------------------------------------------------- #
 def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False}):
-    print(var_name)
+    print(f'loading {var_name}')
     da = None
     if source in ['cmip5', 'cmip6']:
         da = get_cmip_data(var_name, source, dataset, experiment, switch)[var_name]         if var_name not in ['pr', 'tas', 'wap']         else da # no need to change units
@@ -322,8 +322,8 @@ if __name__ == '__main__':
     switch_var = {
         'pr':       False,                                                                                      # Precipitation
         'tas':      False, 'ta':            False,                                                              # Temperature
-        'wap':      False,                                                                                      # Circulation
-        'hur':      True, 'hus' :          False,                                                              # Humidity                   
+        'wap':      True,                                                                                      # Circulation
+        'hur':      False, 'hus' :          False,                                                              # Humidity                   
         'rlds':     False, 'rlus':          False,  'rlut':     False,  'netlw':    False,                      # Longwave radiation
         'rsdt':     False, 'rsds':          False,  'rsus':     False,  'rsut':     False,  'netsw':    False,  # Shortwave radiation
         'cl':       False, 'cl_p_hybrid':   False,  'p_hybrid': False,  'ds_cl':    False,                      # Cloudfraction (ds_cl is for getting pressure levels)
@@ -334,7 +334,7 @@ if __name__ == '__main__':
 
     switch = {
         'ocean':         False, # mask
-        'save_sample':   False  # save
+        'save_sample':   True  # save
         }
 
     run_get_data(switch_var, switch)

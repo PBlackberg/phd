@@ -11,7 +11,6 @@ In this script, key variables' spatial and temporal means are calculated.
 import numpy as np
 import xarray as xr
 
-
 # ----------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
@@ -20,7 +19,6 @@ sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV                                 
 import myClasses as mC
 import myFuncs as mF     
-
 
 
 # ------------------------
@@ -37,9 +35,9 @@ def calc_vMean(da, dataset = '', plevs0 = 850e2, plevs1 = 0):       # free tropo
 def pick_vert_reg(switch, dataset, da):
     da, region = da, ''
     for met_type in [k for k, v in switch.items() if v]:
-        da, region = [da.sel(plev = 700e2), '_700hpa']  if met_type == '700hpa'                         else [da, region]
-        da, region = [da.sel(plev = 500e2), '_500hpa']  if met_type == '500hpa'                         else [da, region]
-        da, region = [da.sel(plev = 250e2), '_250hpa']  if met_type == '250hpa'                         else [da, region]
+        da, region = [da.sel(plev = 700e2), '_700hpa']  if met_type == '700hpa' and 'plev' in da.dims   else [da, region]
+        da, region = [da.sel(plev = 500e2), '_500hpa']  if met_type == '500hpa' and 'plev' in da.dims   else [da, region]
+        da, region = [da.sel(plev = 250e2), '_250hpa']  if met_type == '250hpa' and 'plev' in da.dims   else [da, region]
         da, region = [calc_vMean(da, dataset), '']      if met_type == 'vMean' and 'plev' in da.dims    else [da, region]
     return da, region
 
@@ -47,11 +45,11 @@ def pick_hor_reg(switch, dataset, experiment, da):
     ''' Ascent/descent region based on 500 hPa vertical pressure velocity (wap)'''
     da, region = da, ''
     for met_type in [k for k, v in switch.items() if v]:
-        wap500 = mF.load_variable(switch, 'wap', dataset, experiment).sel(plev = 500e2) if ('descent' in switch and switch['descent']) or ('ascent' in switch and switch['ascent']) else None
+        wap500 = mF.load_variable(switch, 'wap', dataset, experiment).sel(plev = 500e2) if ('descent' in switch and met_type == 'descent') or ('ascent' in switch and met_type == 'ascent') else None
         da, region = [da.where(wap500 > 0), '_d']  if met_type == 'descent' else [da, region]
         da, region = [da.where(wap500 < 0), '_a']  if met_type == 'ascent'  else [da, region]
 
-        wap500 = mF.load_variable(switch, 'wap', dataset, experiment).sel(plev = 500e2).mean(dim='time') if ('descent_fixed' in switch and switch['descent_fixed']) or ('ascent_fixed' in switch and switch['ascent_fixed']) else None
+        wap500 = mF.load_variable(switch, 'wap', dataset, experiment).sel(plev = 500e2).mean(dim='time') if ('descent_fixed' in switch and met_type == 'descent_fixed') or ('ascent_fixed' in switch and met_type == 'ascent_fixed') else None
         da, region = [da.where(wap500 > 0), '_fd']  if met_type == 'descent_fixed' else [da, region]
         da, region = [da.where(wap500 < 0), '_fa']  if met_type == 'ascent_fixed'  else [da, region]
         region = f'_o{region}' if met_type == 'ocean' else region   # loading data deals with picking out ocean (as it can be done before or after interpolation)                         
@@ -59,9 +57,9 @@ def pick_hor_reg(switch, dataset, experiment, da):
 
 
 # -------------------------------------------------------------------------------------- Get variable ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
-def get_variable(switch, dataset, experiment, var):
-    print(var)
+@mF.timing_decorator()
+def get_variable(switch, var, dataset, experiment):
+    print(f'getting {var}')
     if var in ['lcf', 'hcf']:
         da = mF.load_variable(switch, 'cl', dataset, experiment)
         da = da.sel(plev = slice(1000e2, 600e2)).max(dim = 'plev') if var == 'lcf' else da
@@ -112,36 +110,35 @@ def get_variable(switch, dataset, experiment, var):
 
 
 # ------------------------------------------------------------------------------------- Get data ----------------------------------------------------------------------------------------------------- #
-def get_data(switch_var, switch, dataset, experiment):
-    for var in [k for k, v in switch_var.items() if v]:
-        da = get_variable(switch, dataset, experiment, var)
+def get_data(switch, var, dataset, experiment):
+        da = get_variable(switch, var, dataset, experiment)
         da, vert_reg = pick_vert_reg(switch, dataset, da)
-        da, hor_reg  = pick_hor_reg(switch, dataset, experiment, da)
-        yield var, da, f'{vert_reg}{hor_reg}'
+        da, hor_reg  = pick_hor_reg(switch, dataset, experiment, da)    # experiment needed as wap is loaded to pick region
+        yield da, f'{vert_reg}{hor_reg}'
 
 
 
 # ------------------------
 #    Calculate metrics
 # ------------------------
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_snapshot(da):
-    plot = True
+    plot = False
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
             mF.cycle_plot(fig)
     return da.isel(time=0)
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_tMean(da):
     return da.mean(dim='time', keep_attrs=True) 
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_sMean(da):
     return da.weighted(np.cos(np.deg2rad(da.lat))).mean(dim=('lat','lon'), keep_attrs=True).compute() # dask objects require the compute part
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_area(da, dim):
     ''' Area covered in domain [% of domain]. Used for area of ascent and descent (wap) '''
     mask = xr.where(da > 0, 1, 0)
@@ -154,30 +151,33 @@ def get_area(da, dim):
 #   Run / save metric
 # ------------------------
 # ------------------------------------------------------------------------------------ Get metric and metric name ----------------------------------------------------------------------------------------------------- #
-def calc_metric(switchM, da, var, region):
+def calc_metric(switchM, var_name, da, region):
         dim = mC.dims_class(da)
         for metric_name in [k for k, v in switchM.items() if v]:
             metric = None
             metric = get_snapshot(da)   if metric_name == 'snapshot'    else metric
             metric = get_tMean(da)      if metric_name == 'tMean'       else metric
             metric = get_sMean(da)      if metric_name == 'sMean'       else metric
-            metric = get_area(da, dim)  if metric_name == 'sMean'       else metric
-
-            metric_name =f'{var}{region}_{metric_name}' 
+            metric = get_area(da, dim)  if metric_name == 'area'        else metric
+            metric_name =f'{var_name}{region}_{metric_name}' 
             yield metric, metric_name
 
 
 # ------------------------------------------------------------------------------------ Get dataset and save metric ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator(show_time = True)
 def run_ls_metrics(switch_var, switchM, switch):
     print(f'variable: {mV.resolutions[0]} {mV.timescales[0]} data \n {[key for key, value in switch_var.items() if value]}')
     print(f'metric: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
-    for dataset, experiment in mF.run_dataset():
-        for var, da, region in get_data(switch_var, switch, dataset, experiment):
-            for metric, metric_name in calc_metric(switchM, da, var, region):
-                mF.save_structured(dataset, experiment, metric, metric_name, 'metrics', var)                                                                                                            if switch['save']               else None
-                mF.save_file(xr.Dataset({metric_name: metric}), folder = f'{home}/Desktop/{metric_name}', filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop']    else None
+    for var_name in [k for k, v in switch_var.items() if v]:
+        for dataset, experiment in mF.run_dataset(var_name):
+            for da, region in get_data(switch, var_name, dataset, experiment):
+                for metric, metric_name in calc_metric(switchM, var_name, da, region):
+                    print(f'\t\t\tsaving: {metric_name}')                                                                      if switch['save']               else None
+                    mF.save_structured(var_name, dataset, experiment, metric, metric_name, folder = 'metrics')                 if switch['save']               else None
+                    mF.save_file(xr.Dataset({metric_name: metric}), 
+                                 folder = f'{home}/Desktop/{metric_name}', 
+                                 filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop']    else None
 
 
 # ----------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
@@ -185,29 +185,30 @@ if __name__ == '__main__':
     switch_var = {                                                                                          # Choose variable (can choose multiple)
         'pr':       False,  'clwvi':        False,   'pe':          False,                                  # Precipitation
         'wap':      False,                                                                                  # Circulation
-        'hur':      True,  'hus':          False,                                                          # Humidity                             
+        'hur':      False,  'hus':          False,                                                          # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                  # Temperature
         'netlw':    False,  'rlds':         False,  'rlus':         False,  'rlut': False,                  # Longwave radiation
         'netsw':    False,  'rsdt':         False,  'rsds':         False,  'rsus': False,  'rsut': False,  # Shortwave radiation
-        'lcf':      False,  'hcf':          False,                                                          # Cloud fraction
+        'lcf':      True,  'hcf':          False,                                                          # Cloud fraction
         'zg':       False,                                                                                  # Geopotential height
         'hfss':     False,  'hfls':         False,                                                          # Surface fluxes
         'h':        False,  'h_anom2':      False,                                                          # Moist Static Energy
         }
     
     switchM = {                                                                         # choose metric type (can choose multiple)
-        'snapshot': True,   'tMean':    False,   'sMean':    False,   'area':   False,  # type 
+        'snapshot': True,   'tMean':    True,   'sMean':    True,   'area':   False,  # type 
         }
 
     switch = {                                                                                                  # choose data to use and mask
-        'constructed_fields':   False,  'sample_data':      True,  'gadi_data':    False,                      # data to use
+        'constructed_fields':   False,  'sample_data':      False,  'gadi_data':    True,                      # data to use
 
-        '250hpa':               False,  '500hpa':           False,  '700hpa':       False,  'vMean':    True,   # mask data: vertical (only affects wap, hur)
+        '250hpa':               False,  '500hpa':           False,  '700hpa':       False,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
         'ascent':               False,  'descent':          False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)
         'ascent_fixed':         False,  'descent_fixed':    True,                                              # mask data: horizontal 
         
-        'save_to_desktop':      False,  'save':             False,                                              # save
+        'save_to_desktop':      False,  'save':             True,                                              # save
         }
+    
     
     run_ls_metrics(switch_var, switchM, switch)
 
