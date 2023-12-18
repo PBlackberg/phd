@@ -27,7 +27,7 @@ import myFuncs as mF
 
 
 # ------------------------
-#       Get data
+#       Get metric
 # ------------------------
 # ---------------------------------------------------------------------------------------- get scene ----------------------------------------------------------------------------------------------------- #
 def tas_weighted(metric, title, axtitle, dataset):        
@@ -42,9 +42,9 @@ def tas_weighted(metric, title, axtitle, dataset):
 
 def ecs_weighted(metric, title, axtitle, dataset):     
     title = f'_per_K (ECS)'
-    tas_change = mV.ecs_list[dataset] 
-    metric = metric / tas_change
-    axtitle = f'{dataset:20} ECS = {np.round(tas_change,2)} K'
+    ecs = mV.ecs_list[dataset] 
+    metric = metric / ecs
+    axtitle = f'{dataset:20} ECS = {np.round(ecs,2)} K'
     return metric, title, axtitle
 
 def get_change_with_warming(metric_class, title, axtitle, dataset, switchM):
@@ -79,11 +79,12 @@ def get_limits(switchM, metric_name):
     if switchM['change with warming']:
         qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0.05, 0.95, 0, 1] if metric_class.name in ['pr_tMean']           else [qWithin_low, qWithin_high, qBetween_low, qBetween_high]
         qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.9, 0, 1]     if metric_class.name in ['pr_rx1day_tMean']    else [qWithin_low, qWithin_high, qBetween_low, qBetween_high] 
-    vmin, vmax = mF.find_limits(switchM, metric_class, get_metric, 
-                                qWithin_low, qWithin_high, qBetween_low, qBetween_high, # if calculating limits (set lims to '', or comment out)
-                                vmin = 0, vmax = 0.4                                    # if manually setting limits
+    vmin, vmax = mF.find_limits(switchM, metric_class, get_metric, qWithin_low, qWithin_high, qBetween_low, qBetween_high,
+                                
+                                vmin = 0, vmax = 0.4    # if manually setting limits (comment out for normal limits)
+                                # vmin = 0, vmax = 0.2    # if manually setting limits (comment out for normal limits)
                                 )      
-    if metric_class.var_type in ['wap'] or switchM['change with warming']:
+    if metric_class.var in ['wap'] or switchM['change with warming']:
         vabs_max = np.maximum(np.abs(vmin), np.abs(vmax))
         vmin, vmax = -vabs_max, vabs_max 
     return vmin, vmax
@@ -97,16 +98,15 @@ def get_limits(switchM, metric_name):
 def format_fig(num_subplots):
     ncols = 4 if num_subplots > 4 else num_subplots # max 4 subplots per row
     nrows = int(np.ceil(num_subplots / ncols))
-    width, height = [14, 3]   if nrows == 1 else [14, 6] 
-    width, height = [14, 3.5] if nrows == 2 else [width, height]
-    width, height = [14, 4.5] if nrows == 3 else [width, height]
-    width, height = [14, 5]   if nrows == 4 else [width, height]
-    width, height = [14, 6]   if nrows == 5 else [width, height] 
-    width, height = [14, 7.5] if nrows == 6 else [width, height]
-    width, height = [14, 8.25]  if nrows == 7 else [width, height]
-    width, height = [14, 8.25]   if nrows == 8 else [width, height]
+    width, height = [14, 3]     if nrows == 1   else [14, 6] 
+    width, height = [14, 3.5]   if nrows == 2   else [width, height]
+    width, height = [14, 4.5]   if nrows == 3   else [width, height]
+    width, height = [14, 5]     if nrows == 4   else [width, height]
+    width, height = [14, 6]     if nrows == 5   else [width, height] 
+    width, height = [14, 7.5]   if nrows == 6   else [width, height]
+    width, height = [14, 8.25]  if nrows == 7   else [width, height]
+    width, height = [14, 8.25]  if nrows == 8   else [width, height]
     fig, axes = mF.create_map_figure(width = width, height = height, nrows=nrows, ncols=ncols)
-    
     mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig, axes, nrows, ncols
 
@@ -148,7 +148,7 @@ def plot_scenes(switchM, metric_name, vmin = None, vmax = None):
     for subplot, dataset in enumerate(mV.datasets):
         metric, title, axtitle = get_metric(switchM, dataset, metric_class)
         fig.text(0.5, 0.95, f'{metric_class.name}{title}', ha = 'center', fontsize = 15, transform=fig.transFigure)  # fig title
-        ax = axes.flatten()[subplot] if len(mV.datasets)>1 else axes
+        ax = axes.flatten()[subplot]
         pcm = mF.plot_axMapScene(ax, metric, metric_class.cmap, vmin = vmin, vmax = vmax)
         format_axes(fig, ax, subplot, len(mV.datasets), nrows, ncols, axtitle)
     plot_colobar(fig, ax, pcm, metric_class.label)
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         'netlw':                False,  'rlds':          False, 'rlus':         False,  'rlut':     False,                  # LW
         'netsw':                False,  'rsdt':          False, 'rsds':         False,  'rsus':     False,  'rsut': False,  # SW
         'lcf':                  False,  'hcf':           False, 'ws_lc':        False,  'ws_hc':    False,                  # clouds
-        'h':                    False,   'h_anom2':      False,                                                             # moist static energy
+        'h':                    False,  'h_anom2':      False,                                                              # moist static energy
         }
 
     switchM = {                                                                     # choose seetings for metrics
@@ -196,7 +196,7 @@ if __name__ == '__main__':
         '250hpa':               False,  '500hpa':       False,  '700hpa':    False, # mask: vertical
         'descent':              False,  'ascent':       False,  'ocean':     False, # mask: horizontal
         'descent_fixed':        False,  'ascent_fixed': False,                      # mask: horizontal
-        'snapshot':             False,  'tMean':        False,                      # scene type
+        'snapshot':             False,  'tMean':        True,                      # scene type
         'change with warming':  False,  'per kelvin':   False, 'per ecs':   False,  # scenario type
         }
 
@@ -210,15 +210,6 @@ if __name__ == '__main__':
 
 # ------------------------------------------------------------------------------------ run ----------------------------------------------------------------------------------------------------- #
     run_map_plot(switch_metric, switchM, switch)
-
-
-
-
-
-
-
-
-
 
 
 
