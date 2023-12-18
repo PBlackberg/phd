@@ -47,8 +47,8 @@ def rename_var(folder_path, old_var_name, new_var_name):
 # ------------------------------------------------------------------------------ Choose variable to rename --------------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
 
-    folder_path = '/Users/cbla0002/Documents/data/pr/sample_data/cmip6'
-    old_var_name, new_var_name = 'precip', 'pr'
+    folder_path = '/Users/cbla0002/Documents/data/sample_data/tas/obs'
+    old_var_name, new_var_name = 'sst', 'tas'
     
     rename_var(folder_path, old_var_name, new_var_name)
 

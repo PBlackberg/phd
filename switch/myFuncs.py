@@ -104,9 +104,9 @@ def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'g
     var = 'pr'  if var == 'var_2d' else var # for testing
     var = 'hur' if var == 'var_3d' else var # for testing
                                                    
-    da = cF.get_cF_var(dataset_alt, var)                                                                                                                            if switch['constructed_fields']             else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
-    da = gD.get_var_data(source, dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
+    da = cF.get_cF_var(dataset_alt, var)                                                                                                                    if switch['constructed_fields']             else None
+    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']   if switch['sample_data']                    else da  
+    da = gD.get_var_data(source, dataset_alt, experiment, var)                                                                                              if switch['gadi_data']                      else da
     if '_' in dataset:                                                  
         start_year, end_year = dataset.split('_')[1].split('-')
         da = da.sel(time= slice(start_year, end_year))
@@ -195,6 +195,22 @@ def save_plot(switch= {'save_folder_desktop': False, 'save_test_desktop': False,
         save_figure(fig, folder = f'{home}/Desktop/plots', filename = f'{filename}.pdf')            if save_type == 'save_folder_desktop' else None
         save_figure(fig, folder = f'{home}/Desktop', filename = 'test.pdf')                         if save_type == 'save_test_desktop'   else None
         save_figure(fig, folder = f'{os.getcwd()}', filename = 'test.png')                          if save_type == 'save_test_cwd'       else None
+
+def show_plot(fig, show_type = 'cycle', cycle_time = 0.5):
+    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
+    if show_type == 'cycle':
+        plt.ion()
+        plt.show()
+        plt.pause(cycle_time)
+        plt.close(fig)
+        plt.ioff()
+    elif show_type == 'save_cwd':
+        save_plot(fig = fig) 
+        return True
+    elif show_type == 'show':
+        plt.show()
+        return True
+
 
 
 # --------------------------------------------------------------------------------------- Decorators --------------------------------------------------------------------------------------------------- #
@@ -434,20 +450,6 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     # scene = conv_regions.isel(time=1)
     # mF.plot_one_scene(scene)
 
-def show_plot(fig, show_type = 'cycle', cycle_time = 0.5):
-    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
-    if show_type == 'cycle':
-        plt.ion()
-        plt.show()
-        plt.pause(cycle_time)
-        plt.close(fig)
-        plt.ioff()
-    elif show_type == 'save_cwd':
-        save_plot(fig = fig) 
-        return True
-    elif show_type == 'show':
-        plt.show()
-        return True
 
 
 # ----------------------------------------------------------------------------------------------- Scatter plot --------------------------------------------------------------------------------------------------- #

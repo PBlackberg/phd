@@ -53,23 +53,25 @@ def find_convective_regions(switch, dataset, experiment):
 @mF.timing_decorator()
 def get_conv_snapshot(da):
     ''' Convective region '''
-    plot = True
+    plot = False
     if plot:
-        for day in np.arange(0, len(da.time.data)):
-            fig = mF.plot_scene(da.isel(time=day), ax_title = day)
-            mF.cycle_plot(fig, cycle_time = 0.5)
+        for timestep in np.arange(0, len(da.time.data)):
+            fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+            if mF.show_plot(fig, 'cycle', cycle_time = 0.5):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+                break
     return da.isel(time=0) 
 
 @mF.timing_decorator()
 def get_obj_snapshot(da):
     ''' Contihuous convective regions (including crossing lon boundary) '''
-    plot = False
+    plot = True
     if plot:
         for day in np.arange(0, len(da.time.data)):
             scene = skm.label(da.isel(time=day), background = 0, connectivity=2)
             fig = mF.plot_scene(xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data}))
-            mF.cycle_plot(fig, cycle_time = 3.25)
-    
+            if mF.show_plot(fig, 'cycle', cycle_time = 0.5):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+                break
+        
     scene = skm.label(da.isel(time=0), background = 0, connectivity=2)
     return xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data})
 
@@ -248,8 +250,8 @@ def run_org_metrics(switch_metric, switch):
     for dataset, experiment in mF.run_dataset():
         da = find_convective_regions(switch, dataset, experiment)
         for metric, metric_name in calc_metric(switch_metric, da):
-            mF.save_structured(dataset, experiment, metric, metric_name, 'metrics', 'org')                                                                                                          if switch['save']               else None
-            mF.save_file(xr.Dataset({metric_name: metric}), folder = f'{home}/Desktop/{metric_name}', filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop']    else None
+            mF.save_metric(switch, 'org', dataset, experiment, metric, metric_name, folder = 'metrics') if switch['save'] or switch['save_folder_desktop'] else None
+            print(f'\t\t\t{metric_name} saved')                                                         if switch['save'] or switch['save_folder_desktop'] else None
 
 
 # ---------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
@@ -266,7 +268,7 @@ if __name__ == '__main__':
     switch = {                                                                              # settings
         'constructed_fields':   False,  'sample_data':      True,   'gadi_data':    False,  # data source
         'fixed_area':           False,                                                      # conv_threshold type
-        'save':                 False,  'save_to_desktop':  False                           # save
+        'save_folder_desktop':  False , 'save':             True,                          # save
         }
     
     run_org_metrics(switch_metric, switch)

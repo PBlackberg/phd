@@ -130,7 +130,7 @@ def get_snapshot(da):
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
-            if mF.show_plot(fig, 'save_cwd', cycle_time = 3.25): # [show, save_cwd, cycle] (only cycle wont break the loop)
+            if mF.show_plot(fig, 'cycle', cycle_time = 0.5): #3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
                 break
     return da.isel(time=0)
 
@@ -178,7 +178,7 @@ def run_ls_metrics(switch_var, switchM, switch):
         for dataset, experiment in mF.run_dataset(var_name):
             da, region = get_data(switch, var_name, dataset, experiment)
             for metric, metric_name in calc_metric(switchM, var_name, da, region):            
-                mF.save_metric(var_name, dataset, experiment, metric, metric_name, folder = 'metrics')  if switch['save'] else None
+                mF.save_metric(switch, var_name, dataset, experiment, metric, metric_name, folder = 'metrics')  if switch['save'] else None
                 print(f'\t\t\t{metric_name} saved')                                                     if switch['save'] else None
                     
 
@@ -202,9 +202,9 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                                  # choose data to use and mask
-        'constructed_fields':   False,  'sample_data':      False,  'gadi_data':    False,                      # data to use
+        'constructed_fields':   False,  'sample_data':      True,  'gadi_data':    False,                      # data to use
 
-        '250hpa':               False,  '500hpa':           False,  '700hpa':       True,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
+        '250hpa':               False,  '500hpa':           False,  '700hpa':       False,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
         'ascent':               False,  'descent':          False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)
         'ascent_fixed':         False,  'descent_fixed':    False,                                              # mask data: horizontal 
         
@@ -213,6 +213,16 @@ if __name__ == '__main__':
     
     
     run_ls_metrics(switch_var, switchM, switch)
+
+
+
+
+
+
+
+
+
+
 
 
 

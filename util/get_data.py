@@ -228,6 +228,17 @@ def get_era5_monthly(var, switch = {'ocean': False}):
 
 
 
+# --------------------------------------------------------------------------------------- NOAA ----------------------------------------------------------------------------------------------------------#
+def get_NOAA(var):
+    ds = xr.open_dataset('/Users/cbla0002/Documents/data/sample_data/tas/obs/sst.mnmean.nc')
+    ds = ds.sortby('lat').sel(lat = slice(-35,35))
+    da = ds[var]
+    da = regrid_hor(ds, da)     if mV.resolutions[0] == 'regridded' else da # horizontally interpolate
+    ds = xr.Dataset(data_vars = {f'{var}': da.sel(lat=slice(-30,30))}, attrs = ds.attrs)
+    return ds
+
+
+
 # ----------------------------
 #  Run script / save variable
 # ----------------------------
@@ -249,6 +260,8 @@ def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False
         da = get_era5_monthly('t')['t']                                                     if var_name == 'ta'     and dataset == 'ERA5'   else da
         da = get_era5_monthly('q')['q']                                                     if var_name == 'hus'    and dataset == 'ERA5'   else da
         da = get_era5_monthly('z')['z']                                                     if var_name == 'zg'     and dataset == 'ERA5'   else da
+
+        da = get_NOAA('tas')['tas']                                                         if var_name == 'tas'     and dataset == 'NOAA'   else da
     return da
 
 
@@ -295,7 +308,7 @@ def run_var_data(switch_var, switch, source, dataset, experiment):
             continue
         da = get_var_data(source, dataset, experiment, var_name, switch)
         ds = xr.Dataset(data_vars = {var_name: da}) if not var_name == 'ds_cl' else da
-        # print(ds)
+        print(ds)
         # print(ds[f'{var_name}'])
         save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] else None
 
@@ -324,7 +337,7 @@ if __name__ == '__main__':
 
     switch_var = {
         'pr':       False,                                                                                      # Precipitation
-        'tas':      False, 'ta':            False,                                                              # Temperature
+        'tas':      True, 'ta':            False,                                                              # Temperature
         'wap':      False,                                                                                      # Circulation
         'hur':      False, 'hus' :          False,                                                              # Humidity                   
         'rlds':     False, 'rlus':          False,  'rlut':     False,  'netlw':    False,                      # Longwave radiation

@@ -93,14 +93,14 @@ observations = [
 #    General settings
 # ------------------------
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 experiments = [
-    'historical',       # current climate conditions simulation        
+    # 'historical',       # current climate conditions simulation        
     # 'rcp85',          # warm scenario for cmip5
-    'ssp585',         # warm scenario for cmip6
+    # 'ssp585',         # warm scenario for cmip6
     '',               # observations
     ]
 

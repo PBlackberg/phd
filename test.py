@@ -10,20 +10,15 @@ import myVars as mV
 import myFuncs as mF     
 import myClasses as mC
 
-# a = xr.open_dataset('/Users/cbla0002/Documents/data/metrics/ws/ws_hc_snapshot/obs/ISCCP_ws_hc_snapshot_daily__regridded.nc')
-# print(a)
 
-# mF.plot_scene(a['ws_hc_snapshot'])
-# plt.show()
+a = xr.open_dataset('sst.mnmean.nc')
+print(a)
 
 
 
-def a_func(a = 5):
-    if a == 6:
-        return True
 
-if a_func(a = 6):
-    print('executes')
+
+NOAA_tas_monthly__regridded.nc
 
 
 
