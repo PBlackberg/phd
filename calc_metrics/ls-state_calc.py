@@ -126,7 +126,7 @@ def get_data(switch, var, dataset, experiment):
 # ------------------------
 @mF.timing_decorator()
 def get_snapshot(da):
-    plot = False
+    plot = True
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
@@ -188,8 +188,8 @@ if __name__ == '__main__':
     switch_var = {                                                                                          # Choose variable (can choose multiple)
         'pr':       False,  'clwvi':        False,   'pe':          False,                                  # Precipitation
         'wap':      False,                                                                                  # Circulation
-        'hur':      True,  'hus':          False,                                                          # Humidity                             
-        'tas':      False,  'ta':           False,  'stability':    False,                                  # Temperature
+        'hur':      False,  'hus':          False,                                                          # Humidity                             
+        'tas':      True,  'ta':           False,  'stability':    False,                                  # Temperature
         'netlw':    False,  'rlds':         False,  'rlus':         False,  'rlut': False,                  # Longwave radiation
         'netsw':    False,  'rsdt':         False,  'rsds':         False,  'rsus': False,  'rsut': False,  # Shortwave radiation
         'lcf':      False,  'hcf':          False,                                                          # Cloud fraction
@@ -203,7 +203,7 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                                                  # choose data to use and mask
-        'constructed_fields':   False,  'sample_data':      False,  'gadi_data':    True,                      # data to use
+        'constructed_fields':   False,  'sample_data':      False,  'gadi_data':    False,                      # data to use
 
         '250hpa':               False,  '500hpa':           False,  '700hpa':       True,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
         'ascent':               False,  'descent':          False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)

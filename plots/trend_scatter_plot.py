@@ -210,7 +210,7 @@ if __name__ == '__main__':
         'descent':      False,  'ascent':   False,  'ocean':    False,                  # mask: horizontal
         'fixed area':   False,  '90':       False,  '95':       False,  '97':   False,  # conv threshold (95th default)
         'sMean':        False,   'area':     False,                                      # metric type
-        'anomalies':    True,                                                           # calc type
+        'anomalies':    False,                                                           # calc type
         }
     
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
         'pr_rx1day':    False,  'pr_rx5day':    False,                                                                  # precipitation extremes
         'rome':         False,  'ni':           False,  'areafraction': False,  'o_heatmap': False,                     # organization
         'wap':          False,                                                                                          # circulation
-        'tas':          True,  'stability':    False,  'oni':          True,                                          # temperature
+        'tas':          True,  'stability':    False,  'oni':          False,                                          # temperature
         'hur':          False,  'hus':          False,                                                                  # humidity
         'netlw':        False,  'rlut':         False,  'rlds':         False,  'rlus':     False,  'rlut':     False,  # LW
         'netsw':        False,  'rsdt':         False,  'rsds':         False,  'rsus':     False,  'rsut':     False,  # SW
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         'descent_fixed':    False,  'ascent_fixed': False,                                      # mask: horizontal
         'fixed area':       False,  '90':           False,  '95':       False,  '97':   False,  # conv threshold (95th default)
         'sMean':            True,   'area':         False,                                      # metric type
-        'anomalies':        True,                                                               # calc type
+        'anomalies':        False,                                                               # calc type
         }
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         'scatter':              False, 'density_map':         True,                            # plot type
         'slope':                True, 'bin_trend':           False,                            # plot type
         'show':                 False,                                                          # show
-        'save_test_desktop':    True,  'save_folder_desktop': False, 'save_folder_cwd': False,  # save
+        'save_test_desktop':    True,  'save_folder_desktop': False, 'save_cwd': False,  # save
         }
     
 # ----------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #

@@ -226,8 +226,8 @@ if __name__ == '__main__':
         'descent':      False,  'ascent':               False,  'ocean':    False,                  # mask: horizontal
         'fixed area':   False,  '90':                   False,  '95':       False,  '97':   False,  # conv threshold
         'sMean':        False,  'area':                 False,                                      # metric type
-        'clim':         True,   'change_with_warming': False,                                      # Scenario type   
-        'per_kelvin':  False, 'per_ecs':              False,                                      # by warming
+        'clim':         True,   'change_with_warming': True,                                      # Scenario type   
+        'per_kelvin':   True, 'per_ecs':              False,                                      # by warming
         }
 
     
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         'rome':         False,  'ni':           False,  'areafraction': False,  'F_pr10':   False,                      # organization
         'wap':          False,                                                                                          # circulation
         'hur':          False,  'hus':          False,                                                                  # humidity
-        'tas':          False,  'ecs':          True,  'stability':    False,                                          # temperature
+        'tas':          True,  'ecs':          False,  'stability':    False,                                          # temperature
         'netlw':        False,  'rlds':         False,  'rlus':         False,  'rlut':     False,                      # LW
         'netsw':        False,  'rsdt':         False,  'rsds':         False,  'rsus':     False,  'rsut':     False,  # SW
         'lcf':          False,   'hcf':         False, 'ws_lc':        False,  'ws_hc':    False,                       # clouds
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         'descent_fixed':    False,  'ascent_fixed':         False,                                      # mask: horizontal
         'fixed area':       False,  '90':                   False,  '95':       False,  '97':   False,  # conv threshold
         'sMean':            True,   'area':                 False,                                      # metric type
-        'clim':             False,  'change_with_warming':  False,                                       # Scenario type   
+        'clim':             False,  'change_with_warming':  True,                                       # Scenario type   
         'per_kelvin':       False,  'per_ecs':              False,                                      # by warming
         }
 

@@ -57,7 +57,7 @@ def get_conv_snapshot(da):
     if plot:
         for day in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=day), ax_title = day)
-            mF.cycle_plot(fig, cycle_time = 3.25)
+            mF.cycle_plot(fig, cycle_time = 0.5)
     return da.isel(time=0) 
 
 @mF.timing_decorator()
@@ -264,7 +264,7 @@ if __name__ == '__main__':
         }
 
     switch = {                                                                              # settings
-        'constructed_fields':   False,  'sample_data':      False,   'gadi_data':    True,  # data source
+        'constructed_fields':   False,  'sample_data':      True,   'gadi_data':    False,  # data source
         'fixed_area':           False,                                                      # conv_threshold type
         'save':                 False,  'save_to_desktop':  False                           # save
         }
