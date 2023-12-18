@@ -48,3 +48,6 @@ plot_object = da.isel(time=0).plot()
 fig = plot_object.figure
 fig.savefig(f'{os.getcwd()}/test/plot_test/test.png')
 print(da.isel(time=0))
+
+
+
