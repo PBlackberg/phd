@@ -41,7 +41,7 @@ def get_fixed_area_conv_threshold(da):
     ''' Gridboxes exceeding variable precipitation rate considered convective. Area is fixed to 5% each day '''
     return da.quantile(int(mV.conv_percentiles[0])*0.01, dim=('lat', 'lon'), keep_attrs=True)
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def find_convective_regions(switch, dataset, experiment):
     da = mF.load_variable(switch, 'pr', dataset, experiment)
     conv_threshold = get_conv_threshold(da) if not switch['fixed_area'] else get_fixed_area_conv_threshold(da)    
@@ -50,17 +50,17 @@ def find_convective_regions(switch, dataset, experiment):
 
 
 # --------------------------------------------------------------------------- Visualize convective regions and objects ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_conv_snapshot(da):
     ''' Convective region '''
-    plot = False
+    plot = True
     if plot:
         for day in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=day), ax_title = day)
-            mF.cycle_plot(fig)
+            mF.cycle_plot(fig, cycle_time = 3.25)
     return da.isel(time=0) 
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_obj_snapshot(da):
     ''' Contihuous convective regions (including crossing lon boundary) '''
     plot = False
@@ -68,7 +68,7 @@ def get_obj_snapshot(da):
         for day in np.arange(0, len(da.time.data)):
             scene = skm.label(da.isel(time=day), background = 0, connectivity=2)
             fig = mF.plot_scene(xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data}))
-            mF.cycle_plot(fig)
+            mF.cycle_plot(fig, cycle_time = 3.25)
     
     scene = skm.label(da.isel(time=0), background = 0, connectivity=2)
     return xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data})
@@ -78,7 +78,7 @@ def get_obj_snapshot(da):
 #    Calculate metrics
 # ------------------------
 # ---------------------------------------------------------------------------------------- Areafraction ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_areafraction(da, dim):
     ''' Areafraction convered by convection (with fixed precipitation rate, the convective area will fluctuate from day to day)'''
     areaf = [None] * len(da.time.data)
@@ -89,7 +89,7 @@ def calc_areafraction(da, dim):
 
 
 # -------------------------------------------------------------------------------------- NI (Number Index) ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_ni(da):
     ''' Number of object in scene (a rough indicator of clumpiness) '''
     ni = [None] * len(da.time.data)
@@ -103,7 +103,7 @@ def calc_ni(da):
 
 
 # ------------------------------------------------------------------------------------------ Mean area ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_o_area_mean(da, dim):
     ''' Mean area of each contiguous convective region (object) in a day (similar to ROME (Radar Organization MEtric) when area is fixed) '''
     mean_area = [None] * len(da.time.data)
@@ -154,7 +154,7 @@ def rome_scene(da, labels, dim):
                 idx_o += 1
     return np.mean(np.array(rome_allPairs))
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_rome(da, dim):
     ''' ROME (RAdar Organization MEtric) '''
     rome = [None] * len(da.time.data)
@@ -166,7 +166,7 @@ def calc_rome(da, dim):
         rome[day] = rome_scene(da_day, labels, dim)
     return xr.DataArray(rome, dims = ['time'], coords = {'time': da.time.data})
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_rome_n(da, dim, n=8): 
     ''' ROME_n
         Finds n largest objects and calls rome_scene of subset of objects '''
@@ -184,7 +184,7 @@ def calc_rome_n(da, dim, n=8):
 
 
 # -------------------------------------------------------------------------------------------- Object area ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_o_area(da, dim):
     ''' Area of each contiguous convective regions (objects). Used to create probability distribution of sizes of convective blobs '''
     # o_area = [None] * len(da.time.data) * len(dim.lat) * len(dim.lon)
@@ -204,7 +204,7 @@ def calc_o_area(da, dim):
     
 
 # ------------------------------------------------------------------------------------------- Object heatmap ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_o_heatmap(da):
     ''' Frequency of occurence of objects in individual gridboxes in tropical scene '''
     return da.sum(dim= 'time') / len(da.time.data)
@@ -240,7 +240,7 @@ def calc_metric(switch_metric, da):
 
 
 # ------------------------------------------------------------------------------------ Get dataset and save metric ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def run_org_metrics(switch_metric, switch):
     print(f'variable: Binary matrix from gridboxes exceeding {mV.conv_percentiles[0]}th percentile precipitation threshold, using {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'metric: {[key for key, value in switch_metric.items() if value]}')
@@ -254,19 +254,19 @@ def run_org_metrics(switch_metric, switch):
 
 # ---------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    switch_metric = {                                                               # metric
-        'obj_snapshot': False,   'conv_snapshot':    False,   'areafraction': False,   # conceptual visualization of data
-        'ni':           False,                                                       # Number index
-        'o_area_mean':  False,                                                       # object mean area                     
-        'rome':         False,   'rome_n':           False,                           # ROME
-        'o_area':       False,                                                       # object area 
-        'o_heatmap':    True,                                                       # object location
+    switch_metric = {                                                                   # metric
+        'conv_snapshot':    True,   'obj_snapshot':     False,  'areafraction': False, # conceptual visualization of data
+        'ni':               False,                                                      # Number index
+        'o_area_mean':      False,                                                      # object mean area                     
+        'rome':             False,  'rome_n':           False,                          # ROME
+        'o_area':           False,                                                      # object area 
+        'o_heatmap':        False,                                                      # object location
         }
 
     switch = {                                                                              # settings
-        'constructed_fields':   False,  'sample_data':      True,   'gadi_data':    False,  # data source
+        'constructed_fields':   False,  'sample_data':      False,   'gadi_data':    True,  # data source
         'fixed_area':           False,                                                      # conv_threshold type
-        'save':                 True,  'save_to_desktop':  False                            # save
+        'save':                 False,  'save_to_desktop':  False                           # save
         }
     
     run_org_metrics(switch_metric, switch)

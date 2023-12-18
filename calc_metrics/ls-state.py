@@ -26,7 +26,7 @@ import myFuncs as mF
 # ------------------------
 # -------------------------------------------------------------------------------------- pick region ----------------------------------------------------------------------------------------------------- #
 def calc_vMean(da, dataset = '', plevs0 = 850e2, plevs1 = 0):       # free troposphere (as most values at 1000 hPa  and 925 hPa over land are NaN)                              
-    plevs = slice(plevs0, plevs1) if not dataset == 'ERA5' else slice(plevs1, plevs0)
+    plevs = slice(plevs0, plevs1) #if not dataset == 'ERA5' else slice(plevs1, plevs0)
     da = da.sel(plev=plevs)
     w = ~np.isnan(da) * da['plev']                                  # Where there are no values, exclude the associated pressure levels from the weights
     da = (da * w).sum(dim='plev') / w.sum(dim='plev') 
@@ -94,6 +94,9 @@ def get_variable(switch, var, dataset, experiment):
         da_sMean = get_sMean(da)
         da_anom = da - da_sMean
         da = da_anom**2
+        plot_object = da.isel(time=0).plot()
+        fig = plot_object.figure
+        fig.savefig(f'{os.getcwd()}/test/plot_test/test2.png')
 
     elif var == 'pe':
         pr = mF.load_variable(switch, 'pr', dataset, experiment, timescale = 'daily').resample(time='1MS').mean(dim='time')    # mm/m^2/day
@@ -185,11 +188,11 @@ if __name__ == '__main__':
     switch_var = {                                                                                          # Choose variable (can choose multiple)
         'pr':       False,  'clwvi':        False,   'pe':          False,                                  # Precipitation
         'wap':      False,                                                                                  # Circulation
-        'hur':      False,  'hus':          False,                                                          # Humidity                             
+        'hur':      True,  'hus':          False,                                                          # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                  # Temperature
         'netlw':    False,  'rlds':         False,  'rlus':         False,  'rlut': False,                  # Longwave radiation
         'netsw':    False,  'rsdt':         False,  'rsds':         False,  'rsus': False,  'rsut': False,  # Shortwave radiation
-        'lcf':      True,  'hcf':          False,                                                          # Cloud fraction
+        'lcf':      False,  'hcf':          False,                                                          # Cloud fraction
         'zg':       False,                                                                                  # Geopotential height
         'hfss':     False,  'hfls':         False,                                                          # Surface fluxes
         'h':        False,  'h_anom2':      False,                                                          # Moist Static Energy
@@ -202,9 +205,9 @@ if __name__ == '__main__':
     switch = {                                                                                                  # choose data to use and mask
         'constructed_fields':   False,  'sample_data':      False,  'gadi_data':    True,                      # data to use
 
-        '250hpa':               False,  '500hpa':           False,  '700hpa':       False,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
+        '250hpa':               False,  '500hpa':           False,  '700hpa':       True,  'vMean':    False,   # mask data: vertical (only affects wap, hur)
         'ascent':               False,  'descent':          False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)
-        'ascent_fixed':         False,  'descent_fixed':    True,                                              # mask data: horizontal 
+        'ascent_fixed':         False,  'descent_fixed':    False,                                              # mask data: horizontal 
         
         'save_to_desktop':      False,  'save':             True,                                              # save
         }

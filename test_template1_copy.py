@@ -146,8 +146,8 @@ def get_test_data(switch, switch_var):
         da = xr.open_dataset(path)
 
     if switch['variable']:
-        print(f'{var} data from dataset: {mV.datasets[0]} ({mV.find_source(mV.datasets[0])})')
-        print(f'experiment: {mV.experiments[0]}')           if mV.find_source(mV.datasets[0]) not in ['test']   else None   # only print experiment for model data
+        print(f'{var} data from dataset: {mV.datasets[0]} ({mF.find_source(mV.datasets[0])})')
+        print(f'experiment: {mV.experiments[0]}')           if mF.find_source(mV.datasets[0]) not in ['test']   else None   # only print experiment for model data
         da = mF.load_variable(switch, var, mV.datasets[0])                                                                  # default is precipitation data
 
     if switch['metric']:
@@ -167,18 +167,25 @@ switch = {                                                                      
     }
 
 switch_var = {                                                  # variable type
-    'var_1d':   False, 'var_2d':    True,  'var_3d':   False,  # basic
+    'var_1d':   True, 'var_2d':    True,  'var_3d':   False,  # basic
     'conv':     False,                                          # like convective regions
     'manual':   False                                           # matrices that can be edited in this script
     }
 
 
 
+
+
 # ----------------------
 #      Testing
 # ----------------------
-# da = get_test_data(switch, switch_var)
-# print(da)
+da = get_test_data(switch, switch_var)
+print(da)
+
+da.plot()
+plt.show()
+
+
 
 # mF.plot_one_scene(a['obj_snapshot_95thprctile'])
 

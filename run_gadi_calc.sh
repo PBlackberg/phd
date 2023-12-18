@@ -16,6 +16,7 @@ python /home/565/cb4968/Documents/code/phd/switch/calculate_clouds.py $PBS_NCPUS
 
 
 
+# comment out from here if running bash script
 # -------------
 # submit script
 # -------------

@@ -158,6 +158,7 @@ def get_cmip_data(var_name, source, model, experiment, switch = {'ocean': False}
         # path_folder = '/g/data/oi10/replicas/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical/r11i1p1f1/Amon/clwvi/gr/v20200201/'
         ds = concat_files(path_folder, experiment)    
         da = ds[var_name]      
+
         da = regrid_vert(da, model)                         if 'plev' in da.dims                       else da # vertically interpolate (some models have different number of vertical levels)
         da = regrid_hor(ds, da)                             if mV.resolutions[0] == 'regridded'         else da # horizontally interpolate
         da = pick_ocean_region(da)                          if switch['ocean']                          else da # pick ocean region (specifically for stability calculation)
@@ -218,6 +219,7 @@ def get_era5_monthly(var, switch = {'ocean': False}):
     if 'level' in da.dims:
         da['level'] = da['level']*100                                       # convert from millibar (hPa) to Pa
         da = da.rename({'level': 'plev'})
+        da = da.sortby('plev')
     da = regrid_hor(ds, da)     if mV.resolutions[0] == 'regridded' else da # horizontally interpolate
     da = regrid_vert(da)        if 'plev' in da.dims                else da # vertically interpolate
     da = pick_ocean_region(da)  if switch['ocean']                  else da # pick ocean region (specifically for stability calculation)    
@@ -243,9 +245,10 @@ def get_var_data(source, dataset, experiment, var_name, switch = {'ocean': False
     elif source in ['obs']:
         da = get_gpcp()['pr']                                                               if var_name == 'pr'     and dataset == 'GPCP'   else da
 
+        da = get_era5_monthly('r')['r']                                                     if var_name == 'hur'    and dataset == 'ERA5'   else da
         da = get_era5_monthly('t')['t']                                                     if var_name == 'ta'     and dataset == 'ERA5'   else da
         da = get_era5_monthly('q')['q']                                                     if var_name == 'hus'    and dataset == 'ERA5'   else da
-        da = get_era5_monthly('r')['r']                                                     if var_name == 'hur'    and dataset == 'ERA5'   else da
+        da = get_era5_monthly('z')['z']                                                     if var_name == 'zg'     and dataset == 'ERA5'   else da
     return da
 
 
@@ -293,7 +296,7 @@ def run_var_data(switch_var, switch, source, dataset, experiment):
         da = get_var_data(source, dataset, experiment, var_name, switch)
         ds = xr.Dataset(data_vars = {var_name: da}) if not var_name == 'ds_cl' else da
         # print(ds)
-        print(ds[f'{var_name}'])
+        # print(ds[f'{var_name}'])
         save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] else None
 
 def run_experiment(switch_var, switch, source, dataset):
@@ -322,7 +325,7 @@ if __name__ == '__main__':
     switch_var = {
         'pr':       False,                                                                                      # Precipitation
         'tas':      False, 'ta':            False,                                                              # Temperature
-        'wap':      True,                                                                                      # Circulation
+        'wap':      False,                                                                                      # Circulation
         'hur':      False, 'hus' :          False,                                                              # Humidity                   
         'rlds':     False, 'rlus':          False,  'rlut':     False,  'netlw':    False,                      # Longwave radiation
         'rsdt':     False, 'rsds':          False,  'rsus':     False,  'rsut':     False,  'netsw':    False,  # Shortwave radiation
@@ -334,7 +337,7 @@ if __name__ == '__main__':
 
     switch = {
         'ocean':         False, # mask
-        'save_sample':   True  # save
+        'save_sample':   False  # save
         }
 
     run_get_data(switch_var, switch)
