@@ -242,11 +242,11 @@ if __name__ == '__main__':
         'dTas': False, 'subset_switch': False, 'custom':    False,  # higlight models
         }
     
-    switch = {                                                                                  # overall settings
-        'scatter':              False, 'density_map':         True,                            # plot type
-        'slope':                True, 'bin_trend':           False,                            # plot type
-        'show':                 False,                                                          # show
-        'save_test_desktop':    True,  'save_folder_desktop': False, 'save_folder_cwd': False,  # save
+    switch = {                                                                              # overall settings
+        'scatter':              False, 'density_map':         True,                         # plot type
+        'slope':                True, 'bin_trend':           False,                         # plot type
+        'show':                 False,                                                      # show
+        'save_test_desktop':    True,  'save_folder_desktop': False, 'save_cwd':    False,  # save
         }
     
 # ----------------------------------------------------------------------------------- run ----------------------------------------------------------------------------------------------------- #

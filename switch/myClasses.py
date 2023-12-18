@@ -173,8 +173,8 @@ def get_metric_class(metric, switchM = {'metric_variation':False}, prctile = '95
 
 
 # -------------------------------------------------------------------- Moist Static Energy ----------------------------------------------------------------------------------------------------- #
-    var, name, label, cmap, color = ['h',        f'h{v_reg(switchM)}{m_type(switchM)}',                                     r'h [J/kg]',                            'Blues',              'b'] if metric in ['h']          else [var, name, label, cmap, color]
-    var, name, label, cmap, color = ['h_anom2',  f'h_anom2{v_reg(switchM)}{m_type(switchM)}',                               r'h [(J/kg)$^{2}$]',                            'Blues',              'b'] if metric in ['h_anom2']    else [var, name, label, cmap, color]
+    var, name, label, cmap, color = ['h',        f'h{v_reg(switchM)}{v_reg(switchM)}{m_type(switchM)}',          r'h [J/kg]',                            'Blues',              'b'] if metric in ['h']          else [var, name, label, cmap, color]
+    var, name, label, cmap, color = ['h_anom2',  f'h_anom2{v_reg(switchM)}{h_reg(switchM)}{m_type(switchM)}',    r'h [(J/kg)$^{2}$]',                    'Blues',              'b'] if metric in ['h_anom2']    else [var, name, label, cmap, color]
 
 
 # ------------------------------------------------------------------------- Clpids ----------------------------------------------------------------------------------------------------- #

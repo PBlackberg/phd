@@ -173,13 +173,6 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path)
 
-def save_structured(var_name, dataset, experiment, metric, metric_name, folder):
-    ''' Saves in variable/metric specific folders '''
-    ds = xr.Dataset(data_vars = {metric_name: metric})
-    folder = f'{mV.folder_save[0]}/{folder}/{var_name}/{metric_name}/{find_source(dataset)}'
-    filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-    save_file(ds, folder, filename)
-
 def save_figure(figure, folder =f'{home}/Documents/phd', filename = 'test.pdf', path = ''):
     ''' Basic plot saving function '''
     if folder and filename:
@@ -188,13 +181,20 @@ def save_figure(figure, folder =f'{home}/Documents/phd', filename = 'test.pdf', 
     os.remove(path) if os.path.exists(path) else None
     figure.savefig(path)
 
-def save_plot(switch= {'save_test_desktop': True, 'save_folder_desktop': False, 'save_folder_cwd': False}, 
-              fig = '', home = home, filename = 'test'):
+def save_metric(switch, var_name, dataset, experiment, metric, metric_name, folder):
+    ''' Saves in variable/metric specific folders '''
+    filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+    folder = f'{mV.folder_save[0]}/{folder}/{var_name}/{metric_name}/{find_source(dataset)}'
+    for save_type in [k for k, v in switch.items() if v]:
+        save_file(xr.Dataset({metric_name: metric}), folder, filename)                          if save_type == 'save'                  else None                                        
+        save_file(xr.Dataset({metric_name: metric}), f'{home}/Desktop/{metric_name}', filename) if save_type == 'save_folder_desktop'   else None
+
+def save_plot(switch= {'save_folder_desktop': False, 'save_test_desktop': False,  'save_test_cwd': True}, fig = '', home = home, filename = 'test'):
     ''' Saves figure to desktop or cwd '''
     for save_type in [k for k, v in switch.items() if v]:
-        save_figure(fig, f'{home}/Desktop', 'test.pdf')                         if save_type == 'save_test_desktop'   else None
-        save_figure(fig, f'{home}/Desktop/plots', f'{filename}.pdf')            if save_type == 'save_folder_desktop' else None
-        save_figure(fig, f'{os.getcwd()}/test/plot_test', f'{filename}.png')    if save_type == 'save_folder_cwd'     else None
+        save_figure(fig, folder = f'{home}/Desktop/plots', filename = f'{filename}.pdf')            if save_type == 'save_folder_desktop' else None
+        save_figure(fig, folder = f'{home}/Desktop', filename = 'test.pdf')                         if save_type == 'save_test_desktop'   else None
+        save_figure(fig, folder = f'{os.getcwd()}', filename = 'test.png')                          if save_type == 'save_test_cwd'       else None
 
 
 # --------------------------------------------------------------------------------------- Decorators --------------------------------------------------------------------------------------------------- #
@@ -434,16 +434,23 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     # scene = conv_regions.isel(time=1)
     # mF.plot_one_scene(scene)
 
-def cycle_plot(fig, cycle_time = 0.5):
+def show_plot(fig, show_type = 'cycle', cycle_time = 0.5):
     ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
-    plt.ion()
-    plt.show()
-    plt.pause(cycle_time)
-    plt.close(fig)
-    plt.ioff()
+    if show_type == 'cycle':
+        plt.ion()
+        plt.show()
+        plt.pause(cycle_time)
+        plt.close(fig)
+        plt.ioff()
+    elif show_type == 'save_cwd':
+        save_plot(fig = fig) 
+        return True
+    elif show_type == 'show':
+        plt.show()
+        return True
+
 
 # ----------------------------------------------------------------------------------------------- Scatter plot --------------------------------------------------------------------------------------------------- #
-
 def calc_meanInBins(x, y, binwidth_frac=100):
     bin_width = (x.max() - x.min())/binwidth_frac # Each bin is one percent of the range of x values
     bins = np.arange(x.min(), x.max() + bin_width, bin_width)
