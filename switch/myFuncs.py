@@ -14,7 +14,9 @@ Plots -         (ex: plot figure / subplots, move column and rows)
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import pandas as pd
+from scipy import stats
 import cftime
 import datetime
 import time
@@ -97,24 +99,35 @@ def load_variable(switch = {'constructed_fields': False, 'sample_data': True, 'g
 
         Sometimes sections of years of a dataset will be used instead of the full data ex: if dataset = GPCP_1998-2010 (for obsservations) 
         (There is a double trend in high percentile precipitation rate for the first 12 years of the data (that affects the area picked out by the time-mean percentile threshold)'''
+    source = find_source(dataset)
     dataset_alt = dataset.split('_')[0] if '_' in dataset else dataset    
     var = 'pr'  if var == 'var_2d' else var # for testing
     var = 'hur' if var == 'var_3d' else var # for testing
                                                    
     da = cF.get_cF_var(dataset_alt, var)                                                                                                                            if switch['constructed_fields']             else None
-    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{find_source(dataset)}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
-    da = gD.get_var_data(find_source(dataset), dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
+    da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/{var}/{source}/{dataset_alt}_{var}_{timescale}_{experiment}_{mV.resolutions[0]}.nc')[f'{var}']           if switch['sample_data']                    else da  
+    da = gD.get_var_data(source, dataset_alt, experiment, var)                                                                                                      if switch['gadi_data']                      else da
     if '_' in dataset:                                                  
         start_year, end_year = dataset.split('_')[1].split('-')
         da = da.sel(time= slice(start_year, end_year))
     return da
 
 def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experiments[0], timescale = mV.timescales[0], resolution = mV.resolutions[0], folder_load = mV.folder_save[0]):
-    experiment = '' if find_source(dataset) in ['obs'] else experiment
-    path = f'{folder_load}/metrics/{metric_class.var_type}/{metric_class.name}/{find_source(dataset)}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
-    # print(path)   # for debugging
+    source = find_source(dataset)
+    experiment = ''             if source in ['obs'] else experiment
+    if source in ['obs'] and dataset not in ['GPCP', 'GPCP_1998-2009', 'GPCP_2010-2022']:
+        # dataset = 'GPCP_1998-2009'  if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset  # for comparing with other obs datasets
+        dataset = 'GPCP_2010-2022'  if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset   # for comparing with other obs datasets
+        # dataset = 'GPCP'            if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset  # for comparing with other obs datasets
+    timescale = 'daily'         if metric_class.var in ['pr', 'org', 'hus', 'ws'] else timescale            # some metrics are only on daily
+    timescale = 'daily'         if dataset == 'NOAA'    else timescale                                      # some datasets are only on daily
+    timescale = 'daily'         if dataset == 'ISCCP'   else timescale                                      # some datasets are only on daily
+
+    path = f'{folder_load}/metrics/{metric_class.var}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
     ds = xr.open_dataset(path)     
     da = ds[f'{metric_class.name}']
+    if dataset == 'CERES':
+        da['time'] = da['time'] - pd.Timedelta(days=14) # this observational dataset have monthly data with day specified as the middle of the month instead of the first
     return da
 
 def convert_to_datetime(dates, data):
@@ -257,7 +270,7 @@ def resample_timeMean(da, timeMean_option=''):
         da = da.rename({'month':'season'})
         da = da.assign_coords(season=["MAM", "JJA", "SON", "DJF"])
         da = da.isel(year=slice(1, None))
-    elif timeMean_option == 'monthly' and len(da) > 360:
+    elif timeMean_option == 'monthly' and len(da) > 30:
         da = da.resample(time='1MS').mean(dim='time')
     elif timeMean_option == 'daily' or not timeMean_option:
         pass
@@ -422,28 +435,65 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     # mF.plot_one_scene(scene)
 
 def cycle_plot(fig, cycle_time = 0.5):
+    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
     plt.ion()
     plt.show()
-    plt.pause(0.5)
+    plt.pause(cycle_time)
     plt.close(fig)
     plt.ioff()
 
-# ----------------------------------------------------------------------------------------------- Trend plot --------------------------------------------------------------------------------------------------- #
-def plot_scatter(ax, x, y, metric_class):
-    h = ax.scatter(x, y, facecolors='none', edgecolor= metric_class.color)    
+# ----------------------------------------------------------------------------------------------- Scatter plot --------------------------------------------------------------------------------------------------- #
+
+def calc_meanInBins(x, y, binwidth_frac=100):
+    bin_width = (x.max() - x.min())/binwidth_frac # Each bin is one percent of the range of x values
+    bins = np.arange(x.min(), x.max() + bin_width, bin_width)
+    y_bins = []
+    for i in np.arange(0,len(bins)-1):
+        y_bins.append(y.where((x>=bins[i]) & (x<bins[i+1])).mean())
+    return bins, y_bins
+
+def plot_slope(x, y, ax, color):
+    ''' Line of best fit (linear) '''
+    slope, intercept = np.polyfit(x, y, 1)
+    y_fit = slope * x + intercept
+    ax.plot(x, y_fit, color=color)
+
+def plot_axScatter(switch, ax, x, y, metric_classY, binwidth_frac=100):
+    h = None
+    for plot_type in [k for k, v in switch.items() if v]:
+        ax.scatter(x, y, facecolors='none', edgecolor= metric_classY.color)                                                         if plot_type == 'scatter'       else None
+        h = ax.hist2d(x,y,[20,20], range=[[np.nanmin(x), np.nanmax(x)], [np.nanmin(y), np.nanmax(y)]], cmap = metric_classY.cmap)   if plot_type == 'density_map'   else h
+        plot_slope(x, y, ax, metric_classY.color)                                                                                                        if plot_type == 'slope'       else None
+        if plot_type == 'bin_trend':
+            bins, y_bins = calc_meanInBins(x, y, binwidth_frac)            
+            ax.plot(bins[:-1], y_bins, color = metric_classY.color)                                              
     return h
 
-def plot_ax_datapointDensity(ax, x, y, metric_class):
-    h = ax.hist2d(x,y,[20,20], range=[[np.nanmin(x), np.nanmax(x)], [np.nanmin(y), np.nanmax(y)]], cmap = metric_class.cmap)
-    return h
-
-def plot_ax_line(ax, x, y, color = 'b'):
-    h = ax.plot(x, y, color)
-    return h
-
-
-
-
+def plot_scatter(switch, metric_classX, metric_classY, x, y, metric_title, axtitle, xmin, xmax, ymin, ymax):
+    fig, ax = create_figure(width = 9, height = 6)
+    fig_title = f'{metric_classX.name} and {metric_classY.name} ({metric_title})'
+    h = plot_axScatter(switch, ax, x, y, metric_classY)
+    res= stats.pearsonr(x,y)
+    placement = (0.825, 0.05) if res[0]>0 else (0.825, 0.9) 
+    ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', xytext=placement, textcoords='axes fraction', fontsize = 12, color = 'r') if res[1]<=0.05 else None      
+    move_col(ax, -0.03)
+    move_row(ax, 0.01)
+    scale_ax_x(ax, 0.95)
+    scale_ax_y(ax, 1)
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12) 
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    ax.xaxis.set_major_formatter(formatter)
+    plot_xlabel(fig, ax, metric_classX.label, pad = 0.09,   fontsize = 12)
+    plot_ylabel(fig, ax, metric_classY.label, pad = 0.075, fontsize = 12)
+    plot_axtitle(fig, ax, axtitle, xpad = 0.005, ypad = 0.01, fontsize = 12)
+    fig.text(0.5, 0.95, fig_title, ha = 'center', fontsize = 15.5, transform=fig.transFigure)
+    cbar_right_of_axis(fig, ax, h[3], width_frac= 0.05, height_frac=1, pad=0.035, numbersize = 12, cbar_label = 'months [Nb]', text_pad = 0.05, fontsize = 12) if switch['density_map'] else None
+    return fig
 
 
 

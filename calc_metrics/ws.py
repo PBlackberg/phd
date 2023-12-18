@@ -32,9 +32,9 @@ def load_data(year):
 #   intermediate plot
 # ------------------------
 # ------------------------------------------------------------------------------- plot intermediate calculation ----------------------------------------------------------------------------------------------------- #
-def plot_scene(scene, title = ''):
+def plot_scene(switch, scene, title = ''):
     fig, ax = mF.create_map_figure(width = 12, height = 4)
-    pcm = mF.plot_axScene(ax, scene, cmap = 'Blues')
+    pcm = mF.plot_axMapScene(ax, scene, cmap = 'Blues')
     mF.cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.075, numbersize = 12, cbar_label = 'weather states frequency [Nb]', text_pad = 0.125)
     mF.move_col(ax, moveby = -0.055)
     mF.move_row(ax, moveby = 0.075)
@@ -152,6 +152,7 @@ def get_metric(switch, source, years, metric, ws_values, metric_type):
             if metric_type == 'snapshot':
                 metric_name =f'{metric}_snapshot'
                 da_calc = get_snapshot(ws_values, da_month)
+                mF.plot_scene(da_calc)
                 break
 
             if metric_type == 'sMean':
@@ -169,8 +170,8 @@ def get_metric(switch, source, years, metric, ws_values, metric_type):
         if metric_type == 'snapshot':
             break                
 
-    mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'ws', metric_name, source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0]) if switch['save'] else None
-
+    # mF.save_in_structured_folders(da_calc, f'{mV.folder_save[0]}/metrics', 'ws', metric_name, source, mV.datasets[0], mV.timescales[0], mV.experiments[0], mV.resolutions[0]) if switch['save'] else None
+    mF.save_structured(var_name = 'ws', dataset= mV.datasets[0], experiment = mV.experiments[0], metric = da_calc, metric_name =metric_name, folder = 'metrics')                 if switch['save']               else None
 
 
 # ------------------------
@@ -178,7 +179,7 @@ def get_metric(switch, source, years, metric, ws_values, metric_type):
 # ------------------------
 # ---------------------------------------------------------------------------------------------- pick dataset ----------------------------------------------------------------------------------------------------- #
 def run_metric(switch_metric, switchM, switch):
-    source = mV.find_source(mV.datasets[0], mV.models_cmip5, mV.models_cmip6, mV.observations)
+    source = mF.find_source(mV.datasets[0])
     years = np.arange(2000, 2018) # available years: 1983-2017 (first years do not have complete coverage)
     for metric in [k for k, v in switch_metric.items() if v] :
         ws_values = [7, 8, 9, 10]      if metric == 'ws_lc' else [7]       # taken from examples of weather states from ISCCP (clouds below 600 hPa)
@@ -188,7 +189,7 @@ def run_metric(switch_metric, switchM, switch):
             get_metric(switch, source, years, metric, ws_values, metric_type)
 
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def run_ws_metrics(switch_metric, switchM, switch):
     if not [mV.datasets[0], mV.experiments[0], mV.timescales[0]] == ['ISCCP', '', 'daily']:
         print('can only do daily obs: ISCCP')
@@ -207,15 +208,15 @@ def run_ws_metrics(switch_metric, switchM, switch):
 if __name__ == '__main__':
     switch_metric = {
         # metrics (can choose multiple)
-        'ws_lc':                       True,
+        'ws_lc':                       False,
         'ws_hc':                       True,
         }
     
     switchM = {
         # choose type
-        'snapshot':                    False,
-        'sMean':                       False, 
-        'tMean':                       False, 
+        'snapshot':                    True,
+        'sMean':                       True, 
+        'tMean':                       True, 
         }
 
     switch = {        
@@ -225,7 +226,8 @@ if __name__ == '__main__':
         'show_tMean_scenes':           False, 
 
         # save
-        'save':                        False,
+        'save':                        True,
+        'save_to_desktop':             False,
         }
     
     run_ws_metrics(switch_metric, switchM, switch)
