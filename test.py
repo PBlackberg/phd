@@ -18,11 +18,12 @@ import myClasses as mC
 
 
 
-my_list = ['string1', 'string2', 'string3', 'string4', 'string5', 'string6', 'string7', 'string8', 'string9', 'string10', 'string11', 'string12', 'string13', 'string14', 'string15']
-chunk_size = 4
+def a_func(a = 5):
+    if a == 6:
+        return True
 
-for i in range(0, len(my_list), chunk_size):
-    current_chunk = my_list[i:i + chunk_size]
-    print(current_chunk)
+if a_func(a = 6):
+    print('executes')
+
 
 

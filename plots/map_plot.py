@@ -81,8 +81,8 @@ def get_limits(switchM, metric_name):
         qWithin_low, qWithin_high, qBetween_low, qBetween_high = [0, 0.9, 0, 1]     if metric_class.name in ['pr_rx1day_tMean']    else [qWithin_low, qWithin_high, qBetween_low, qBetween_high] 
     vmin, vmax = mF.find_limits(switchM, metric_class, get_metric, qWithin_low, qWithin_high, qBetween_low, qBetween_high,
                                 
-                                # vmin = 0, vmax = 0.4    # if manually setting limits (comment out for normal limits)
-                                # vmin = 0, vmax = 0.2    # if manually setting limits (comment out for normal limits)
+                                # vmin = 0, vmax = 0.4    # if manually setting limits (comment out for normal limits) o_heatmap
+                                # vmin = 0, vmax = 0.2    # if manually setting limits (comment out for normal limits) o_heatmap (with_warming)
                                 )      
     if metric_class.var in ['wap'] or switchM['change with warming']:
         vabs_max = np.maximum(np.abs(vmin), np.abs(vmax))
@@ -191,20 +191,21 @@ if __name__ == '__main__':
         'h':                    False,  'h_anom2':      True,                                                              # moist static energy
         }
 
-    switchM = {                                                                     # choose seetings for metrics
-        'fixed area':           False,                                              # org threshold
-        '250hpa':               False,  '500hpa':       False,  '700hpa':    False, # mask: vertical
-        'descent':              False,  'ascent':       False,  'ocean':     False, # mask: horizontal
-        'descent_fixed':        False,  'ascent_fixed': False,                      # mask: horizontal
-        'snapshot':             False,  'tMean':        True,                      # scene type
-        'change with warming':  False,  'per kelvin':   False, 'per ecs':   False,  # scenario type
+    switchM = {                                                                         # choose seetings for metrics
+        'fixed area':           False,                                                  # org threshold
+        '250hpa':               False,  '500hpa':       False,  '700hpa':    True,     # mask: vertical
+        'descent':              False,  'ascent':       False,  'ocean':     False,     # mask: horizontal
+        'descent_fixed':        True,  'ascent_fixed': False,                           # mask: horizontal
+        
+        'snapshot':             True,  'tMean':        False,                           # scene type
+        'change with warming':  False,  'per kelvin':   False, 'per ecs':   False,      # scenario type
         }
 
 
 # ---------------------------------------------------------------------------------- settings ----------------------------------------------------------------------------------------------------- #
     switch = {
-        'show':                 False,                                                                  # show
-        'save_test_desktop':    True,   'save_folder_desktop':  False,    'save_folder_cwd':  False,   # save
+        'show':                 False,                                                          # show
+        'save_folder_desktop':  False, 'save_test_desktop': False,   'save_test_cwd':   True,   # save
         }
     
 

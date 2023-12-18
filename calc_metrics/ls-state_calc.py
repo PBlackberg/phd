@@ -114,10 +114,10 @@ def get_variable(switch, var, dataset, experiment):
 
 # ------------------------------------------------------------------------------------- Get data ----------------------------------------------------------------------------------------------------- #
 def get_data(switch, var, dataset, experiment):
-        da = get_variable(switch, var, dataset, experiment)
-        da, vert_reg = pick_vert_reg(switch, dataset, da)
-        da, hor_reg  = pick_hor_reg(switch, dataset, experiment, da)    # experiment needed as wap is loaded to pick region
-        yield da, f'{vert_reg}{hor_reg}'
+    da = get_variable(switch, var, dataset, experiment)
+    da, vert_reg = pick_vert_reg(switch, dataset, da)
+    da, hor_reg  = pick_hor_reg(switch, dataset, experiment, da)    # experiment needed as wap is loaded to pick region
+    return da, f'{vert_reg}{hor_reg}'
 
 
 
@@ -130,8 +130,10 @@ def get_snapshot(da):
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
-            mF.cycle_plot(fig)
+            if mF.show_plot(fig, 'save_cwd', cycle_time = 3.25): # [show, save_cwd, cycle] (only cycle wont break the loop)
+                break
     return da.isel(time=0)
+
 
 @mF.timing_decorator()
 def get_tMean(da):
@@ -174,14 +176,11 @@ def run_ls_metrics(switch_var, switchM, switch):
     print(f'settings: {[key for key, value in switch.items() if value]}')
     for var_name in [k for k, v in switch_var.items() if v]:
         for dataset, experiment in mF.run_dataset(var_name):
-            for da, region in get_data(switch, var_name, dataset, experiment):
-                for metric, metric_name in calc_metric(switchM, var_name, da, region):
-                    print(f'\t\t\tsaving: {metric_name}')                                                                      if switch['save']               else None
-                    mF.save_structured(var_name, dataset, experiment, metric, metric_name, folder = 'metrics')                 if switch['save']               else None
-                    mF.save_file(xr.Dataset({metric_name: metric}), 
-                                 folder = f'{home}/Desktop/{metric_name}', 
-                                 filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc') if switch['save_to_desktop']    else None
-
+            da, region = get_data(switch, var_name, dataset, experiment)
+            for metric, metric_name in calc_metric(switchM, var_name, da, region):            
+                mF.save_metric(var_name, dataset, experiment, metric, metric_name, folder = 'metrics')  if switch['save'] else None
+                print(f'\t\t\t{metric_name} saved')                                                     if switch['save'] else None
+                    
 
 # ----------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
@@ -199,7 +198,7 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                         # choose metric type (can choose multiple)
-        'snapshot': True,   'tMean':    True,   'sMean':    True,   'area':   False,  # type 
+        'snapshot': True,   'tMean':    False,   'sMean':    False,   'area':   False,  # type 
         }
 
     switch = {                                                                                                  # choose data to use and mask
@@ -209,7 +208,7 @@ if __name__ == '__main__':
         'ascent':               False,  'descent':          False,  'ocean':        False,                      # mask data: horizontal (can apply both ocean and ascent/descent together)
         'ascent_fixed':         False,  'descent_fixed':    False,                                              # mask data: horizontal 
         
-        'save_to_desktop':      False,  'save':             True,                                              # save
+        'save_folder_desktop':  False,  'save':             False,                                              # save
         }
     
     
