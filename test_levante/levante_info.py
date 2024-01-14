@@ -1,3 +1,25 @@
+'''
+# user: b382628, project/account: bb1153
+
+For getting data,
+If not loaded, needs:
+module use /work/k20200/k202134/hsm-tools/outtake/module
+module load hsm-tools/unstable
+
+slk login
+username: b382628
+password:
+
+Make script executible in shell by
+chmod a+x find_files
+chmod +x find_files_intake.sh
+
+
+Create temporary directory for post processed data:
+dask_tmp_dir = TemporaryDirectory(dir=scratch_dir, prefix='PostProc')
+'''
+
+
 
 # -------------------
 # loading environment
@@ -9,15 +31,13 @@
 
 
 # in tcsh or csh script
-source /sw/etc/csh.levante
+# source /sw/etc/csh.levante
 
 import numpy as np
 import xarray as xr
 import os
 # import cartopy
 # import xesmf as xe
-
-#asdkadskavn
 
 # -------------------
 #   Loading data

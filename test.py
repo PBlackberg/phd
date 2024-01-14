@@ -33,7 +33,15 @@ scene = a['cl'].isel(time=0).sel(plev = slice(1000e2, 600e2)) #.max(dim='plev')
 
 
 
+# Get the total memory information
+import psutil
+import multiprocessing
 
+total_memory = psutil.virtual_memory().total
+num_cpu_cores = multiprocessing.cpu_count()
+memory_per_core = total_memory / num_cpu_cores
+print(f"Total Memory: {total_memory / (1024**3):.2f} GB")
+print(f"Memory Per CPU Core: {memory_per_core / (1024**3):.2f} GB")
 
 
 

@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from getpass import getuser
 import numpy as np
 
 
@@ -15,71 +17,115 @@ constructed_fields = [
 
 # -------------------------------------------------------------------------  CMIP5 ----------------------------------------------------------------------------------------------------- #
 models_cmip5 = [
-    # 'IPSL-CM5A-MR',    # 1
-    # 'GFDL-CM3',        # 2
-    # 'GISS-E2-H',       # 3
-    # 'bcc-csm1-1',      # 4
-    # 'CNRM-CM5',        # 5
-    # 'CCSM4',           # 6
-    # 'HadGEM2-AO',      # 7
-    # 'BNU-ESM',         # 8
-    # 'EC-EARTH',        # 9
-    # 'FGOALS-g2',       # 10
-    # 'MPI-ESM-MR',      # 11
-    # 'CMCC-CM',         # 12
-    # 'inmcm4',          # 13
-    # 'NorESM1-M',       # 14
-    # 'CanESM2',         # 15
-    # 'MIROC5',          # 16
-    # 'HadGEM2-CC',      # 17
-    # 'MRI-CGCM3',       # 18
-    # 'CESM1-BGC'        # 19
+    # 'IPSL-CM5A-MR',       # 1
+    # 'GFDL-CM3',           # 2
+    # 'GISS-E2-H',          # 3
+    # 'bcc-csm1-1',         # 4
+    # 'CNRM-CM5',           # 5
+    # 'CCSM4',              # 6
+    # 'HadGEM2-AO',         # 7
+    # 'BNU-ESM',            # 8
+    # 'EC-EARTH',           # 9
+    # 'FGOALS-g2',          # 10
+    # 'MPI-ESM-MR',         # 11
+    # 'CMCC-CM',            # 12
+    # 'inmcm4',             # 13
+    # 'NorESM1-M',          # 14
+    # 'CanESM2',            # 15
+    # 'MIROC5',             # 16
+    # 'HadGEM2-CC',         # 17
+    # 'MRI-CGCM3',          # 18
+    # 'CESM1-BGC'           # 19
     ]
 
 
 # -------------------------------------------------------------------------  CMIP6 ----------------------------------------------------------------------------------------------------- #
 models_cmip6 = [         # Models ordered by change in temperature with warming
-    'INM-CM5-0',         # 1
-    'IITM-ESM',          # 2
-    'FGOALS-g3',         # 3    
-    'INM-CM4-8',         # 4                                
-    'MIROC6',            # 5                                      
-    'MPI-ESM1-2-LR',     # 6                         
-    'KIOST-ESM',         # 7    
-    'BCC-CSM2-MR',       # 8              
-    'GFDL-ESM4',         # 9         
-    'MIROC-ES2L',        # 10   
-    'NorESM2-LM',        # 11      
-    'NorESM2-MM',        # 12                                      
-    'MRI-ESM2-0',        # 13                                  
-    'GFDL-CM4',          # 14      
-    'CMCC-CM2-SR5',      # 15                
-    'CMCC-ESM2',         # 16                                    
-    'NESM3',             # 17     
-    'ACCESS-ESM1-5',     # 18   
-    'CNRM-ESM2-1',       # 19   
-    'EC-Earth3',         # 20
-    'CNRM-CM6-1',        # 21  
-    'CNRM-CM6-1-HR',     # 22   
-    'KACE-1-0-G',        # 23            
-    'IPSL-CM6A-LR',      # 24
-    'ACCESS-CM2',        # 25   
-    'TaiESM1',           # 26                            
-    'CESM2-WACCM',       # 27   
-    'CanESM5',           # 28  
-    'UKESM1-0-LL',       # 29  
+    # 'INM-CM5-0',          # 1
+    # 'IITM-ESM',           # 2
+    # 'FGOALS-g3',          # 3    
+    # 'INM-CM4-8',          # 4                                
+    # 'MIROC6',             # 5                                      
+    # 'MPI-ESM1-2-LR',      # 6                         
+    # 'KIOST-ESM',          # 7    
+    # 'BCC-CSM2-MR',        # 8              
+    # 'GFDL-ESM4',          # 9         
+    # 'MIROC-ES2L',         # 10   
+    # 'NorESM2-LM',         # 11      
+    # 'NorESM2-MM',         # 12                                      
+    # 'MRI-ESM2-0',         # 13                                  
+    # 'GFDL-CM4',           # 14      
+    # 'CMCC-CM2-SR5',       # 15                
+    # 'CMCC-ESM2',          # 16                                    
+    # 'NESM3',              # 17     
+    # 'ACCESS-ESM1-5',      # 18   
+    # 'CNRM-ESM2-1',        # 19   
+    # 'EC-Earth3',          # 20
+    # 'CNRM-CM6-1',         # 21  
+    # 'CNRM-CM6-1-HR',      # 22   
+    # 'KACE-1-0-G',         # 23            
+    # 'IPSL-CM6A-LR',       # 24
+    # 'ACCESS-CM2',         # 25   
+    # 'TaiESM1',            # 26                            
+    # 'CESM2-WACCM',        # 27   
+    # 'CanESM5',            # 28  
+    # 'UKESM1-0-LL',        # 29  
     ]
 
-switch_subset = {
-    'exclude':         True,  'only_include':      False,                            
-    'similar_version': False, 'high_res_version':  False,
-    'no_clouds':       False,
-    'no_stability':    False, 'stability_no_land': False,
-    'no_orig_ocean':   False,
-    'not_in_schiro':   False, 
-    'res_versions':    False,
-    'threshold_res':   False,                                   # Threshold: 2.5 degrees dlat x dlon
-    }
+
+# -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
+models_dyamondW = [
+    # 'ARPEGE-NH-2km r1i1p1f1',
+    # 'GEM r1i1p1f1',
+    # 'GEOS-1km r1i1p1f1',
+    # 'GEOS-3km r1i1p1f1',
+    # 'GRIST-5km r1i1p1f1',
+    # 'ICON-NWP-2km r1i1p1f1',
+    # 'ICON-SAP-5km dpp0014',
+    # 'MPAS-3km r1i1p1f1',
+    # 'SCREAM-3km r1i1p1f1',
+    # 'SHiELD-3km r1i1p1f1',
+    # 'UM-5km r1i1p1f1',
+    # 'gSAM-4km r1i1p1f1',
+    # 'GEOS-6km r1i1p1f1',
+    # 'ICON-SAP-5km dpp0029',
+    # 'ICON-SAP-5km r1i1p1f1',
+    # 'IFS-4km r1i1p1f1',
+    # 'IFS-9km r1i1p1f1',
+    ]
+
+models_dyamondS = [
+    # 'ARPEGE NH',            # 1
+    # 'FV3',                  # 2
+    # 'GEOS',                 # 3
+    # 'ICON',                 # 4
+    # 'IFS',                  # 5
+    # 'MPAS',                 # 6
+    # 'NICAM',                # 7
+    # 'SAM',                  # 8
+    # 'UM'                    # 9
+    ]
+
+
+# -------------------------------------------------------------------------- NextGEMS ----------------------------------------------------------------------------------------------------- #
+models_nextgems = [
+    # 'IFS-FESOM2-4km hlq0',
+    # 'IFS-NEMO-4km hmrt',
+    # 'IFS-NEMO-9km hmt0',
+    # 'IFS-NEMO-DEEPon-4km hmwz',
+    # 'ICON-ESM dpp0066',
+    # 'ICON-ESM dpp0067',
+    # 'ICON-ESM ngc2009',
+    # 'ICON-ESM ngc2012',
+    'ICON-ESM ngc2013',
+    # 'IFS-FESOM HQYS',
+    # 'IFS-FESOM HR0N',
+    # 'IFS-FESOM HR2N',
+    # 'IFS-FESOM HR2N_nodeep',
+    # 'ICON-ESM ngc3028',
+    # 'IFS-FESOM IFS_4.4-FESOM_5-cycle3',
+    # 'IFS-FESOM IFS_9-NEMO_25-cycle3',
+    ]
 
 
 # -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
@@ -93,18 +139,10 @@ observations = [
     ]
 
 
-# -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
-models_dyamond = [
-    'winter',
-]
-
-
-
-
 # ------------------------------------------------------------------------ Overall settings ----------------------------------------------------------------------------------------------------- #
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
     # 'annual'
     ]
 
@@ -115,6 +153,7 @@ experiments = [
     # ''                   # observations
     ]
 
+x_res, y_res = 0.1, 0.1
 resolutions = [
     # 'orig',
     'regridded'
@@ -129,16 +168,30 @@ conv_percentiles = [       # for organization metrics
 
 # ------------------------------------------------------------------------ Folder to save metric to ----------------------------------------------------------------------------------------------------- #
 folder_save = [os.path.expanduser("~") + '/Documents/data']
-folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
 folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
+folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
 
 
+folder_scratch = [os.path.expanduser("~") + '/Documents/data']
+folder_scratch = ''  if os.path.expanduser("~") == '/home/565/cb4968'                                          else folder_scratch 
+folder_scratch = (Path("/scratch") / getuser()[0] / getuser()) if os.path.expanduser("~") == '/home/b/b382628' else folder_scratch # /scratch/b/b382628
 
 
 # --------------------------------
 #  Functions for picking datasets
 # --------------------------------
 # --------------------------------------------------------------------- Exclude models based on conditions ----------------------------------------------------------------------------------------------------- #
+switch_subset = {
+    'exclude':         True,  'only_include':      False,                            
+    'similar_version': False, 'high_res_version':  False,
+    'no_clouds':       False,
+    'no_stability':    False, 'stability_no_land': False,
+    'no_orig_ocean':   False,
+    'not_in_schiro':   False, 
+    'res_versions':    False,
+    'threshold_res':   False,                                   # Threshold: 2.5 degrees dlat x dlon
+    }
+    
 def exclude_models(models_cmip6, switch_subset):
     ''' Some models are versions of the same model and give close to identical results. Some models are exluded to fit into plots.'''
     models_excluded = []
@@ -454,7 +507,7 @@ models_cmip6 = order_by(models_cmip6, switch_order, ecs_list)
 
 
 
-datasets = models_cmip5 + models_cmip6 + observations + constructed_fields
+datasets = models_cmip5 + models_cmip6 + observations + constructed_fields + models_dyamondW + models_dyamondS + models_nextgems
 institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
@@ -464,3 +517,5 @@ institutes = {**institutes_cmip5, **institutes_cmip6}
 # exclude_list =  ['INM-CM5-0', 'IITM-ESM', 'MPI-ESM1-2-LR', 'KIOST-ESM', 'BCC-CSM2-MR', 'NorESM2-LM', 'NorESM2-MM', 'CMCC-CM2-SR5', 'CMCC-ESM2', 'NESM3', 'EC-Earth3', 'TaiESM1', 'CanESM5'] 
 # filtered_list = [item for item in main_list if item not in exclude_list]
 # print(filtered_list)
+
+
