@@ -63,7 +63,7 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
     # 'ACCESS-CM2',        # 25   
-    # 'TaiESM1',           # 26 # test                           
+    'TaiESM1',           # 26 # test                           
     # 'CESM2-WACCM',       # 27   
     # 'CanESM5',           # 28  
     # 'UKESM1-0-LL',       # 29  
@@ -84,7 +84,7 @@ observations = [
     # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
     # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
-    'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
+    # 'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
     ]
 
 
@@ -93,15 +93,15 @@ observations = [
 #    General settings
 # ------------------------
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
     ]
 
 experiments = [
-    # 'historical',       # current climate conditions simulation        
+    'historical',       # current climate conditions simulation        
     # 'rcp85',          # warm scenario for cmip5
     # 'ssp585',         # warm scenario for cmip6
-    '',               # observations
+    # '',               # observations
     ]
 
 resolutions = [

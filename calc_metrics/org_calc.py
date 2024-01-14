@@ -53,7 +53,7 @@ def find_convective_regions(switch, dataset, experiment):
 @mF.timing_decorator()
 def get_conv_snapshot(da):
     ''' Convective region '''
-    plot = False
+    plot = True
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
@@ -64,7 +64,7 @@ def get_conv_snapshot(da):
 @mF.timing_decorator()
 def get_obj_snapshot(da):
     ''' Contihuous convective regions (including crossing lon boundary) '''
-    plot = True
+    plot = False
     if plot:
         for day in np.arange(0, len(da.time.data)):
             scene = skm.label(da.isel(time=day), background = 0, connectivity=2)
