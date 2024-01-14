@@ -183,21 +183,21 @@ if __name__ == '__main__':
         'pr_rx1day':            False,  'pr_rx5day':     False,                                                             # precipitaiton extremes
         'conv':                 False,  'obj':           False, 'o_heatmap':    False,                                      # organization
         'wap':                  False,                                                                                      # circulation
-        'tas':                  False,  'stability':     False,                                                             # temperature
+        'tas':                  True,  'stability':     False,                                                             # temperature
         'hur':                  False,  'hus':           False,                                                             # humidity
         'netlw':                False,  'rlds':          False, 'rlus':         False,  'rlut':     False,                  # LW
         'netsw':                False,  'rsdt':          False, 'rsds':         False,  'rsus':     False,  'rsut': False,  # SW
         'lcf':                  False,  'hcf':           False, 'ws_lc':        False,  'ws_hc':    False,                  # clouds
-        'h':                    False,  'h_anom2':      True,                                                              # moist static energy
+        'h':                    False,  'h_anom2':      False,                                                              # moist static energy
         }
 
     switchM = {                                                                         # choose seetings for metrics
         'fixed area':           False,                                                  # org threshold
-        '250hpa':               False,  '500hpa':       False,  '700hpa':    True,     # mask: vertical
+        '250hpa':               False,  '500hpa':       False,  '700hpa':    False,     # mask: vertical
         'descent':              False,  'ascent':       False,  'ocean':     False,     # mask: horizontal
-        'descent_fixed':        True,  'ascent_fixed': False,                           # mask: horizontal
+        'descent_fixed':        False,  'ascent_fixed': False,                           # mask: horizontal
         
-        'snapshot':             True,  'tMean':        False,                           # scene type
+        'snapshot':             False,  'tMean':        True,                           # scene type
         'change with warming':  False,  'per kelvin':   False, 'per ecs':   False,      # scenario type
         }
 

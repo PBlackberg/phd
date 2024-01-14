@@ -120,7 +120,7 @@ def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experime
         dataset = 'GPCP_2010-2022'  if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset   # for comparing with other obs datasets
         # dataset = 'GPCP'            if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset  # for comparing with other obs datasets
     timescale = 'daily'         if metric_class.var in ['pr', 'org', 'hus', 'ws'] else timescale            # some metrics are only on daily
-    timescale = 'daily'         if dataset == 'NOAA'    else timescale                                      # some datasets are only on daily
+    timescale = 'monthly'         if dataset == 'NOAA'    else timescale                                      # some datasets are only on daily
     timescale = 'daily'         if dataset == 'ISCCP'   else timescale                                      # some datasets are only on daily
 
     path = f'{folder_load}/metrics/{metric_class.var}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'

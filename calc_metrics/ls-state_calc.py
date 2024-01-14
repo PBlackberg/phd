@@ -126,7 +126,7 @@ def get_data(switch, var, dataset, experiment):
 # ------------------------
 @mF.timing_decorator()
 def get_snapshot(da):
-    plot = True
+    plot = False
     if plot:
         for timestep in np.arange(0, len(da.time.data)):
             fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep) #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                         # choose metric type (can choose multiple)
-        'snapshot': True,   'tMean':    False,   'sMean':    False,   'area':   False,  # type 
+        'snapshot': True,   'tMean':    True,   'sMean':    True,   'area':   False,  # type 
         }
 
     switch = {                                                                                                  # choose data to use and mask

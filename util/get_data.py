@@ -230,7 +230,7 @@ def get_era5_monthly(var, switch = {'ocean': False}):
 
 # --------------------------------------------------------------------------------------- NOAA ----------------------------------------------------------------------------------------------------------#
 def get_NOAA(var):
-    ds = xr.open_dataset('/Users/cbla0002/Documents/data/sample_data/tas/obs/sst.mnmean.nc')
+    ds = xr.open_dataset('/g/data/k10/cb4968/data/sample_data/tas/obs/sst.mnmean.nc')
     ds = ds.sortby('lat').sel(lat = slice(-35,35))
     da = ds[var]
     da = regrid_hor(ds, da)     if mV.resolutions[0] == 'regridded' else da # horizontally interpolate
@@ -308,7 +308,7 @@ def run_var_data(switch_var, switch, source, dataset, experiment):
             continue
         da = get_var_data(source, dataset, experiment, var_name, switch)
         ds = xr.Dataset(data_vars = {var_name: da}) if not var_name == 'ds_cl' else da
-        print(ds)
+        # print(ds)
         # print(ds[f'{var_name}'])
         save_sample(source, dataset, experiment, ds, var_name) if switch['save_sample'] else None
 
