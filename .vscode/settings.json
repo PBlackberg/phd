@@ -1,3 +1,4 @@
 {
-    "editor.autoClosingBrackets": "never"
+    "editor.autoClosingBrackets": "never",
+    "esbonio.sphinx.confDir": ""
 }

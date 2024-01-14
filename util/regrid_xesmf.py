@@ -1,6 +1,21 @@
+'''
+# ------------------------
+#     Regrid xesmf
+# ------------------------
+This script conservatively horizontally interpolates a dataset using the xesmf package (quicker than raw calculation)
+'''
+
+
+
+# ------------------------------------------------------------------------------------ Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import xesmf as xe
 
+
+# ------------------------
+#     Regrid xesmf
+# ------------------------
+# --------------------------------------------------------------------------- Choose model to interpolate to --------------------------------------------------------------------------------------------------------- #
 def regrid_conserv_xesmf(ds_in):
     ''' Creates regridder, interpolating to the grid of FGOALS-g2 from cmip5 '''
     folder = '/g/data/al33/replicas/CMIP5/combined/LASG-CESS/FGOALS-g2/historical/day/atmos/day/r1i1p1/v20161204/pr'
