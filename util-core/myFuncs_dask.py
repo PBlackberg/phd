@@ -34,7 +34,7 @@ warnings.filterwarnings(action="ignore")
 # ------------------------------------------------------------------------------------ imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
-sys.path.insert(0, f'{os.getcwd()}/util_core')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                             # list of datasets to use    
 
 
@@ -49,8 +49,9 @@ def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
     threads_per_worker = ncpu // nworkers
     mem_per_worker = threads_per_worker     # 1 GB per worker (standard capacity is 940 MB / worker, giving some extra for overhead operations)
     processes = False                       # False: Workers share memory (True: Each worker mostly deal with sub-tasks separately)
-    print(f'Specs: {format_bytes(total_memory)}, {ncpu} CPUs')
-    print(f'Client: {nworkers} workers, {threads_per_worker} cpus/worker, processes: {processes}')
+    print(f'Dask client')
+    print(f'\tSpecs: {format_bytes(total_memory)}, {ncpu} CPUs')
+    print(f'\tCluster: {nworkers} workers, {threads_per_worker} cpus/worker, processes: {processes}')
     client = Client(n_workers = nworkers, memory_limit = f"{mem_per_worker}GB", threads_per_worker = threads_per_worker, processes = processes)         
     if switch['dashboard']:         # tunnel IP to local by: ssh -L 8787:localhost:8787 b382628@136.172.124.4 (on local terminal)
         import webbrowser

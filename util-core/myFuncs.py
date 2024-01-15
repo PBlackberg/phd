@@ -37,11 +37,11 @@ import os
 import sys
 home = os.path.expanduser("~")
 
-sys.path.insert(0, f'{os.getcwd()}/util_data')
+sys.path.insert(0, f'{os.getcwd()}/util-data')
 import constructed_fields as cF                 # manually created scripts for testing
 import get_data as gD                           # for loading data from supercomp   
 
-sys.path.insert(0, f'{os.getcwd()}/util_core')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                             # list of datasets to use    
 import myClasses as mC                          # list of metrics to choose from
 
