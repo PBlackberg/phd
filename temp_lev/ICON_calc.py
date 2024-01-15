@@ -34,7 +34,7 @@ from dask.utils import format_bytes # check size of variable: print(format_bytes
 import os
 import sys
 home = os.path.expanduser("~")                            
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                                 
 import myFuncs2 as mF2      
 

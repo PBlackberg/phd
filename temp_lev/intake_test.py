@@ -1,3 +1,12 @@
+''' 
+# ----------------------------------
+#   NextGEMS and DYAMOND simulations
+# ----------------------------------
+This script shows a catalogue of the available data for the NextGEMS and DYAMOND simulations
+'''
+
+
+
 # -------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
 import xarray as xr
 import numpy as np
@@ -10,9 +19,9 @@ from dask.utils import format_bytes # check size of variable: print(format_bytes
 import os
 import sys
 home = os.path.expanduser("~")                            
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util_core')
 import myVars as mV                                 
-import myFuncs2 as mF2      
+import myFuncs_dask as mFd     
 
 
 print('testing intake')
@@ -22,10 +31,9 @@ pd.set_option("max_colwidth", None)
 import outtake
 
 
-
 catalog_file = "/work/ka1081/Catalogs/dyamond-nextgems.json"
 cat = intake.open_esm_datastore(catalog_file)
-# print(mF2.get_from_cat(cat, ["project", "experiment_id", "source_id", "simulation_id"]))
+# print(mFd.get_from_cat(cat, ["project", "experiment_id", "source_id", "simulation_id"]))
 
 print('ICON ngc2013')
 # looking at available variables

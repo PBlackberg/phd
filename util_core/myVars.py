@@ -66,7 +66,7 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
     # 'ACCESS-CM2',        # 25   
-    'TaiESM1',           # 26 # test                           
+    # 'TaiESM1',           # 26 # test                           
     # 'CESM2-WACCM',       # 27   
     # 'CanESM5',           # 28  
     # 'UKESM1-0-LL',       # 29  
@@ -76,6 +76,12 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
 # -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
 models_dyamond = [
     # 'winter',
+]
+
+
+# -------------------------------------------------------------------------- NextGEMS ----------------------------------------------------------------------------------------------------- #
+models_nextgems = [
+    'ICON-ESM_ngc2013',
 ]
 
 
@@ -102,9 +108,9 @@ timescales = [
 
 experiments = [
     'historical',       # current climate conditions simulation        
-    # 'rcp85',          # warm scenario for cmip5
-    # 'ssp585',         # warm scenario for cmip6
-    # '',               # observations
+    # 'rcp85',            # warm scenario for cmip5
+    # 'ssp585',           # warm scenario for cmip6
+    # 'obs',              # observations
     ]
 
 x_res, y_res = 0.1, 0.1
@@ -121,9 +127,9 @@ conv_percentiles = [    # threshold for precipitation rate considered to be asso
 
 
 
-# -------------------------
-# Folder for saving metric
-# -------------------------
+# --------------------------------
+# Folder for saving metrics / data
+# --------------------------------
 folder_save = [os.path.expanduser("~") + '/Documents/data']
 folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
 folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
@@ -132,6 +138,8 @@ folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home
 folder_scratch = [os.path.expanduser("~") + '/Documents/data']
 folder_scratch = ''  if os.path.expanduser("~") == '/home/565/cb4968'                                          else folder_scratch 
 folder_scratch = (Path("/scratch") / getuser()[0] / getuser()) if os.path.expanduser("~") == '/home/b/b382628' else folder_scratch # /scratch/b/b382628
+
+
 
 # ------------------------
 # Other dataset variables
@@ -172,9 +180,9 @@ ecs_list = {**ecs_cmip5, **ecs_cmip6}
 
 
 
-# --------------------------------
-#  Functions for picking subset
-# --------------------------------
+# --------------------------------------
+#  Functions for picking dataset subset
+# --------------------------------------
 # --------------------------------------------------------------------- Exclude models based on conditions ----------------------------------------------------------------------------------------------------- #
 def order_datasets_by(models_cmip6, switch_order, ecs_list):
     if switch_order['ecs']:
@@ -278,10 +286,14 @@ datasets = test_fields + models_cmip5 + models_cmip6 + observations
 
 
 
-datasets = models_cmip5 + models_cmip6 + observations + constructed_fields + models_dyamondW + models_dyamondS + models_nextgems
+datasets = test_fields + models_cmip5 + models_cmip6 + models_nextgems + observations 
 institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
+# ------------------------------------------------------------------------------ test --------------------------------------------------------------------------------------------------- #
+if __name__ == '__main__':
+    print(f'Chosen datasets:{datasets}')
+    print(f'Chosen subset:{datasets}')
 
 
 

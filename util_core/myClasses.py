@@ -1,9 +1,5 @@
-import numpy as np
-
-
-
 # ------------------------
-#       Classes
+#    Metric class
 # ------------------------
 # --------------------------------------------------------------- Gives metric specs ----------------------------------------------------------------------------------------------------- #
 class metric_class():
@@ -14,33 +10,6 @@ class metric_class():
         self.label         = label
         self.cmap          = cmap
         self.color         = color
-
-
-# ----------------------------------------------------------------- Gives Variable specs ----------------------------------------------------------------------------------------------------- #
-class variable_class():
-    ''' Gives variable details (name, option, label, cmap) (Used for animation of fields) '''
-    def __init__(self, ref, variable_type, name, cmap, label):
-        self.ref           = ref
-        self.variable_type = variable_type
-        self.name          = name
-        self.label         = label
-        self.cmap          = cmap
-
-
-# ------------------------------------------------------------------ Gives dimension specs ----------------------------------------------------------------------------------------------------- #
-class dims_class():
-    R = 6371        # radius of earth
-    g = 9.81        # gravitaional constant
-    c_p = 1.005     # specific heat capacity
-    L_v = 2.256e6   # latent heat of vaporization
-    def __init__(self, da):
-        self.lat, self.lon       = da['lat'].data, da['lon'].data
-        self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
-        self.dlat, self.dlon     = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
-        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # area of domain
-        self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2)                     # used for broadcasting
-        self.aream3d             = np.expand_dims(self.aream,axis=2)
-
 
 
 # ------------------------
@@ -198,6 +167,23 @@ def get_metric_class(metric, switchM = {'metric_variation':False}, prctile = '95
 
 
 
+
+
+
+# ------------------------
+#    data variable class
+# ------------------------
+# ----------------------------------------------------------------- Gives Variable specs ----------------------------------------------------------------------------------------------------- #
+class variable_class():
+    ''' Gives variable details (name, option, label, cmap) (Used for animation of fields) '''
+    def __init__(self, ref, variable_type, name, cmap, label):
+        self.ref           = ref
+        self.variable_type = variable_type
+        self.name          = name
+        self.label         = label
+        self.cmap          = cmap
+
+
 # -----------------------
 #     All variables
 # -----------------------
@@ -219,18 +205,22 @@ def get_variable_class(switch):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+# ------------------------
+#    dimensions class
+# ------------------------
+# ------------------------------------------------------------------ Gives dimension specs ----------------------------------------------------------------------------------------------------- #
+class dims_class():
+    R = 6371        # radius of earth
+    g = 9.81        # gravitaional constant
+    c_p = 1.005     # specific heat capacity
+    L_v = 2.256e6   # latent heat of vaporization
+    def __init__(self, da):
+        self.lat, self.lon       = da['lat'].data, da['lon'].data
+        self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
+        self.dlat, self.dlon     = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
+        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # area of domain
+        self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2)                     # used for broadcasting
+        self.aream3d             = np.expand_dims(self.aream,axis=2)
 
 
 
