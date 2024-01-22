@@ -205,7 +205,6 @@ def timing_decorator(show_time = False):
     return decorator
 
 
-
 # ------------------------
 #      Calculations
 # ------------------------

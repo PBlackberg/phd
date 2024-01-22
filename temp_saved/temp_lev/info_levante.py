@@ -14,9 +14,9 @@ Make script executible in shell by
 chmod a+x find_files
 chmod +x find_files_intake.sh
 
-
 Create temporary directory for post processed data:
 dask_tmp_dir = TemporaryDirectory(dir=scratch_dir, prefix='PostProc')
+
 '''
 
 
