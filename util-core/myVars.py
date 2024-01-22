@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from getpass import getuser
-import numpy as np
 
 
 
@@ -75,7 +74,7 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
 
 # -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
 models_dyamond = [
-    # 'winter',
+    # '',
 ]
 
 
@@ -113,7 +112,7 @@ experiments = [
     # 'obs',              # observations
     ]
 
-x_res, y_res = 0.1, 0.1
+x_res, y_res = 2.5, 2.5
 resolutions = [
     # 'orig',
     'regridded'

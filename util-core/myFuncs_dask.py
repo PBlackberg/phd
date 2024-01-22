@@ -9,10 +9,6 @@ General functions utilizing dask
 
 
 # --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------- #
-import numpy as np
-import xarray as xr
-import pandas as pd
-
 from distributed import(Client, progress, wait)
 import dask
 from dask.utils import format_bytes # check size of variable: print(format_bytes(da.nbytes))
@@ -40,10 +36,43 @@ import myVars as mV                             # list of datasets to use
 
 
 # ------------------------
+#      Operations
+# ------------------------
+# --------------------------------------------------------------------------------------- run terminal command --------------------------------------------------------------------------------------------------- #
+def run_cmd(cmd, path_extra=Path(sys.exec_prefix) / "bin"):
+    """Run a bash command."""
+    env_extra = os.environ.copy()
+    env_extra["PATH"] = str(path_extra) + ":" + env_extra["PATH"]
+    status = run(cmd, check=False, stderr=PIPE, stdout=PIPE, env=env_extra)
+    if status.returncode != 0:
+        error = f"""{' '.join(cmd)}: {status.stderr.decode('utf-8')}"""
+        raise RuntimeError(f"{error}")
+    return status.stdout.decode("utf-8")
+
+def get_MiB(da):
+    ''' 
+    print(f'{mFd.get_MiB(da)} MiB')
+    '''
+    return  round(da.nbytes / 1024**2, 2)
+    
+def get_GiB(da):
+    ''' 
+    print(f'{mFd.get_GiB(da)} GiB')
+    '''
+    return  round(da.nbytes / 1024**3, 2)
+    
+
+
+# ------------------------
 #          Dask
 # ------------------------
-# --------------------------------------------------------------------------------------- Dask client --------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------------------------------ Create dask client --------------------------------------------------------------------------------------------------- #
 def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
+    if ncpus == 'all':
+        if 'SLURM_JOB_ID' in os.environ:
+            ncpus = int(os.environ.get('SLURM_CPUS_ON_NODE', multiprocessing.cpu_count()))
+        else:
+            ncpus = multiprocessing.cpu_count()
     total_memory = psutil.virtual_memory().total
     ncpu = multiprocessing.cpu_count() if ncpus == 'all' else ncpus
     threads_per_worker = ncpu // nworkers
@@ -51,7 +80,7 @@ def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
     processes = False                       # False: Workers share memory (True: Each worker mostly deal with sub-tasks separately)
     print(f'Dask client')
     print(f'\tSpecs: {format_bytes(total_memory)}, {ncpu} CPUs')
-    print(f'\tCluster: {nworkers} workers, {threads_per_worker} cpus/worker, processes: {processes}')
+    print(f'\tCluster: {nworkers} workers, {threads_per_worker} cpus/worker, {mem_per_worker} GiB/worker, processes: {processes}')
     client = Client(n_workers = nworkers, memory_limit = f"{mem_per_worker}GB", threads_per_worker = threads_per_worker, processes = processes)         
     if switch['dashboard']:         # tunnel IP to local by: ssh -L 8787:localhost:8787 b382628@136.172.124.4 (on local terminal)
         import webbrowser
@@ -77,46 +106,19 @@ def slurm_cluster(scratch_dir):
                         interface='ib0')
     return cluster
 
-def persist_process(client, da, task, persistIt = True, loadIt = False, progressIt = True):
+def persist_process(client, task, task_des, persistIt = True, computeIt = False, progressIt = True):
     if persistIt:
-        da = client.persist(da)        # can also do .compute()
-        print(f'{task} started')
+        task = client.persist(task)        # can also do .compute()
+        print(f'{task_des} started')
         if progressIt:
-            progress(da)
-        print(f'{task} finished')
-    if loadIt:    
-        da = da.compute()
-    return da
+            progress(task)
+        print(f'{task_des} finished')
+    if computeIt:    
+        task = task.compute()
+    return task
 
 
 
-# ------------------------
-#      Operations
-# ------------------------
-# --------------------------------------------------------------------------------------- load data --------------------------------------------------------------------------------------------------- #
-def load_variable(switch, folder, pattern_file):                            
-    path = sorted([str(f) for f in folder.rglob(f"*{pattern_file}*.nc")])[:]
-    # print(path[0])
-    ds = xr.open_mfdataset(path[0], combine="by_coords", chunks="auto", engine="netcdf4", parallel=True)
-
-    if not switch['test_sample']:
-        ds = xr.open_mfdataset(path[0:50], combine="by_coords", chunks="auto", engine="netcdf4", parallel=True)
-    return ds
-
-
-# --------------------------------------------------------------------------------------- Interpolation --------------------------------------------------------------------------------------------------- #
-def run_cmd(cmd, path_extra=Path(sys.exec_prefix) / "bin"):
-    """Run a bash command."""
-    env_extra = os.environ.copy()
-    env_extra["PATH"] = str(path_extra) + ":" + env_extra["PATH"]
-    status = run(cmd, check=False, stderr=PIPE, stdout=PIPE, env=env_extra)
-    if status.returncode != 0:
-        error = f"""{' '.join(cmd)}: {status.stderr.decode('utf-8')}"""
-        raise RuntimeError(f"{error}")
-    return status.stdout.decode("utf-8")
-
-
-    
 
 
 
