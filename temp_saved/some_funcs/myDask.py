@@ -39,16 +39,6 @@ import myVars as mV                             # list of datasets to use
 #      Operations
 # ------------------------
 # --------------------------------------------------------------------------------------- run terminal command --------------------------------------------------------------------------------------------------- #
-def run_cmd(cmd, path_extra=Path(sys.exec_prefix) / "bin"):
-    """Run a bash command."""
-    env_extra = os.environ.copy()
-    env_extra["PATH"] = str(path_extra) + ":" + env_extra["PATH"]
-    status = run(cmd, check=False, stderr=PIPE, stdout=PIPE, env=env_extra)
-    if status.returncode != 0:
-        error = f"""{' '.join(cmd)}: {status.stderr.decode('utf-8')}"""
-        raise RuntimeError(f"{error}")
-    return status.stdout.decode("utf-8")
-
 def get_MiB(da):
     ''' 
     print(f'{mFd.get_MiB(da)} MiB')

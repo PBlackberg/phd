@@ -20,9 +20,8 @@ import skimage.measure as skm
 import os
 import sys
 home = os.path.expanduser("~")                                        
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                                 
-import myClasses as mC
 import myFuncs as mF                                
 
 
@@ -43,7 +42,10 @@ def get_fixed_area_conv_threshold(da):
 
 @mF.timing_decorator()
 def find_convective_regions(switch, dataset, experiment):
-    da = mF.load_variable(switch, 'pr', dataset, experiment)
+    da = mF.load_variable({'pr':True}, switch, dataset, experiment).sel(lat = slice(-30, 30))
+    # da.coords['lon'] = da.coords['lon'] + 180
+    print(da)
+    # exit()
     conv_threshold = get_conv_threshold(da) if not switch['fixed_area'] else get_fixed_area_conv_threshold(da)    
     conv_regions = (da > conv_threshold)*1
     return conv_regions
@@ -53,11 +55,12 @@ def find_convective_regions(switch, dataset, experiment):
 @mF.timing_decorator()
 def get_conv_snapshot(da):
     ''' Convective region '''
-    plot = True
+    plot = False
     if plot:
+        import myFuncs_plots as mFd     
         for timestep in np.arange(0, len(da.time.data)):
-            fig = mF.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
-            if mF.show_plot(fig, 'cycle', cycle_time = 0.5):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+            fig = mFd.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+            if mFd.show_plot(fig, 'cycle', cycle_time = 0.2):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
                 break
     return da.isel(time=0) 
 
@@ -66,10 +69,11 @@ def get_obj_snapshot(da):
     ''' Contihuous convective regions (including crossing lon boundary) '''
     plot = False
     if plot:
+        import myFuncs_plots as mFd         
         for day in np.arange(0, len(da.time.data)):
             scene = skm.label(da.isel(time=day), background = 0, connectivity=2)
-            fig = mF.plot_scene(xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data}))
-            if mF.show_plot(fig, 'cycle', cycle_time = 0.5):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+            fig = mFd.plot_scene(xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data}))
+            if mFd.show_plot(fig, 'cycle', cycle_time = 0.2):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
                 break
         
     scene = skm.label(da.isel(time=0), background = 0, connectivity=2)
@@ -224,7 +228,7 @@ def calc_o_heatmap(da):
 # ------------------------------------------------------------------------------------- Get metric and metric name ----------------------------------------------------------------------------------------------------- #
 def calc_metric(switch_metric, da):
     ''' Calls organization metric from convective regions '''
-    dim = mC.dims_class(da)
+    dim = mF.dims_class(da)
     for metric_name in [k for k, v in switch_metric.items() if v]:
         metric = None
         metric = get_conv_snapshot(da)          if metric_name == 'conv_snapshot'   else metric
@@ -257,18 +261,18 @@ def run_org_metrics(switch_metric, switch):
 # ---------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_metric = {                                                                   # metric
-        'conv_snapshot':    True,   'obj_snapshot':     False,  'areafraction': False, # conceptual visualization of data
+        'conv_snapshot':    True,   'obj_snapshot':     True,  'areafraction': False, # conceptual visualization of data
         'ni':               False,                                                      # Number index
         'o_area_mean':      False,                                                      # object mean area                     
-        'rome':             False,  'rome_n':           False,                          # ROME
+        'rome':             True,  'rome_n':           False,                          # ROME
         'o_area':           False,                                                      # object area 
         'o_heatmap':        False,                                                      # object location
         }
 
-    switch = {                                                                              # settings
-        'constructed_fields':   False,  'sample_data':      True,   'gadi_data':    False,  # data source
-        'fixed_area':           False,                                                      # conv_threshold type
-        'save_folder_desktop':  False , 'save':             True,                          # save
+    switch = {                                                                          # settings
+        'fixed_area':           False,                                                  # conv_threshold type
+        'constructed_fields':   False, 'test_sample': False,                            # For testing
+        'save_folder_desktop':  True, 'save_scratch':   False, 'save': False            # Save
         }
     
     run_org_metrics(switch_metric, switch)

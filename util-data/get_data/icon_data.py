@@ -6,7 +6,7 @@
 - It will first check if the dataset is in scratch. If not, it will generate and process the data, save it in scratch, and then access it from scratch.
 - If this script is called from a different script a client will need to have been defined
 
-    # path_targetGrid = '/pool/data/ICON/grids/public/mpim/0015/icon_grid_0015_R02B09_G.nc' # cycle 1
+    # path_targetGrid = '/pool/data/ICON/grids/public/mpim/0015/icon_grid_0015_R02B09_G.nc' # for cycle 1
 '''
 
 
@@ -15,19 +15,19 @@
 import xarray as xr
 from pathlib import Path
 import numpy as np
-
+import multiprocessing
+from dask.utils import format_bytes # check size of variable: print(format_bytes(da.nbytes))
+from distributed import(Client, progress, wait)
+import psutil
 
 # ------------------------------------------------------------------------------------ imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
-sys.path.insert(0, f'{os.getcwd()}/util-data')
-import intake_tools as iT
-import regrid_ICON as rI
-
 sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV
-import myFuncs_dask as mFd
 
+sys.path.insert(0, f'{os.getcwd()}/util-data')
+import regrid.icon_regrid as rGi
 
 
 # ------------------------
@@ -64,12 +64,12 @@ def process_month(variable_id, x_res, y_res, pattern_file, client, path_dataRaw,
             ds = load_month(path_dataRaw, year, month, pattern_file)
             da = ds[variable_id]
             da = da.resample(time="1D", skipna=True).mean()
-            da = mFd.persist_process(client, task = da, task_des = 'resample', persistIt = True, computeIt = True, progressIt = True)
+            da = persist_process(client, task = da, task_des = 'resample', persistIt = True, computeIt = True, progressIt = True)
             da = da.assign_coords(clon=("ncells", ds_grid.clon.data * 180 / np.pi), clat=("ncells", ds_grid.clat.data * 180 / np.pi))
             if calc_weights:
                 path_gridDes, path_weights = rI.gen_weights(ds_in = da.isel(time = 0).compute(), x_res = x_res, y_res = y_res, path_targetGrid = path_targetGrid, path_scratch = mV.folder_scratch)
                 calc_weights = False
-            ds_month = rI.remap(ds_in = da, path_gridDes = path_gridDes, path_weights = path_weights, path_targetGrid = path_targetGrid, path_scratch = mV.folder_scratch)
+            ds_month = rGi.remap(ds_in = da, path_gridDes = path_gridDes, path_weights = path_weights, path_targetGrid = path_targetGrid, path_scratch = mV.folder_scratch)
             ds_month.to_netcdf(path_month)
             path_months.append(path_month)
     return path_months
@@ -100,6 +100,38 @@ def process_year(model, variable_id, years_range, x_res, y_res, pattern_file, cl
 # ------------------------
 #         Run
 # ------------------------
+# ----------------------------------------------------------------------------------- Set cpu distribution --------------------------------------------------------------------------------------------------- #
+def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
+    if ncpus == 'all':
+        if 'SLURM_JOB_ID' in os.environ:
+            ncpus = int(os.environ.get('SLURM_CPUS_ON_NODE', multiprocessing.cpu_count()))
+        else:
+            ncpus = multiprocessing.cpu_count()
+    total_memory = psutil.virtual_memory().total
+    ncpu = multiprocessing.cpu_count() if ncpus == 'all' else ncpus
+    threads_per_worker = ncpu // nworkers
+    mem_per_worker = threads_per_worker     # 1 GB per worker (standard capacity is 940 MB / worker, giving some extra for overhead operations)
+    processes = False                       # False: Workers share memory (True: Each worker mostly deal with sub-tasks separately)
+    print(f'Dask client')
+    print(f'\tSpecs: {format_bytes(total_memory)}, {ncpu} CPUs')
+    print(f'\tCluster: {nworkers} workers, {threads_per_worker} cpus/worker, {mem_per_worker} GiB/worker, processes: {processes}')
+    client = Client(n_workers = nworkers, memory_limit = f"{mem_per_worker}GB", threads_per_worker = threads_per_worker, processes = processes)         
+    if switch['dashboard']:         # tunnel IP to local by: ssh -L 8787:localhost:8787 b382628@136.172.124.4 (on local terminal)
+        import webbrowser
+        webbrowser.open('http://localhost:8787/status') 
+    return client
+
+def persist_process(client, task, task_des, persistIt = True, computeIt = False, progressIt = True):
+    if persistIt:
+        task = client.persist(task)        # can also do .compute()
+        print(f'{task_des} started')
+        if progressIt:
+            progress(task)
+        print(f'{task_des} finished')
+    if computeIt:    
+        task = task.compute()
+    return task
+
 # --------------------------------------------------------------------------------------- process data --------------------------------------------------------------------------------------------------- #
 def process_data(model, variable_id, x_res, y_res, years_range):
     simulation_id = model.split('_')[1]    # 'ngc2013'
@@ -108,7 +140,8 @@ def process_data(model, variable_id, x_res, y_res, years_range):
     pattern_file = 'ngc2013_atm_2d_3h_mean'                                             # could potentially do this with splitting the name of the file, and looking for dates in last split (instead of pattern search)
     print(f'Processing {frequency} {realm} {variable_id} data from {mV.datasets[0]}')   # this happens if processing data is requested
     print(f'Remapping to daily {x_res}x{y_res} deg data')
-    client = mFd.create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False})
+    client = create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False})
+    import intake_tools as iT
     path_dataRaw = iT.get_files_intake(simulation_id, frequency, variable_id, realm)
     ds_grid, path_targetGrid = get_target_grid()
     show = False
@@ -119,25 +152,37 @@ def process_data(model, variable_id, x_res, y_res, years_range):
     ds = xr.open_mfdataset(path_dataProcessed, combine="by_coords", chunks="auto", engine="netcdf4", parallel=True)                     # open all years
     print(ds)
 
-
 def request_data(model, variable_id, years_list):
     response = input(f"Do you want to process {variable_id} from {model} for years: {years_list[0]}:{years_list[1]}? (y/n): ").lower()
     return response
 
 
 # ---------------------------------------------------------------------------- Choose dataset, time-peroiod and resolution --------------------------------------------------------------------------------------------------- #
-def get_data_ICON(switch_var = {'pr': True}, switch = {'test_sample': False}, years_range = [2020, 2050], model = mV.models_nextgems[0], x_res = mV.x_res, y_res = mV.y_res):
+def find_source(dataset, models_cmip5 = mV.models_cmip5, models_cmip6 = mV.models_cmip6, observations = mV.observations, models_dyamond = mV.models_dyamond, models_nextgems = mV.models_nextgems):
+    '''Determining source of dataset '''
+    source = 'test'     if np.isin(mV.test_fields, dataset).any()   else None     
+    source = 'cmip5'    if np.isin(models_cmip5, dataset).any()     else source      
+    source = 'cmip6'    if np.isin(models_cmip6, dataset).any()     else source         
+    source = 'obs'      if np.isin(observations, dataset).any()     else source
+    source = 'dyamond'  if np.isin(models_dyamond, dataset).any()   else source        
+    source = 'nextgems' if np.isin(models_nextgems, dataset).any()  else source   
+    return source
+
+def get_icon_data(switch_var = {'pr': True}, switch = {'test_sample': False}, model = mV.datasets[0], years_range = [2020, 2050], x_res = mV.x_res, y_res = mV.y_res):
+    source = find_source(model)
     variable_id = next((key for key, value in switch_var.items() if value), None)
     if switch['test_sample']:
         years_range = [2020, 2020]
-    folder_dataProcessed = f'{mV.folder_scratch}/{variable_id}/{model}'
+    folder_dataProcessed = f'{mV.folder_scratch}/sample_data/{variable_id}/{source}/{model}'
     if os.path.exists(folder_dataProcessed):
         print(f'getting {model} daily {variable_id} data at {x_res}x{y_res} deg, between {years_range[0]}:{years_range[1]}')
         path_dataProcessed = [os.path.join(folder_dataProcessed, f) for f in os.listdir(folder_dataProcessed) if os.path.isfile(os.path.join(folder_dataProcessed, f))]
         if path_dataProcessed == []:
-            print(f'no {model}: daily {variable_id} data at {x_res}x{y_res} deg')
+            print(f'no {model}: daily {variable_id} data at {x_res}x{y_res} deg in {folder_dataProcessed} (check)')
         path_dataProcessed.sort()
-        ds = xr.open_mfdataset(path_dataProcessed, combine="by_coords", chunks="auto", engine="netcdf4", parallel=True) # open all processed years
+        if switch['test_sample']:
+            return xr.open_mfdataset(path_dataProcessed[0], combine="by_coords", chunks="auto", engine="netcdf4", parallel=True) # open first processed year        
+        ds = xr.open_mfdataset(path_dataProcessed, combine="by_coords", chunks="auto", engine="netcdf4", parallel=True)        # open all processed years
         years_ds = ds["time"].dt.year.values
         if years_ds[0] != years_range[0] or years_ds[-1] != years_range[1]:
             print(f'years requested: {years_range[0]}:{years_range[-1]}')
@@ -152,12 +197,15 @@ def get_data_ICON(switch_var = {'pr': True}, switch = {'test_sample': False}, ye
         else:
             return ds[variable_id]
     else:
-        print(f'no {model}: daily {variable_id} data')
+        print(f'no {model}: daily {variable_id} data in {folder_dataProcessed}')
         response = request_data(model, variable_id, years_range)
         if response == 'y':
             process_data(model, variable_id, x_res, y_res, years_range)
 
 
+
+
+# --------------------------------------------------------------------------------------------- Test here --------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_var = {
         'pr':   True,
@@ -167,7 +215,7 @@ if __name__ == '__main__':
         'test_sample':  False
         }
     
-    da = get_data_ICON(switch_var, switch)
+    da = get_icon_data(switch_var, switch)
     print(da)
 
 

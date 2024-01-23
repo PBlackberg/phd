@@ -71,6 +71,17 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'UKESM1-0-LL',       # 29  
     ]
 
+# -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
+observations = [
+    # 'GPCP',                # for precipitation and organization index (from project al33 on gadi)
+    # 'GPCP_1998-2009',     # GPCP section 1: high offset in high percentile precipitation
+    # 'GPCP_2010-2022',     # GPCP section 2: low offset in high percentile precipitation
+    # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
+    # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
+    # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
+    # 'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
+    ]
+
 
 # -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
 models_dyamond = [
@@ -82,18 +93,6 @@ models_dyamond = [
 models_nextgems = [
     'ICON-ESM_ngc2013',
 ]
-
-
-# -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
-observations = [
-    # 'GPCP',                # for precipitation and organization index (from project al33 on gadi)
-    # 'GPCP_1998-2009',     # GPCP section 1: high offset in high percentile precipitation
-    # 'GPCP_2010-2022',     # GPCP section 2: low offset in high percentile precipitation
-    # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
-    # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
-    # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
-    # 'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
-    ]
 
 
 
@@ -133,10 +132,9 @@ folder_save = [os.path.expanduser("~") + '/Documents/data']
 folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
 folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
 
-
-folder_scratch = [os.path.expanduser("~") + '/Documents/data']
-folder_scratch = ''  if os.path.expanduser("~") == '/home/565/cb4968'                                          else folder_scratch 
-folder_scratch = (Path("/scratch") / getuser()[0] / getuser()) if os.path.expanduser("~") == '/home/b/b382628' else folder_scratch # /scratch/b/b382628
+folder_scratch = (os.path.expanduser("~") + '/Documents/data/scratch')
+folder_scratch = ('/scratch/w40/cb4968')                        if os.path.expanduser("~") == '/home/565/cb4968'    else folder_scratch 
+folder_scratch = (Path("/scratch") / getuser()[0] / getuser())  if os.path.expanduser("~") == '/home/b/b382628'     else folder_scratch # /scratch/b/b382628
 
 
 

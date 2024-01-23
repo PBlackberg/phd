@@ -84,7 +84,7 @@ def cmap_label_exceptions(metric, switch, cmap, label):
 
 
 # -----------------------
-#      All metrics
+#   Get metric object
 # -----------------------
 def get_metric_class(metric, switchM = {'metric_variation':False}, prctile = '95'):
     ''' Used for loading and plotting metrics '''
@@ -166,61 +166,30 @@ def get_metric_class(metric, switchM = {'metric_variation':False}, prctile = '95
     return metric_class(var, name, cmap, label, color)
 
 
+def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experiments[0], timescale = mV.timescales[0], resolution = mV.resolutions[0], folder_load = mV.folder_save[0]):
+    source = find_source(dataset)
+    experiment = ''             if source in ['obs'] else experiment
+    if source in ['obs'] and dataset not in ['GPCP', 'GPCP_1998-2009', 'GPCP_2010-2022']:
+        # dataset = 'GPCP_1998-2009'  if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset  # for comparing with other obs datasets
+        dataset = 'GPCP_2010-2022'  if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset   # for comparing with other obs datasets
+        # dataset = 'GPCP'            if source == 'obs' and metric_class.var in ['pr', 'org'] else dataset  # for comparing with other obs datasets
+    timescale = 'daily'         if metric_class.var in ['pr', 'org', 'hus', 'ws'] else timescale            # some metrics are only on daily
+    timescale = 'monthly'         if dataset == 'NOAA'    else timescale                                      # some datasets are only on daily
+    timescale = 'daily'         if dataset == 'ISCCP'   else timescale                                      # some datasets are only on daily
 
-
-
-
-# ------------------------
-#    data variable class
-# ------------------------
-# ----------------------------------------------------------------- Gives Variable specs ----------------------------------------------------------------------------------------------------- #
-class variable_class():
-    ''' Gives variable details (name, option, label, cmap) (Used for animation of fields) '''
-    def __init__(self, ref, variable_type, name, cmap, label):
-        self.ref           = ref
-        self.variable_type = variable_type
-        self.name          = name
-        self.label         = label
-        self.cmap          = cmap
-
-
-# -----------------------
-#     All variables
-# -----------------------
-# ----------------------------------------------------------------------------------- variable specs (for field animations) ----------------------------------------------------------------------------------------------------- #
-def get_variable_class(switch):
-    ''' list of variable: name (of saved dataset), option (data array in dataset), label, cmap, color. Used for animation of fields '''
-    ref, var, name, label, cmap = [None, None, None, None, None]
-    keys = [k for k, v in switch.items() if v]  # list of True keys
-    for key in keys: # loop over true keys
-        ref, var, name, label, cmap = [key, 'pr', 'pr',   r'pr [mm day${^-1}$]',  'Greys']    if key in ['obj']  else [ref, var, name, label, cmap] 
-        ref, var, name, label, cmap = [key, key,  key,    r'pr [mm day${^-1}$]',  'Blues']    if key in ['pr']   else [ref, var, name, label, cmap] 
-        ref, var, name, label, cmap = [key, 'pr', 'pr',   r'pr [mm day${^-1}$]',  'Reds']     if key in ['pr99'] else [ref, var, name, label, cmap] 
-        ref, var, name, label, cmap = [key, key,  key,    'rel. humiid. [%]',     'Greens']   if key in ['hur']  else [ref, var, name, label, cmap] 
-        ref, var, name, label, cmap = [key, 'rad', key,   r'OLR [W m${^-2}$]',    'Purples'] if key in ['rlut']  else [ref, var, name, label, cmap]
-    return variable_class(ref, var, name, cmap, label)
+    path = f'{folder_load}/metrics/{metric_class.var}/{metric_class.name}/{source}/{dataset}_{metric_class.name}_{timescale}_{experiment}_{resolution}.nc'
+    ds = xr.open_dataset(path)     
+    da = ds[f'{metric_class.name}']
+    if dataset == 'CERES':
+        da['time'] = da['time'] - pd.Timedelta(days=14) # this observational dataset have monthly data with day specified as the middle of the month instead of the first
+    return da
 
 
 
 
 
 
-# ------------------------
-#    dimensions class
-# ------------------------
-# ------------------------------------------------------------------ Gives dimension specs ----------------------------------------------------------------------------------------------------- #
-class dims_class():
-    R = 6371        # radius of earth
-    g = 9.81        # gravitaional constant
-    c_p = 1.005     # specific heat capacity
-    L_v = 2.256e6   # latent heat of vaporization
-    def __init__(self, da):
-        self.lat, self.lon       = da['lat'].data, da['lon'].data
-        self.lonm, self.latm     = np.meshgrid(self.lon, self.lat)
-        self.dlat, self.dlon     = da['lat'].diff(dim='lat').data[0], da['lon'].diff(dim='lon').data[0]
-        self.aream               = np.cos(np.deg2rad(self.latm))*np.float64(self.dlon*self.dlat*self.R**2*(np.pi/180)**2) # area of domain
-        self.latm3d, self.lonm3d = np.expand_dims(self.latm,axis=2), np.expand_dims(self.lonm,axis=2)                     # used for broadcasting
-        self.aream3d             = np.expand_dims(self.aream,axis=2)
+
 
 
 

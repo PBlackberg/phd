@@ -21,8 +21,8 @@ import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/switch')
 import myVars as mV
-import myClasses as mC
 import myFuncs as mF
+
 
 
 
