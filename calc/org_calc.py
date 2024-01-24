@@ -5,7 +5,6 @@
 In this script organization metrics are calculated from convective regions.
 The convective regions are binary 2D fields.
 The convective regions are determined by precipitation rates exceeding a percentile threshold (on average 5% of the domain covered is the default)
-
 '''
 
 
@@ -42,9 +41,8 @@ def get_fixed_area_conv_threshold(da):
 
 @mF.timing_decorator()
 def find_convective_regions(switch, dataset, experiment):
-    da = mF.load_variable({'pr':True}, switch, dataset, experiment).sel(lat = slice(-30, 30))
-    # da.coords['lon'] = da.coords['lon'] + 180
-    print(da)
+    da = mF.load_variable({'pr': True}, switch, dataset, experiment)
+    # print(da)
     # exit()
     conv_threshold = get_conv_threshold(da) if not switch['fixed_area'] else get_fixed_area_conv_threshold(da)    
     conv_regions = (da > conv_threshold)*1
@@ -60,7 +58,7 @@ def get_conv_snapshot(da):
         import myFuncs_plots as mFd     
         for timestep in np.arange(0, len(da.time.data)):
             fig = mFd.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
-            if mFd.show_plot(fig, 'cycle', cycle_time = 0.2):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+            if mFd.show_plot(fig, show_type = 'cycle', cycle_time = 0.2):        # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
                 break
     return da.isel(time=0) 
 
@@ -73,9 +71,8 @@ def get_obj_snapshot(da):
         for day in np.arange(0, len(da.time.data)):
             scene = skm.label(da.isel(time=day), background = 0, connectivity=2)
             fig = mFd.plot_scene(xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data}))
-            if mFd.show_plot(fig, 'cycle', cycle_time = 0.2):                    # 3.25 # [show, save_cwd, cycle] (only cycle wont break the loop)
+            if mFd.show_plot(fig, show_type = 'cycle', cycle_time = 0.2):                    # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
                 break
-        
     scene = skm.label(da.isel(time=0), background = 0, connectivity=2)
     return xr.DataArray(scene, dims=['lat', 'lon'], coords={'lat': da.lat.data, 'lon': da.lon.data})
 
@@ -248,31 +245,31 @@ def calc_metric(switch_metric, da):
 # ------------------------------------------------------------------------------------ Get dataset and save metric ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator()
 def run_org_metrics(switch_metric, switch):
-    print(f'variable: Binary matrix from gridboxes exceeding {mV.conv_percentiles[0]}th percentile precipitation threshold, using {mV.resolutions[0]} {mV.timescales[0]} data')
+    print(f'variable: Binary matrix of gridboxes exceeding {mV.conv_percentiles[0]}th percentile precipitation threshold, using {mV.resolutions[0]} {mV.timescales[0]} data')
     print(f'metric: {[key for key, value in switch_metric.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
     for dataset, experiment in mF.run_dataset():
         da = find_convective_regions(switch, dataset, experiment)
         for metric, metric_name in calc_metric(switch_metric, da):
-            mF.save_metric(switch, 'org', dataset, experiment, metric, metric_name, folder = 'metrics') if switch['save'] or switch['save_folder_desktop'] else None
-            print(f'\t\t\t{metric_name} saved')                                                         if switch['save'] or switch['save_folder_desktop'] else None
+            mF.save_metric(switch, 'org', dataset, experiment, metric, metric_name)
+            print(f'\t\t\t{metric_name} saved') if switch['save_folder_desktop'] or switch['save_scratch'] or switch['save'] else None
 
 
 # ---------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_metric = {                                                                   # metric
-        'conv_snapshot':    True,   'obj_snapshot':     True,  'areafraction': False, # conceptual visualization of data
+        'conv_snapshot':    False,   'obj_snapshot':     False,  'areafraction': False, # conceptual visualization of data
         'ni':               False,                                                      # Number index
         'o_area_mean':      False,                                                      # object mean area                     
-        'rome':             True,  'rome_n':           False,                          # ROME
+        'rome':             False,  'rome_n':           False,                          # ROME
         'o_area':           False,                                                      # object area 
         'o_heatmap':        False,                                                      # object location
         }
 
     switch = {                                                                          # settings
-        'fixed_area':           False,                                                  # conv_threshold type
-        'constructed_fields':   False, 'test_sample': False,                            # For testing
-        'save_folder_desktop':  True, 'save_scratch':   False, 'save': False            # Save
+        'fixed_area':           False,                                                  # conv_threshold type (fixed area instead of fixed precipitation rate threshold)
+        'constructed_fields':   False, 'test_sample':   False,                          # For testing
+        'save_folder_desktop':  False, 'save_scratch':  False, 'save': False            # Save
         }
     
     run_org_metrics(switch_metric, switch)

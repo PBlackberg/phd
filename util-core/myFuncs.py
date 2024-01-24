@@ -130,12 +130,15 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path, mode = 'w')
 
-def save_metric(switch, var_name, dataset, experiment, metric, metric_name, folder):
+def save_metric(switch, met_type, dataset, experiment, metric, metric_name):
     ''' Saves in variable/metric specific folders '''
     filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
-    folder = f'{mV.folder_save[0]}/{folder}/{var_name}/{metric_name}/{find_source(dataset)}'
+    if mV.resolutions[0] == 'regridded':
+        filename = f'{filename}_{int(360/mV.x_res)}x{int(180/mV.y_res)}'
+    folder = f'/metrics/{met_type}/{metric_name}/{find_source(dataset)}'
     for save_type in [k for k, v in switch.items() if v]:
-        save_file(xr.Dataset({metric_name: metric}), folder, filename)                          if save_type == 'save'                  else None                                        
+        save_file(xr.Dataset({metric_name: metric}), f'{mV.folder_save}{folder}', filename)     if save_type == 'save'                  else None      
+        save_file(xr.Dataset({metric_name: metric}),f'{mV.folder_scratch}/{folder}', filename)  if save_type == 'save_scratch'          else None                                   
         save_file(xr.Dataset({metric_name: metric}), f'{home}/Desktop/{metric_name}', filename) if save_type == 'save_folder_desktop'   else None
 
 

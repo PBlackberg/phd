@@ -128,9 +128,9 @@ conv_percentiles = [    # threshold for precipitation rate considered to be asso
 # --------------------------------
 # Folder for saving metrics / data
 # --------------------------------
-folder_save = [os.path.expanduser("~") + '/Documents/data']
-folder_save = ['/g/data/k10/cb4968/data']   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
-folder_save = ['/work/bb1153/b382628/data'] if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
+folder_save = (os.path.expanduser("~") + '/Documents/data')
+folder_save = ('/g/data/k10/cb4968/data')   if os.path.expanduser("~") == '/home/565/cb4968' else folder_save
+folder_save = ('/work/bb1153/b382628/data') if os.path.expanduser("~") == '/home/b/b382628'  else folder_save
 
 folder_scratch = (os.path.expanduser("~") + '/Documents/data/scratch')
 folder_scratch = ('/scratch/w40/cb4968')                        if os.path.expanduser("~") == '/home/565/cb4968'    else folder_scratch 
