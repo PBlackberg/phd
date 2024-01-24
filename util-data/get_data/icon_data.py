@@ -182,7 +182,7 @@ def get_icon_data(switch_var = {'pr': True}, switch = {'test_sample': False}, mo
         path_dataProcessed.sort()
         if switch['test_sample']:
             ds.coords['lon'] = ds.coords['lon'] + 180
-            return xr.open_mfdataset(path_dataProcessed[0], combine="by_coords", chunks="auto", engine="netcdf4", parallel=True).sel(lat = slice(-30, 30)) # open first processed year        
+            return xr.open_mfdataset(path_dataProcessed[0], combine="by_coords", chunks="auto", engine="netcdf4", parallel=True).sel(lat = slice(-30, 30))*24*60*60 # open first processed year       
         ds = xr.open_mfdataset(path_dataProcessed, combine="by_coords", chunks="auto", engine="netcdf4", parallel=True)        # open all processed years
         years_ds = ds["time"].dt.year.values
         if years_ds[0] != years_range[0] or years_ds[-1] != years_range[1]:
@@ -195,9 +195,10 @@ def get_icon_data(switch_var = {'pr': True}, switch = {'test_sample': False}, mo
             if response == "n":
                 print('returning existing years')
                 return ds[variable_id]
+            
         else:
             ds.coords['lon'] = ds.coords['lon'] + 180
-            return ds[variable_id].sel(lat = slice(-30, 30))
+            return ds[variable_id].sel(lat = slice(-30, 30))*24*60*60
     else:
         print(f'no {model}: daily {variable_id} data in {folder_dataProcessed}')
         response = request_data(model, variable_id, years_range)

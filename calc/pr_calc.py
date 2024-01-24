@@ -33,7 +33,7 @@ def get_snapshot(da):
     if plot:
         import myFuncs_plots as mFd     
         for timestep in np.arange(0, len(da.time.data)):
-            fig = mFd.plot_scene(da.isel(time=timestep), ax_title = timestep)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+            fig = mFd.plot_scene(da.isel(time=timestep), ax_title = timestep, vmin = 0, vmax = 20)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
             if mFd.show_plot(fig, show_type = 'cycle', cycle_time = 0.5):        # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
                 break
     return da.isel(time=0) 
@@ -52,18 +52,18 @@ def get_sMean(da):
 # Calculation: Metric types
 # --------------------------
 # -------------------------------------------------------------------------------------------- Percentile based ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def calc_percentile(da, percentile):
     return da.quantile(percentile, dim=('lat', 'lon'), keep_attrs=True)
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_da_percentile(da, percentile):
     percentile_value = calc_percentile(da, percentile)
     return da.where(da >= percentile_value)
 
 
 # ------------------------------------------------------------------------------------------------ Rxday ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_rxday(da, nb_days = '5'):
     ''' Most extreme daily gridpoint value locally over set time period (1-year here) '''
     if int(nb_days) > 1:
@@ -82,12 +82,13 @@ def calc_conv_threshold(switch, da):
         conv_threshold = xr.DataArray(data = conv_threshold.mean(dim='time').data * np.ones(shape = len(da.time)), dims = 'time', coords = {'time': da.time.data}) 
     return conv_threshold
 
-@mF.timing_decorator
+@mF.timing_decorator()
 def get_pr_o_day(switch, da, dim):
     ''' Precipitation rate in each contigous convective region (object) '''
     conv_threshold = calc_conv_threshold(switch, da)
     pr_o, labels_o = [], []
     for day in np.arange(0,len(da.time.data)):
+        print(f'\t Processing ... currently on {da.time.data[day].year}') if day % 365 == 0 else None
         pr_day = da.isel(time=day)
         pr_day3d = np.expand_dims(pr_day,axis=2)
         L = skm.label(pr_day.where(pr_day>=conv_threshold.isel(time=day),0)>0, background=0,connectivity=2)
@@ -95,21 +96,22 @@ def get_pr_o_day(switch, da, dim):
         labels_oScene = np.unique(L)[1:] # first number is background (0)
         obj3d = np.stack([(L==label) for label in labels_oScene],axis=2)*1 # 3d matrix with each object in a scene being a binary 2d slice
         pr_oScene = np.sum(obj3d * pr_day3d * dim.aream3d, axis=(0,1)) / np.sum(obj3d * dim.aream3d, axis=(0,1))
-        pr_o.append(pr_oScene)
-        labels_o.append(labels_oScene)
-    return pr_o, labels_o
+        pr_o.append(pr_oScene)          # list of lists
+        # labels_o.append(labels_oScene)  # list of lists # can make this a separate matrix in org_calc
+    return pr_o
 
+def create_o_list(list_of_lists):
+    list_o = [item for sublist in list_of_lists for item in sublist]
+    return xr.DataArray(data = list_o, dims = ("obj"), coords = {"obj": np.arange(0, len(list_o))})
+
+@mF.timing_decorator()
 def create_o_array(da, list_of_lists):
     max_length = max(len(sublist) for sublist in list_of_lists)
     array_filled = np.full((len(list_of_lists), max_length), np.nan)
     for i, sublist in enumerate(list_of_lists):
         array_filled[i, :len(sublist)] = sublist
-        array = xr.DataArray(data = array_filled, dims = ("time", "object"), coords = {"time": da.time.data})
+        array = xr.DataArray(data = array_filled, dims = ("time", "obj"), coords = {"time": da.time.data})
     return array
-
-def create_o_list(list_of_lists):
-    list_o = [item for sublist in list_of_lists for item in sublist]
-    return xr.DataArray(data = list_o, dims = ("obj"), coords = {"obj": np.arange(0, len(list_o))})
 
 
 # -------------------------------------------------------------------------------------------- Organization proxy ----------------------------------------------------------------------------------------------------- #
@@ -131,40 +133,52 @@ def fix_metric_type_name(switch, metric_type_name):
     if metric_type_name in ['pr_o', 'pr_o_array']:
         metric_type_name = f'{metric_type_name}_{mV.conv_percentiles[0]}thprctile'
         metric_type_name = f'{metric_type_name}_fixed_area' if switch['fixed_area'] else metric_type_name
+    return metric_type_name
 
 def calc_metric_type(switch_metric, switchM, switch, da):
     dim = mF.dims_class(da)
+    metric_type, metric_type_name = None, None
     for metric_type_name in [k for k, v in switch_metric.items() if v]:
+        print(f'Running {metric_type_name}')
         metric_type = None
-        metric_type = da                                                                            if metric_type_name in ['pr']                                                       else metric_type
-        metric_type = calc_percentile(da, percentile = int(metric_type_name.split()[1]) * 0.01)     if metric_type_name in ['pr_90', 'pr_95', 'pr_97', 'pr_99'] and switchM['other']    else metric_type
-        metric_type = get_da_percentile(da, percentile = int(metric_type_name.split()[1]) * 0.01)   if metric_type_name in ['pr_90', 'pr_95', 'pr_97', 'pr_99']                         else metric_type
-        metric_type = get_rxday(da, nb_days = metric_type_name[5])                                  if metric_type_name in ['pr_rx1day', 'pr_rx5day']                                   else metric_type                                      
-        metric_type = create_o_list(get_pr_o_day(switch, da, dim))                                  if metric_type_name in ['pr_o']                                                     else metric_type
-        metric_type = create_o_array(da, get_pr_o_day(switch, da, dim))                             if metric_type_name in ['pr_o_array']                                               else metric_type
+        metric_type = da                                                                                if metric_type_name in ['pr']                                                       else metric_type
+        metric_type = calc_percentile(da, percentile = int(metric_type_name.split('_')[1]) * 0.01)      if metric_type_name in ['pr_90', 'pr_95', 'pr_97', 'pr_99'] and switchM['other']    else metric_type
+        metric_type = get_da_percentile(da, percentile = int(metric_type_name.split('_')[1]) * 0.01)    if metric_type_name in ['pr_90', 'pr_95', 'pr_97', 'pr_99']                         else metric_type
+        metric_type = get_rxday(da, nb_days = metric_type_name[5])                                      if metric_type_name in ['pr_rx1day', 'pr_rx5day']                                   else metric_type                                      
+        metric_type = create_o_list(get_pr_o_day(switch, da, dim))                                      if metric_type_name in ['pr_o']                                                     else metric_type
+        metric_type = create_o_array(da, get_pr_o_day(switch, da, dim))                                 if metric_type_name in ['pr_o_array']                                               else metric_type
         metric_type_name = fix_metric_type_name(switch, metric_type_name)
-    yield metric_type, metric_type_name
+        yield metric_type, metric_type_name
 
 def calc_metric(switch_metric, switchM, switch, metric_type, metric_type_name):
+    metric, metric_name = None, None
     for metric_name in [k for k, v in switchM.items() if v]:
-        metric, metric_name = [get_snapshot(metric_type), f'{metric_type_name}_snapshot']   if metric_type == 'snapshot'    else [metric_type, metric_type_name]
-        metric, metric_name = [get_sMean(metric_type), f'{metric_type_name}_sMean']         if metric_type == 'sMean'       else [metric_type, metric_type_name]
-        metric, metric_name = [get_tMean(metric_type), f'{metric_type_name}_tMean']         if metric_type == 'tMean'       else [metric_type, metric_type_name]
-    yield metric, metric_name
+        metric = None
+        metric, metric_name = [metric_type, metric_type_name]                               if metric_name == 'other'       else [metric, metric_name]
+        metric, metric_name = [get_snapshot(metric_type), f'{metric_type_name}_snapshot']   if metric_name == 'snapshot'    else [metric, metric_name]
+        metric, metric_name = [get_sMean(metric_type), f'{metric_type_name}_sMean']         if metric_name == 'sMean'       else [metric, metric_name]
+        metric, metric_name = [get_tMean(metric_type), f'{metric_type_name}_tMean']         if metric_name == 'tMean'       else [metric, metric_name]
+        yield metric, metric_name
 
 
 # --------------------------------------------------------------------------------------------------- Run metric ----------------------------------------------------------------------------------------------------- #
 @mF.timing_decorator()
-def run_pr_metrics(switch_metric, switch):
-    print(f'variable: Binary matrix of gridboxes exceeding {mV.conv_percentiles[0]}th percentile precipitation threshold, using {mV.resolutions[0]} {mV.timescales[0]} data')
-    print(f'metric: {[key for key, value in switch_metric.items() if value]}')
+def run_pr_metrics(switch_metric, switchM, switch):
+    print(f'variable: daily precipitation field')
+    print(f'metric_type: {[key for key, value in switch_metric.items() if value]}')
+    print(f'metric: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
     for dataset, experiment in mF.run_dataset():
         da = mF.load_variable({'pr': True}, switch, dataset, experiment)
         for metric_type, metric_type_name in calc_metric_type(switch_metric, switchM, switch, da):
             for metric, metric_name in calc_metric(switch_metric, switchM, switch, metric_type, metric_type_name):
-                mF.save_metric(switch, 'pr', dataset, experiment, metric, metric_name)
-                print(f'\t\t\t{metric_name} saved') if switch['save_folder_desktop'] or switch['save_scratch'] or switch['save'] else None
+                # print(metric_name)
+                # print(metric)
+                path = mF.save_metric(switch, 'pr', dataset, experiment, metric, metric_name) if metric is not None else None
+                # print(path)
+                # ds = xr.open_dataset(path)
+                # print(ds)
+
 
 
 # ------------------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
@@ -172,18 +186,18 @@ if __name__ == '__main__':
     switch_metric = {                                                                                               # metrics (can choose multiple)
         'pr':           True,  'pr_90':         False,  'pr_95':    False,  'pr_97':    False,  'pr_99':    False,  # percentiles
         'pr_rx1day':    False, 'pr_rx5day':     False,                                                              # local extremes
-        'pr_o':         False, 'pr_o_array':    False,                                                              # object precipitation
+        'pr_o':         False, 'pr_o_array':    True,                                                              # object precipitation
         'F_pr10':       False,                                                                                      # organization proxy
         }
     
     switchM = {                                                                                     # metric tyoe (has to work for all metrics chosen in switch_metric)
-        'snapshot': True,   'sMean':    False,  'tMean':    False,  'other':    True
+        'snapshot': True,   'sMean':    False,  'tMean':    False,  'other':    False
         }
     
     switch = {                                                                              # settings
         'constructed_fields':   False,  'test_sample':      False,                          # dataset type
         'fixed_area':           False,                                                      # conv_threshold
-        'save_to_desktop':      False,  'save':             True,   'save_scratch': False,  # save
+        'save_folder_desktop':  False,  'save':             False,   'save_scratch': False,  # save (can only do one at a time)
         }
     
     run_pr_metrics(switch_metric, switchM, switch)

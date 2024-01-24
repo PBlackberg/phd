@@ -132,15 +132,19 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
 
 def save_metric(switch, met_type, dataset, experiment, metric, metric_name):
     ''' Saves in variable/metric specific folders '''
-    filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
+    source = find_source(dataset)
+    filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
     if mV.resolutions[0] == 'regridded':
         filename = f'{filename}_{int(360/mV.x_res)}x{int(180/mV.y_res)}'
-    folder = f'/metrics/{met_type}/{metric_name}/{find_source(dataset)}'
+    folder_sub = f'/metrics/{met_type}/{metric_name}/{source}'
     for save_type in [k for k, v in switch.items() if v]:
-        save_file(xr.Dataset({metric_name: metric}), f'{mV.folder_save}{folder}', filename)     if save_type == 'save'                  else None      
-        save_file(xr.Dataset({metric_name: metric}),f'{mV.folder_scratch}/{folder}', filename)  if save_type == 'save_scratch'          else None                                   
-        save_file(xr.Dataset({metric_name: metric}), f'{home}/Desktop/{metric_name}', filename) if save_type == 'save_folder_desktop'   else None
-
+        folder = f'{mV.folder_save}{folder_sub}'      if save_type == 'save'                  else None
+        folder = f'{mV.folder_scratch}/{folder_sub}'  if save_type == 'save_scratch'          else folder
+        folder = f'{home}/Desktop/{metric_name}'      if save_type == 'save_folder_desktop'   else folder
+        if not folder == None:
+            save_file(xr.Dataset({metric_name: metric}), folder, f'{filename}.nc')
+            print(f'\t\t\t{metric_name} {save_type}')
+            return f'{folder}{filename}'
 
 # --------------------------------------------------------------------------------------- Timing --------------------------------------------------------------------------------------------------- #
 def timing_decorator(show_time = False):
@@ -307,6 +311,15 @@ if __name__ == '__main__':
     print(da)
 
 
+
+# for plotting in separate script
+# import os
+# import sys
+# home = os.path.expanduser("~")                                        
+# sys.path.insert(0, f'{os.getcwd()}/util-core')
+# import myFuncs_plots as mFd   
+# fig = mFd.plot_scene(da, ax_title = 'pr_mean', vmin = 0, vmax = 20)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+# mFd.show_plot(fig, show_type = 'show', cycle_time = 0.5)        # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
 
 
 

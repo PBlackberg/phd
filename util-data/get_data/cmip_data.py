@@ -235,13 +235,12 @@ def get_cmip_data(switch_var = {'pr': True}, switch = {'test_sample': False}, mo
     print(f'getting {model} {mV.resolutions[0]} {mV.timescales[0]} {variable_id} data from {experiment} experiment')
     if mV.resolutions[0] == 'regridded':
         print(f'Regridded to {mV.x_res}x{mV.y_res}')
-    print(f'settings: {[key for key, value in switch.items() if value]}')
     folder = f'{mV.folder_scratch}/sample_data/{variable_id}/{source}'
     path = f'{folder}/{model}_{variable_id}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}.nc'
     if os.path.exists(path):
         return xr.open_dataset(path)[variable_id]
     else:
-        print(f'no {model} {mV.resolutions[0]} {mV.timescales[0]} {variable_id} data at {x_res}x{y_res} deg in {folder} (check)')
+        print(f'no {model} {mV.resolutions[0]} {mV.timescales[0]} {variable_id} data at {x_res}x{y_res} deg in {path} (check)')
         response = request_data(model, variable_id)
         if response == 'y':
             process_data(source, dataset, experiment, var_name = variable_id, switch = {'ocean': False})
@@ -269,6 +268,10 @@ if __name__ == '__main__':
 
     process_all = False
     if process_all:
+        print(f'getting {model} {mV.resolutions[0]} {mV.timescales[0]} {variable_id} data from {experiment} experiment')
+        if mV.resolutions[0] == 'regridded':
+            print(f'Regridded to {mV.x_res}x{mV.y_res}')
+        print(f'settings: {[key for key, value in switch.items() if value]}')
         for dataset in mV.datasets:
             source = find_source(dataset)
             print(f'\t{dataset} ({source})')
