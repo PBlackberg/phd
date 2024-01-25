@@ -38,11 +38,11 @@ home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                             # list of datasets to use    
 
-sys.path.insert(0, f'{os.getcwd()}/util-data')
-import get_data.test_data   as gD_test
-import get_data.cmip_data   as gD_cmip
-import get_data.obs_data    as gD_obs
-import get_data.icon_data   as gD_icon
+# sys.path.insert(0, f'{os.getcwd()}/util-data')
+# import get_data.test_data   as gD_test
+# import get_data.cmip_data   as gD_cmip
+# import get_data.obs_data    as gD_obs
+# import get_data.icon_data   as gD_icon
 # import get_data.metric_data as gD_metric
 
 
@@ -61,7 +61,7 @@ def find_source(dataset, models_cmip5 = mV.models_cmip5, models_cmip6 = mV.model
     return source
 
 # ----------------------------------------------------------------------------- Checking available data --------------------------------------------------------------------------------------------------- #
-def data_available(var = '', dataset = mV.datasets[0], experiment = mV.experiments[0]):
+def data_available(var = 'pr', dataset = 'TaiESM1', experiment = 'historical'):
     ''' Check if dataset has variable. Returning False skips the loop in calc '''
     source = find_source(dataset)
     if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
@@ -93,24 +93,7 @@ def run_dataset(var = ''):
 
 
 # --------------------------------------------------------------------------------- Load data --------------------------------------------------------------------------------------------------- #
-def load_variable(switch_var = {'pr': True}, switch = {'constructed_fields': False},
-                    dataset = 'random', experiment = mV.experiments[0], timescale = mV.timescales[0]):
-    ''' Loading variable data.
-        Sometimes sections of years of a dataset will be used instead of the full data ex: if dataset = GPCP_1998-2010 (for obsservations) 
-        (There is a double trend in high percentile precipitation rate for the first 12 years of the data (that affects the area picked out by the time-mean percentile threshold)'''
-    source = find_source(dataset)
-    if source in ['test']:
-        da = gD_test.get_cF_var(switch_var, dataset)    
-    if source in ['cmip5', 'cmip6']:
-        da = gD_cmip.get_cmip_data(switch_var, switch, dataset, experiment)   
-    if source in ['obs']: 
-        da = gD_obs.get_obs_data(switch_var, switch, dataset, experiment)         
-    if source in ['nextgems'] and dataset == 'ICON-ESM_ngc2013': 
-        da = gD_icon.get_icon_data(switch_var, switch, dataset)
-    # file_pattern = "/Users/cbla0002/Desktop/pr/ICON-ESM_ngc2013/ICON-ESM_ngc2013_pr_daily_*.nc" 
-    # paths = sorted(glob.glob(file_pattern))
-    # da = xr.open_mfdataset(paths, combine='by_coords', parallel=True) # chunks="auto"
-    return da
+
 
 # def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experiments[0], timescale = mV.timescales[0], resolution = mV.resolutions[0], folder_load = mV.folder_save[0]):
 #     source = find_source(dataset)
@@ -144,7 +127,7 @@ def save_metric(switch, met_type, dataset, experiment, metric, metric_name):
         if not folder == None:
             save_file(xr.Dataset({metric_name: metric}), folder, f'{filename}.nc')
             print(f'\t\t\t{metric_name} {save_type}')
-            return f'{folder}{filename}'
+            return f'{folder}/{filename}.nc'
 
 # --------------------------------------------------------------------------------------- Timing --------------------------------------------------------------------------------------------------- #
 def timing_decorator(show_time = False):

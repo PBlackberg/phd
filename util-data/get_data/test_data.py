@@ -18,7 +18,7 @@ np.random.seed(0)
 import os
 import sys
 home = os.path.expanduser("~")               
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                                 
 
 

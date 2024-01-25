@@ -45,22 +45,6 @@ def save_plot(switch= {'save_folder_desktop': False, 'save_test_desktop': False,
         save_figure(fig, folder = f'{os.getcwd()}', filename = 'test.png')                          if save_type == 'save_test_cwd'       else None
 
 
-def show_plot(fig, show_type = 'cycle', cycle_time = 0.5):
-    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
-    if show_type == 'cycle':
-        plt.ion()
-        plt.show()
-        plt.pause(cycle_time)
-        plt.close(fig)
-        plt.ioff()
-    elif show_type == 'save_cwd':
-        save_plot(fig = fig) 
-        return True
-    elif show_type == 'show':
-        plt.show()
-        return True
-
-
 
 # ------------------------
 #         Plots
@@ -216,6 +200,30 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     # scene = conv_regions.isel(time=1)
     # mF.plot_one_scene(scene)
 
+def show_plot(fig, show_type = 'cycle', cycle_time = 0.5):
+    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
+    if show_type == 'cycle':
+        plt.ion()
+        plt.show()
+        plt.pause(cycle_time)
+        plt.close(fig)
+        plt.ioff()
+    elif show_type == 'save_cwd':
+        save_plot(fig = fig) 
+        return True
+    elif show_type == 'show':
+        plt.show()
+        return True
+    
+def get_snapshot(da, plot = False, show_type = 'cycle', vmin = -80, vmax = 80, cmap = 'RdBu'):
+    if plot:
+        for timestep in np.arange(0, len(da.time.data)):
+            if 'plev' in da.dims:
+                print('also has vertical dimensions')
+            fig = plot_scene(da.isel(time=timestep), ax_title = timestep, vmin = -80, vmax = 80, cmap = 'RdBu')     #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
+            if show_plot(fig, show_type = show_type, cycle_time = 0.5):                                             # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
+                break
+    return da.isel(time=0)
 
 
 # ----------------------------------------------------------------------------------------------- Scatter plot --------------------------------------------------------------------------------------------------- #
@@ -269,4 +277,6 @@ def plot_scatter(switch, metric_classX, metric_classY, x, y, metric_title, axtit
     fig.text(0.5, 0.95, fig_title, ha = 'center', fontsize = 15.5, transform=fig.transFigure)
     cbar_right_of_axis(fig, ax, h[3], width_frac= 0.05, height_frac=1, pad=0.035, numbersize = 12, cbar_label = 'months [Nb]', text_pad = 0.05, fontsize = 12) if switch['density_map'] else None
     return fig
+
+
 
