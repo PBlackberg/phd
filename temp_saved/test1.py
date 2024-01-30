@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
   
 
 
-path = '/Users/cbla0002/Desktop/pr_tMean/ICON-ESM_ngc2013_pr_tMean_daily_historical_regridded_144x72.nc'
+path = '/scratch/w40/cb4968/metrics/wap/wap_500hpa_itcz_width/cmip6/TaiESM1_wap_500hpa_itcz_width_monthly_historical_regridded_144x72.nc'
 ds = xr.open_dataset(path)
 print(ds)
-da = ds['pr_tMean']
-print(da)
+da = ds['wap_500hpa_itcz_width']
+print(da.data)
 
 
 import os
@@ -22,4 +22,6 @@ mFd.show_plot(fig, show_type = 'show', cycle_time = 0.5)        # 3.25 # show_ty
 
 # da.plot.pcolormesh('object', 'time')
 # plt.show()
+
+
 

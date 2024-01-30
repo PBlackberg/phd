@@ -69,7 +69,7 @@ def pick_hor_reg(switch, dataset, experiment, da):
 # ------------------------
 # --------------------------------------------------------------------------------------- Calculate --------------------------------------------------------------------------------------------------- #
 def get_variable(switch, var_name, dataset, experiment):
-    print(f'getting {var_name}')
+    # print(f'getting {var_name}{[key for key, value in switch.items() if value]}')
     if var_name in ['lcf', 'hcf']:
         da = vB.load_variable({'cl':True}, switch, dataset, experiment)
         da = da.sel(plev = slice(1000e2, 600e2)).max(dim = 'plev') if var_name == 'lcf' else da
@@ -125,36 +125,38 @@ def get_variable_data(switch, var_name, dataset, experiment):
 
 
 
-
 # ------------------------
 #         Test
 # ------------------------
+# ------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     sys.path.insert(0, f'{os.getcwd()}/util-core')
     import myVars          as mV
     import myFuncs_plots    as mFp     
 
     switch_var = {                                                  # Choose variable
-        'pe':           False,                                      # Precipitation                        
+        'pr':           False,  'pe':           False,              # Precipitation (pr not calculated, for test, this script can also get base variables)               
+        'wap':          True,                                      # Circulation
+        'hur':          False,  'hus' :         False,              # Humidity               
         'stability':    False,                                      # Temperature
         'netlw':        False,                                      # Longwave radiation
         'netsw':        False,                                      # Shortwave radiation
         'lcf':          False,  'hcf':          False,              # Cloud fraction
+        'zg':           False,                                      # Height coordinates
         'h':            False,  'h_anom2':      False,              # Moist Static Energy
         }
 
     switch = {                                                                                                 # choose data to use and mask
         'constructed_fields':   False,  'test_sample':      False,                                             # data to use (test_sample uses first file (usually first year))
         '700hpa':               False,  '500hpa':           True,   '250hpa':  False,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
-        'ocean_orig':           False,  'ocean_common':     False,                                             # horizontal mask
+        'ocean_mask':           False,                                                                         # horizontal mask
         'ascent_fixed':         False,  'descent_fixed':    False,  'ascent':  False,  'descent':  False,      # horizontal mask
-        'save_scratch':         False,  'save':             False                                              # Save
         }
 
     var_name = next((key for key, value in switch_var.items() if value), None)
     da, region = get_variable_data(switch = switch, var_name = var_name, dataset = mV.datasets[0], experiment = mV.experiments[0])
     print(da)
-    mFp.get_snapshot(da, plot = True, show_type = 'cycle')  # show_type = [show, save_cwd, cycle] 
+    # mFp.get_snapshot(da, plot = True, show_type = 'cycle')  # show_type = [show, save_cwd, cycle] 
 
 
 

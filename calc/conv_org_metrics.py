@@ -42,8 +42,6 @@ def get_fixed_area_conv_threshold(da):
 @mF.timing_decorator()
 def find_convective_regions(switch, dataset, experiment):
     da = mF.load_variable({'pr': True}, switch, dataset, experiment)
-    # print(da)
-    # exit()
     conv_threshold = get_conv_threshold(da) if not switch['fixed_area'] else get_fixed_area_conv_threshold(da)    
     conv_regions = (da > conv_threshold)*1
     return conv_regions

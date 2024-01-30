@@ -5,11 +5,10 @@ import os
 import sys
 import pandas as pd
 home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV
 import myFuncs as mF    
-import myClasses as mC
-
+import myFuncs_plots as mFp    
 
 
 # ------------------------
@@ -121,8 +120,8 @@ def get_plot_metric(switchM, metric_class, dataset, source, bin_width):
 #      Plot
 # ----------------
 # ---------------------------------------------------------------------------------------- plot axis plot ----------------------------------------------------------------------------------------------------- #
-def plot_ax_line(ax, x, y, metric_class):
-    h = ax.plot(x, y, metric_class.color)
+def plot_ax_line(ax, x, y, color):
+    h = ax.plot(x, y, color)
     return h
 
 
@@ -171,6 +170,34 @@ def plot_bins(switchM, metric_class, xmin, xmax):
     plt.ylabel(ylabel)
     fig_title = f'{metric_class.name}' if metric_class.name == 'pwad' else f'{metric_class.name}_foo_dist'
     return fig, fig_title
+
+
+
+def plot_dsBins(ds, x_bins, bin_width, variable_list = mV.datasets, title = '', x_label = '', y_label = ''):
+    fig, ax = mFp.create_figure(width = 9, height = 6)
+    x_bins = x_bins + 0.5 * bin_width       # place the points at the centre of each histogram # for plotting
+    for dataset in variable_list:
+        y_bins = ds[dataset]
+        if dataset == mV.observations[0]:   # plot observations as histogram bars
+            for i, y in enumerate(y_bins):
+                x0 = x_bins[i] - 0.5 * bin_width
+                x1 = x_bins[i] + 0.5 * bin_width
+                color = 'r'
+                plt.plot([x0, x0], [0, y], color=color, linestyle='--')
+                plt.plot([x1, x1], [0, y], color=color, linestyle='--')
+                plt.plot([x0, x1], [y, y], color=color, linestyle='--')
+                color= 'r'
+        else:
+            plot_ax_line(ax, x_bins[0:-1], y_bins, 'k')
+    plt.xlim([None, None])
+    plt.ylim([None, None])
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.axhline(y=0, color='k', linestyle='--') if np.min(y_bins)<0 and np.max(y_bins)>0 else None
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    return fig, ax
 
 
 

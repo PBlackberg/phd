@@ -99,8 +99,8 @@ def rename_files(folder_path, word_before='', word_to_add='', word_to_remove='',
 # ------------------------
 # ---------------------------------------------------------------------------------- Choose what to change --------------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    folder_path = '/Users/cbla0002/Documents/data/pr/sample_data/cmip6'
-    word_next_to, word_to_add = '', ''  # if this is '', the function won't add anything
+    folder_path = '/scratch/w40/cb4968/metrics/pr/pr_o_95thprctile/obs'
+    word_next_to, word_to_add = 'regridded', '144x72'   # if this is '', the function won't add anything
     put_before = False
     word_to_remove = ''                 # if this is '', the function won't remove anything
     rename_files(folder_path, word_next_to, word_to_add, word_to_remove, put_before)

@@ -227,7 +227,7 @@ if __name__ == '__main__':
         'fixed area':   False,  '90':                   False,  '95':       False,  '97':   False,  # conv threshold
         'sMean':        False,  'area':                 False,                                      # metric type
         'clim':         True,   'change_with_warming': True,                                      # Scenario type   
-        'per_kelvin':   True, 'per_ecs':              False,                                      # by warming
+        'per_kelvin':   True,   'per_ecs':              False,                                      # by warming
         }
 
     

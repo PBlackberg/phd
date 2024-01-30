@@ -19,10 +19,10 @@ import numpy as np
 import os
 import sys
 home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/switch')
+sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV
 import myFuncs as mF
-
+import myFuncs_plots as mFp
 
 
 
@@ -32,7 +32,7 @@ import myFuncs as mF
 # ---------------------------------------------------------------------------------------- get scene ----------------------------------------------------------------------------------------------------- #
 def tas_weighted(metric, title, axtitle, dataset):        
     title = f'_per_K (dTas)'
-    tas_class      = mC.get_metric_class('tas', {'sMean': True, 'ascent': False, 'descent': False})
+    tas_class      = mF.get_metric_class('tas', {'sMean': True, 'ascent': False, 'descent': False})
     tas_historical = mF.load_metric(tas_class, dataset, mV.experiments[0]).mean(dim='time')
     tas_warm       = mF.load_metric(tas_class, dataset, mV.experiments[1]).mean(dim='time')
     tas_change = tas_warm - tas_historical
@@ -106,39 +106,42 @@ def format_fig(num_subplots):
     width, height = [14, 7.5]   if nrows == 6   else [width, height]
     width, height = [14, 8.25]  if nrows == 7   else [width, height]
     width, height = [14, 8.25]  if nrows == 8   else [width, height]
-    fig, axes = mF.create_map_figure(width = width, height = height, nrows=nrows, ncols=ncols)
-    mF.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
+    fig, axes = mFp.create_map_figure(width = width, height = height, nrows=nrows, ncols=ncols)
+    mFp.delete_remaining_axes(fig, axes, num_subplots, nrows, ncols)
     return fig, axes, nrows, ncols
 
-def plot_colobar(fig, ax, pcm, label):
-    cbar_position = [0.225, 0.095, 0.60, 0.02]      # [left, bottom, width, height]
+def format_axes(fig, ax, subplot, num_subplots, nrows, ncols, axtitle):
+    row, col = subplot // ncols, subplot % ncols    # determine row and col index
+    mFp.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
+    mFp.move_col(ax, -0.0435 + 0.0025) if col == 1 else None
+    mFp.move_col(ax, -0.005 + 0.0025)  if col == 2 else None
+    mFp.move_col(ax, 0.0325 + 0.0025)  if col == 3 else None
+    mFp.move_row(ax, 0.025+0.005)      if row == 0 else None
+    mFp.move_row(ax, 0.04+0.005)       if row == 1 else None
+    mFp.move_row(ax, 0.045+0.01)       if row == 2 else None
+    mFp.move_row(ax, 0.05+0.01)        if row == 3 else None
+    mFp.move_row(ax, 0.05+0.01)        if row == 4 else None
+    mFp.move_row(ax, 0.05+0.01)        if row == 5 else None
+    mFp.move_row(ax, 0.05+0.01)        if row == 6 else None
+    mFp.move_row(ax, 0.05+0.01)        if row == 7 else None
+    mFp.scale_ax(ax, 1.3)
+    mFp.plot_xlabel(fig, ax, 'Lon', pad = 0.064, fontsize = 8) if subplot >= num_subplots-ncols else None
+    mFp.plot_ylabel(fig, ax, 'Lat', pad = 0.0375, fontsize = 8) if col == 0 else None
+    mFp.format_ticks(ax, subplot, num_subplots, ncols, col, labelsize = 9)
+    mFp.plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095, fontsize = 9) if nrows < 6 else mFp.plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095/2, fontsize = 9) 
+
+def plot_colobar(fig, ax, pcm, label, variable_list = mV.datasets):
+    if len(variable_list) > 4:
+        cbar_position = [0.225, 0.095, 0.60, 0.02]      # [left, bottom, width, height]
+    else:
+        cbar_position = [0.225, 0.15, 0.60, 0.05] 
     cbar_ax = fig.add_axes(cbar_position)
     fig.colorbar(pcm, cax=cbar_ax, orientation='horizontal')
     ax.text(cbar_position[0] + cbar_position[2] / 2 , cbar_position[1]-0.075, label, ha = 'center', fontsize = 10, transform=fig.transFigure)
 
-def format_axes(fig, ax, subplot, num_subplots, nrows, ncols, axtitle):
-    row, col = subplot // ncols, subplot % ncols    # determine row and col index
-    mF.move_col(ax, -0.0825 + 0.0025) if col == 0 else None
-    mF.move_col(ax, -0.0435 + 0.0025) if col == 1 else None
-    mF.move_col(ax, -0.005 + 0.0025)  if col == 2 else None
-    mF.move_col(ax, 0.0325 + 0.0025)  if col == 3 else None
-    mF.move_row(ax, 0.025+0.005)      if row == 0 else None
-    mF.move_row(ax, 0.04+0.005)       if row == 1 else None
-    mF.move_row(ax, 0.045+0.01)       if row == 2 else None
-    mF.move_row(ax, 0.05+0.01)        if row == 3 else None
-    mF.move_row(ax, 0.05+0.01)        if row == 4 else None
-    mF.move_row(ax, 0.05+0.01)        if row == 5 else None
-    mF.move_row(ax, 0.05+0.01)        if row == 6 else None
-    mF.move_row(ax, 0.05+0.01)        if row == 7 else None
-    mF.scale_ax(ax, 1.3)
-    mF.plot_xlabel(fig, ax, 'Lon', pad = 0.064, fontsize = 8) if subplot >= num_subplots-ncols else None
-    mF.plot_ylabel(fig, ax, 'Lat', pad = 0.0375, fontsize = 8) if col == 0 else None
-    mF.format_ticks(ax, subplot, num_subplots, ncols, col, labelsize = 9)
-    mF.plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095, fontsize = 9) if nrows < 6 else mF.plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095/2, fontsize = 9) 
-
 def plot_scenes(switchM, metric_name, vmin = None, vmax = None):
     ''' Plotting multiple scenes. Can plot up to 20 here '''
-    metric_class = mC.get_metric_class(metric_name, switchM)                                                        # has details about name, cmap, label and so on
+    metric_class = mF.get_metric_class(metric_name, switchM)                                                        # has details about name, cmap, label and so on
     vmin, vmax = get_limits(switchM, metric_name)
     if len(mV.datasets) == 1:
         metric, title, axtitle = get_metric(switchM, mV.datasets[0], metric_class)
@@ -153,6 +156,23 @@ def plot_scenes(switchM, metric_name, vmin = None, vmax = None):
         format_axes(fig, ax, subplot, len(mV.datasets), nrows, ncols, axtitle)
     plot_colobar(fig, ax, pcm, metric_class.label)
     return fig, f'{metric_class.name}{title}'
+
+
+def plot_dsScenes(ds, label = 'units []', title = 'test', vmin = None, vmax = None, cmap = 'Blues', variable_list = mV.datasets):
+    ''' Plotting multiple scenes based on daatset with scenes '''
+    if len(variable_list) == 1:
+        for dataset in variable_list:
+            return mFp.plot_scene(ds[dataset], cmap = cmap, label = label, figure_title = title, ax_title= dataset, vmin = vmin, vmax = vmax)
+    fig, axes, nrows, ncols = format_fig(len(variable_list))
+    for subplot, dataset in enumerate(variable_list):
+        da = ds[dataset]
+        top_text = 0.95 if len(variable_list) > 4 else 0.85
+        fig.text(0.5, top_text, title, ha = 'center', fontsize = 15, transform=fig.transFigure)  # fig title
+        ax = axes.flatten()[subplot]
+        pcm = mFp.plot_axMapScene(ax, da, cmap, vmin = vmin, vmax = vmax)
+        format_axes(fig, ax, subplot, len(mV.datasets), nrows, ncols, axtitle = dataset)
+    plot_colobar(fig, ax, pcm, label)
+    return fig, axes
 
 
 

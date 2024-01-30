@@ -11,12 +11,9 @@ Plots -         (ex: plot figure / subplots, move column and rows)
 
 
 # --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------- #
-import xarray as xr
 import numpy as np
-import pandas as pd
 import time
 from pathlib import Path
-import glob
 
 from functools import wraps 
 from subprocess import run, PIPE
@@ -38,13 +35,6 @@ home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util-core')
 import myVars as mV                             # list of datasets to use    
 
-# sys.path.insert(0, f'{os.getcwd()}/util-data')
-# import get_data.test_data   as gD_test
-# import get_data.cmip_data   as gD_cmip
-# import get_data.obs_data    as gD_obs
-# import get_data.icon_data   as gD_icon
-# import get_data.metric_data as gD_metric
-
 
 # ------------------------
 #   Script operations
@@ -55,53 +45,41 @@ def find_source(dataset, models_cmip5 = mV.models_cmip5, models_cmip6 = mV.model
     source = 'test'     if np.isin(mV.test_fields, dataset).any()   else None     
     source = 'cmip5'    if np.isin(models_cmip5, dataset).any()     else source      
     source = 'cmip6'    if np.isin(models_cmip6, dataset).any()     else source         
-    source = 'obs'      if np.isin(observations, dataset).any()     else source
     source = 'dyamond'  if np.isin(models_dyamond, dataset).any()   else source        
     source = 'nextgems' if np.isin(models_nextgems, dataset).any()  else source   
+    source = 'obs'      if np.isin(observations, dataset).any()     else source
     return source
 
 # ----------------------------------------------------------------------------- Checking available data --------------------------------------------------------------------------------------------------- #
 def data_available(var = 'pr', dataset = 'TaiESM1', experiment = 'historical'):
-    ''' Check if dataset has variable. Returning False skips the loop in calc '''
-    source = find_source(dataset)
-    if [source, experiment] == ['cmip5', 'ssp585'] or [source, experiment] == ['cmip6', 'rcp85']: # only run fitting scenario for cmip version
-        return  False
-    if not experiment and not source in ['obs', 'test']:                                          # only run obs or test data for experiment == ''
-        return False
-    if experiment and source in ['obs']:                                                          # only run models when experiment ~= '' 
-        return False
-    if var in ['lcf', 'hcf', 'cl', 
-               'ds_cl', 'cl_p_hybrid', 'p_hybrid'] \
-        and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 
-                        'CNRM-CM6-1-HR', 'GFDL-ESM4']:                                            # Some models do not have cloud variable
+    ''' Checks if dataset has variable and dataset-experiment combination makes sense'''
+    if var in ['lcf', 'hcf', 'cl', 'ds_cl', 'cl_p_hybrid', 'p_hybrid'] \
+        and dataset in ['INM-CM5-0', 'KIOST-ESM', 'EC-Earth3', 'INM-CM4-8', 'CNRM-CM6-1-HR', 'GFDL-ESM4']:                                 
         print(f'No {var} data for this dataset')
-        return False                                                                   
-    return True
+        return False    
+
+    source = find_source(dataset)
+    if [source, experiment] == ['cmip5', 'historical'] or [source, experiment] == ['cmip5', 'rcp85']:
+        return True
+    if [source, experiment] == ['cmip6', 'historical'] or [source, experiment] == ['cmip6', 'ssp585']:
+        return True
+    if source == 'obs' and experiment == 'obs':
+        return True
+    return False
 
 # ---------------------------------------------------------------------- Loop through datasets and experiments  --------------------------------------------------------------------------------------------------- #
-def run_experiment(var, dataset):
+def run_experiment(var, dataset, source):
     for experiment in mV.experiments:
         if not data_available(var, dataset, experiment):
             continue
-        print(f'\t\t {dataset} ({find_source(dataset)}) {experiment}') if experiment else print(f'\t {dataset} ({find_source(dataset)}) observational dataset')
+        print(f'\t\t {dataset} ({source}) {experiment}') if experiment else print(f'\t {dataset} ({source}) observational dataset')
         yield dataset, experiment
         
 def run_dataset(var = ''):
     for dataset in mV.datasets:
-        print(f'\t{dataset} ({find_source(dataset)})')
-        yield from run_experiment(var, dataset)
-
-
-# --------------------------------------------------------------------------------- Load data --------------------------------------------------------------------------------------------------- #
-
-
-# def load_metric(metric_class, dataset = mV.datasets[0], experiment = mV.experiments[0], timescale = mV.timescales[0], resolution = mV.resolutions[0], folder_load = mV.folder_save[0]):
-#     source = find_source(dataset)
-#     da = gD_metric.get_metric(source, dataset)
-#     # file_pattern = "/Users/cbla0002/Desktop/pr/ICON-ESM_ngc2013/ICON-ESM_ngc2013_pr_daily_*.nc" 
-#     # paths = sorted(glob.glob(file_pattern))
-#     # da = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
-#     return da
+        source = find_source(dataset)
+        print(f'\t{dataset} ({source})')
+        yield from run_experiment(var, dataset, source)
 
 
 # --------------------------------------------------------------------------------------- Saving --------------------------------------------------------------------------------------------------- #
@@ -113,21 +91,20 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path, mode = 'w')
 
-def save_metric(switch, met_type, dataset, experiment, metric, metric_name):
-    ''' Saves in variable/metric specific folders '''
-    source = find_source(dataset)
-    filename = f'{dataset}_{metric_name}_{mV.timescales[0]}_{experiment}_{mV.resolutions[0]}'
-    if mV.resolutions[0] == 'regridded':
-        filename = f'{filename}_{int(360/mV.x_res)}x{int(180/mV.y_res)}'
-    folder_sub = f'/metrics/{met_type}/{metric_name}/{source}'
-    for save_type in [k for k, v in switch.items() if v]:
-        folder = f'{mV.folder_save}{folder_sub}'      if save_type == 'save'                  else None
-        folder = f'{mV.folder_scratch}/{folder_sub}'  if save_type == 'save_scratch'          else folder
-        folder = f'{home}/Desktop/{metric_name}'      if save_type == 'save_folder_desktop'   else folder
-        if not folder == None:
-            save_file(xr.Dataset({metric_name: metric}), folder, f'{filename}.nc')
-            print(f'\t\t\t{metric_name} {save_type}')
-            return f'{folder}/{filename}.nc'
+def remove_test_data(directory=f'{mV.folder_scratch}/test'):
+    if os.path.exists(directory) and os.path.isdir(directory):
+        nc_files = [f for f in os.listdir(directory) if f.endswith('.nc')]
+        if nc_files:
+            print(f'from folder: {directory}')
+            for filename in nc_files:
+                file_path = os.path.join(directory, filename)
+                os.remove(file_path)
+                print(f"File {file_path} has been removed")
+        else:
+            print(f"No .nc files found in {directory}")
+    else:
+        print(f"Directory {directory} does not exist or is not a directory")
+
 
 # --------------------------------------------------------------------------------------- Timing --------------------------------------------------------------------------------------------------- #
 def timing_decorator(show_time = False):
@@ -290,8 +267,10 @@ def persist_process(client, task, task_des, persistIt = True, computeIt = False,
 
 # ------------------------------------------------------------------------------------- test function ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    da = load_variable(switch_var = {'pr': True}, switch = {'test_sample': False}, dataset = mV.datasets[0])
-    print(da)
+    print('testing myFuncs functions')
+
+    source = find_source('TaiESM1')
+    print(source)
 
 
 
@@ -303,6 +282,22 @@ if __name__ == '__main__':
 # import myFuncs_plots as mFd   
 # fig = mFd.plot_scene(da, ax_title = 'pr_mean', vmin = 0, vmax = 20)    #, vmin = 0, vmax = 60) #, cmap = 'RdBu')
 # mFd.show_plot(fig, show_type = 'show', cycle_time = 0.5)        # 3.25 # show_type = [show, save_cwd, cycle] (cycle wont break the loop)
+
+
+# for taking all files in folder
+# import glob
+
+
+
+
+# saving log of script run
+# import logging
+
+# # Setup logging to write to a file
+# logging.basicConfig(filename='data_processing.log', level=logging.INFO, 
+#                     format='%(asctime)s:%(levelname)s:%(message)s')
+# logging.info("Dataset saved.")
+# logging.error(f"Error processing model {model}: {e}")
 
 
 

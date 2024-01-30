@@ -19,9 +19,10 @@ import ls_state.means_calc      as mean_calc
 import ls_state.itcz_width_calc as itcz_calc
 
 sys.path.insert(0, f'{os.getcwd()}/util-core')
-import myVars           as mV                                 
-import myFuncs          as mF     
-import myFuncs_plots    as mFp     
+import myVars               as mV                                 
+import myFuncs              as mF     
+import myFuncs_plots        as mFp     
+import get_data.metric_data as mD
 
 
 # ------------------------
@@ -32,10 +33,12 @@ def calc_metric(switchM, var_name, da, region):
     dim = mF.dims_class(da)
     for metric_name in [k for k, v in switchM.items() if v]:
         metric = None
-        metric = mFp.get_snapshot(da)           if metric_name == 'snapshot'        else metric
-        metric = mean_calc.get_tMean(da)        if metric_name == 'tMean'           else metric
-        metric = mean_calc.get_sMean(da)        if metric_name == 'sMean'           else metric
-        metric = itcz_calc.get_itcz_width(da)   if metric_name == 'itcz_width'      else metric
+        metric = mFp.get_snapshot(da)           if metric_name == 'snapshot'            else metric
+        metric = mean_calc.get_tMean(da)        if metric_name == 'tMean'               else metric
+        metric = mean_calc.get_sMean(da)        if metric_name == 'sMean'               else metric
+        metric = itcz_calc.itcz_width(da)       if metric_name == 'itcz_width'          else metric
+        metric = itcz_calc.itcz_width_sMean(da) if metric_name == 'itcz_width_sMean'    else metric
+        metric = itcz_calc.itcz_width(da)       if metric_name == 'area_pos'            else metric
         metric_name =f'{var_name}{region}_{metric_name}' 
         yield metric, metric_name
 
@@ -50,9 +53,9 @@ def run_ls_metrics(switch_var, switchM, switch):
         for dataset, experiment in mF.run_dataset(var_name):
             da, region = vD.get_variable_data(switch, var_name, dataset, experiment)
             for metric, metric_name in calc_metric(switchM, var_name, da, region):      
-                print(metric_name)      
-                print(metric)      
-                path = mF.save_metric(switch, var_name, dataset, experiment, metric, metric_name)
+                # print(metric_name)      
+                # print(metric)      
+                path = mD.save_metric(switch, var_name, dataset, experiment, metric, metric_name)
                 print(f'Metric saved at: {path}')
 
 # ------------------------------------------------------------------------------------------- Choose metric ----------------------------------------------------------------------------------------------------- #
@@ -60,7 +63,7 @@ if __name__ == '__main__':
     switch_var = {                                                                                              # Choose variable (can choose multiple)
         'pr':       False,  'clwvi':        False,   'pe':          False,                                      # Precipitation
         'wap':      True,                                                                                       # Circulation
-        'hur':      False,  'hus':           False,                                                            # Humidity                             
+        'hur':      False,  'hus':          False,                                                              # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                      # Temperature
         'rlut':     False,  'rlds':         False,  'rlus':         False,  'netlw':    False,                  # Longwave radiation
         'rsut':     False,  'rsdt':         False,  'rsds':         False,  'rsus':     False, 'netsw': False,  # Shortwave radiation
@@ -71,18 +74,18 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                                                 # choose metric type (can choose multiple)
-        'snapshot': False,                                                                                       # visualization
-        'tMean':    False,   'sMean':    False,                                                                   # means 
-        'eof':      False,                                                                                      # ENSO
-        'area_pos': False,  'itcz_width': True                                                                  # ITCZ width (fraction of descent)
+        'snapshot':     False,                                                                                  # visualization
+        'tMean':        False,  'sMean':            False,                                                      # means 
+        'eof':          False,                                                                                  # ENSO
+        'itcz_width':   True,   'itcz_width_sMean': True,   'area_pos': False,   'area_pos': False,            # ITCZ width (+ fraction of descent)
         }
 
     switch = {                                                                                                  # choose data to use and mask
         'constructed_fields':   False,  'test_sample':      False,                                              # data to use (test_sample uses first file (usually first year))
         '700hpa':               False,  '500hpa':           True,   '250hpa':   False,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
-        'ocean_orig':           False,  'ocean_common':     False,                                              # horizontal mask
+        'ocean_mask':           False,                                                                          # horizontal mask
         'ascent_fixed':         False,  'descent_fixed':    False,  'ascent':   False,  'descent':  False,      # horizontal mask
-        'save_folder_desktop':  True,   'save_scratch':     False,  'save':     False                           # Save
+        'save_folder_desktop':  False,   'save_scratch':    True,  'save':     False                            # Save
         }
     
     run_ls_metrics(switch_var, switchM, switch)
