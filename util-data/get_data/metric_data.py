@@ -184,7 +184,8 @@ def get_filename(dataset, experiment, metric_name, source, timescale = mV.timesc
     filename = f'{dataset}_{metric_name}_{timescale}_{experiment}_{mV.resolutions[0]}'
     if source in ['obs']:  
         filename = f'{dataset}_{metric_name}_{timescale}_{mV.obs_years[0]}_{experiment}_{mV.resolutions[0]}'
-    if mV.resolutions[0] == 'regridded':
+    # print(metric_name)
+    if mV.resolutions[0] == 'regridded' and metric_name == 'rome_95thprctile':
         filename = f'{filename}_{int(360/mV.x_res)}x{int(180/mV.y_res)}'
     # print(f'filename is: {filename}')
     return filename
@@ -214,10 +215,11 @@ def load_metric(metric_obj, dataset = 'TaiESM1', experiment = 'historical'):
         file_paths.append(f'{folder}/{filename}.nc')
         filename_daily = get_filename(dataset, experiment, metric_name=metric_obj.name, source=source, timescale='daily')   # check variation of filename
         file_paths.append(f'{folder}/{filename_daily}.nc')
+    print(file_paths)
     for path in file_paths:
         try:
             ds = xr.open_dataset(path)
-            return ds[f'{metric_obj.name}']
+            return ds[metric_obj.name]
         except FileNotFoundError:
             continue
 
@@ -233,7 +235,7 @@ def load_metric_file(metric_type, metric_name, dataset, experiment):
         file_paths.append(f'{folder}/{filename}.nc')
         filename_daily = get_filename(dataset, experiment, metric_name, source, timescale='daily')                          # check variation of filename
         file_paths.append(f'{folder}/{filename_daily}.nc')
-    # print(file_paths)
+    print(file_paths)
     for path in file_paths:
         try:
             ds = xr.open_dataset(path)

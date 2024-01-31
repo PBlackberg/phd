@@ -86,7 +86,7 @@ models_nextgems = [
 
 # -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
 observations = [
-    'GPCP',                # for precipitation and organization index (from project al33 on gadi)
+    # 'GPCP',                # for precipitation and organization index (from project al33 on gadi)
     # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
     # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
