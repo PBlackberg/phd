@@ -91,7 +91,7 @@ def save_file(data, folder=f'{home}/Documents/phd', filename='test.nc', path = '
     os.remove(path) if os.path.exists(path) else None
     data.to_netcdf(path, mode = 'w')
 
-def remove_test_data(directory=f'{mV.folder_scratch}/test'):
+def remove_temp_calc(directory=f'{mV.folder_scratch}/temp_calc'):
     if os.path.exists(directory) and os.path.isdir(directory):
         nc_files = [f for f in os.listdir(directory) if f.endswith('.nc')]
         if nc_files:

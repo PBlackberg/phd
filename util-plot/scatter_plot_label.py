@@ -153,7 +153,7 @@ def format_ax(x_label, y_label, fig, ax, xmin, xmax, ymin, ymax):
     mFp.plot_xlabel(fig, ax, x_label, pad=0.1, fontsize = 12)
     mFp.plot_ylabel(fig, ax, y_label, pad = 0.075, fontsize = 12)
 
-def plot_letters(ax, x, y, variable_list): #switch_highlight,
+def plot_letters1(ax, x, y, variable_list): #switch_highlight,
     # model_highlight = mV.highlight_models(switch_highlight, mV.datasets, mV.switch_subset)
     legend_handles, legend_labels = [], []
     for dataset in variable_list: # put 2 letters as label for each dataset (with associated legend)
@@ -193,24 +193,54 @@ def plot_scatter_timeMean(switchX, switchY, switch_highlight, metric_nameX, metr
     return fig, fig_title
 
 
-def plot_scatter_ds(ds_x, ds_y, variable_list = mV.datasets, fig_title = '', x_label = '', y_label = '', xmin = None, xmax = None, ymin = None, ymax = None):
-    fig, ax = mFp.create_figure(width = 11, height = 6.25)
-    mFp.scale_ax_x(ax, scaleby=0.75)
+
+def add_correlation_coeff(x, y, ax, color):
+    res= stats.pearsonr(x,y) #if not mF.find_ifWithObs(mV.datasets) else stats.pearsonr(x[0:-len(mV.observations)],y[0:-len(mV.observations)])
+    print('r: ', res[0])
+    print('p-value:', res[1])
+    if color == 'g':
+        # if res[1]<=0.05:
+        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', 
+                    xytext=(0.86, 0.9), textcoords='axes fraction', fontsize = 12, color = 'g')
+    else:
+        # if res[1]<=0.05:
+        ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', 
+                    xytext=(0.86, 0.95), textcoords='axes fraction', fontsize = 12, color = color)
+
+def plot_letters(ax, x, y, variable_list, color, models_highlight=['']): #switch_highlight,
+    legend_handles, legend_labels = [], []
+    for dataset in variable_list: # put 2 letters as label for each dataset (with associated legend)
+        dataset_idx = variable_list.index(dataset)
+        label_text = dataset[0:2]
+        label_text = f'{label_text}-L'  if dataset[-2] == 'L'       else label_text 
+        label_text = f'{label_text}-L'  if dataset[-1] == 'L'       else label_text 
+        label_text = f'{label_text}-E'  if dataset == 'CMCC-ESM2'   else label_text 
+        label_text = f'{label_text}-H'  if dataset[-2] == 'H'       else label_text
+        text_color = 'g'                if dataset in models_highlight else color
+        text_color = 'r'                if mF.find_source(dataset) in ['obs']  else text_color # highlighted obs
+        ax.text(x[dataset_idx], y[dataset_idx], label_text, color=text_color, ha='center', va='center')
+        legend_handles.append(Patch(facecolor=text_color, edgecolor='none'))
+        legend_labels.append(f"{label_text} - {dataset}")
+    ax.legend(handles=legend_handles, labels=legend_labels, bbox_to_anchor=(1.1, 0.475), loc='center left')
+
+def plot_scatter_ds(ds_x, ds_y, variable_list = mV.datasets, fig_title = '', x_label = '', y_label = '', xmin = None, xmax = None, ymin = None, ymax = None, fig_given = False, fig = '', ax = '', color = 'k', models_highlight = ['']):
+    if not fig_given:
+        fig, ax = mFp.create_figure(width = 11, height = 6.25)
+        mFp.scale_ax_x(ax, scaleby=0.75)
     x, y = [], []
     for dataset in variable_list:
         x_datapoint, y_datapoint = ds_x[dataset].data, ds_y[dataset].data
         x.append(x_datapoint)
         y.append(y_datapoint)    
     ax.scatter(x, y, alpha=0)                                                               # Completely transparent points 
-    add_correlation_coeff(x, y, ax)
-    plot_letters(ax, x, y, variable_list)                #switch_highlight,                                                   # dataset latters at points
-    plt.axhline(y=0, color='k', linestyle='--') if np.min(y)<0 and np.max(y)>0 else None    # add dashed line if datapoints cross zero 
-    plt.axvline(x=0, color='k', linestyle='--') if np.min(x)<0 and np.max(x)>0 else None    # add dashed line if datapoints cross zero 
-    format_ax(x_label, y_label, fig, ax, xmin, xmax, ymin, ymax)
-    mFp.plot_axtitle(fig, ax, fig_title, xpad = 0.15, ypad = 0.0075, fontsize = 12)
+    add_correlation_coeff(x, y, ax, color)
+    if not fig_given:
+        plot_letters(ax, x, y, variable_list, color, models_highlight)                #switch_highlight,                 # dataset latters at points
+        plt.axhline(y=0, color='k', linestyle='--') if np.min(y)<0 and np.max(y)>0 else None    # add dashed line if datapoints cross zero 
+        plt.axvline(x=0, color='k', linestyle='--') if np.min(x)<0 and np.max(x)>0 else None    # add dashed line if datapoints cross zero 
+        format_ax(x_label, y_label, fig, ax, xmin, xmax, ymin, ymax)
+        mFp.plot_axtitle(fig, ax, fig_title, xpad = 0.15, ypad = 0.0075, fontsize = 12)
     return fig, ax
-
-
 
 
 

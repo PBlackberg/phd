@@ -2,6 +2,7 @@
 # ------------------------
 #   Getting variable
 # ------------------------
+These variables are calculated from base variables (the base variables are at times saved in scratch for quick access) (the calculated variables are rarely stored)
 Some variables need to be calculated, and sometimes a horizontal or vertical region is picked out
 '''
 

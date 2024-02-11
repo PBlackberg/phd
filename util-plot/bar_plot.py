@@ -8,7 +8,7 @@ This script plots a bar plot of each model's resolution
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as mpatches
 
 import os
 import sys
@@ -16,7 +16,7 @@ sys.path.insert(0, f'{os.getcwd()}/util-core/myFuncs_plots')
 import myFuncs_plots        as mFp
 
 
-def plot_dsBar(ds, dim = 'model', title = 'test', ylabel = ''):
+def plot_dsBar(ds, dim = 'model', title = 'test', ylabel = '', highlight_given = False, models_highlight = ['a', 'b']):
     datasets, alist = [], []
     for dataset in ds.data_vars:
         datasets.append(dataset)
@@ -29,13 +29,34 @@ def plot_dsBar(ds, dim = 'model', title = 'test', ylabel = ''):
     da = xr.DataArray(data = sorted_alist, dims = [dim], coords={dim: sorted_datasets})
     fig = plt.figure(figsize = (10, 5))
     ax = fig.add_subplot()
-    da.to_series().plot.bar(ax=ax, rot=0)
+
+    if highlight_given:
+        # highlight_color = 'blue'
+        highlight_color = 'green'
+    else:
+        highlight_color = 'C0'  # This is orange, but you can use any color you like
+
+    default_color = 'k'  # This is blue, the default color matplotlib uses
+    if highlight_given:
+        colors = [highlight_color if dataset in models_highlight else default_color for dataset in sorted_datasets]
+    else:
+        colors = [highlight_color if i < 14 else default_color for i in range(len(sorted_datasets))]
+
+    da.to_series().plot.bar(ax=ax, color = colors, rot=0)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     plt.title(title)
     plt.ylabel(ylabel)
     mFp.scale_ax_y(ax, scaleby=0.8)
     mFp.move_row(ax, moveby = 0.1)
     mFp.move_row(ax, moveby = 0.065)
+
+    if highlight_given:
+        label = 'pwad and hur close to obs'
+    else:
+        label='pwad close to obs'
+
+    close_patch = mpatches.Patch(color=highlight_color, label=label)
+    plt.legend(handles=[close_patch])
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     return fig, ax

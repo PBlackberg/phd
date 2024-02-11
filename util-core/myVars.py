@@ -51,8 +51,8 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     'GFDL-ESM4',         # 9         
     'MIROC-ES2L',        # 10   
     'NorESM2-LM',        # 11      
-    'NorESM2-MM',        # 12                                      
-    'MRI-ESM2-0',        # 13                                  
+    'NorESM2-MM',        # 12            # missing variables on gadi at the moment                          
+    'MRI-ESM2-0',        # 13                # up to here                  
     'GFDL-CM4',          # 14      
     'CMCC-CM2-SR5',      # 15                
     'CMCC-ESM2',         # 16                                    
@@ -95,7 +95,7 @@ observations = [
 obs_years = [
     # '1998-2022',          # Full GPCP data
     # '1998-2009',          # high offset in high percentile precipitation (GPCP, affects organization indices)
-    '2010-2022'           # low offset in high percentile precipitation (GPCP, affects organization indices)
+    # '2010-2022'           # low offset in high percentile precipitation (GPCP, affects organization indices)
     ]
 
 
@@ -111,8 +111,8 @@ timescales = [
 experiments = [
     'historical',       # current climate conditions simulation        
     # 'rcp85',            # warm scenario for cmip5
-    # 'ssp585',           # warm scenario for cmip6
-    'obs',              # observations
+    'ssp585',           # warm scenario for cmip6
+    # 'obs',              # observations
     ]
 
 resolutions = [

@@ -30,15 +30,15 @@ import get_data.metric_data as mD
 # ------------------------
 # ------------------------------------------------------------------------------------ Get metric and metric name ----------------------------------------------------------------------------------------------------- #
 def calc_metric(switchM, var_name, da, region):
-    dim = mF.dims_class(da)
+    dims = mF.dims_class(da)
     for metric_name in [k for k, v in switchM.items() if v]:
         metric = None
-        metric = mFp.get_snapshot(da)           if metric_name == 'snapshot'            else metric
-        metric = mean_calc.get_tMean(da)        if metric_name == 'tMean'               else metric
-        metric = mean_calc.get_sMean(da)        if metric_name == 'sMean'               else metric
-        metric = itcz_calc.itcz_width(da)       if metric_name == 'itcz_width'          else metric
-        metric = itcz_calc.itcz_width_sMean(da) if metric_name == 'itcz_width_sMean'    else metric
-        metric = itcz_calc.itcz_width(da)       if metric_name == 'area_pos'            else metric
+        metric = mFp.get_snapshot(da)                           if metric_name == 'snapshot'            else metric
+        metric = mean_calc.get_tMean(da)                        if metric_name == 'tMean'               else metric
+        metric = mean_calc.get_sMean(da)                        if metric_name == 'sMean'               else metric
+        metric = itcz_calc.itcz_width(da)                       if metric_name == 'itcz_width'          else metric
+        metric = itcz_calc.itcz_width_sMean(da)                 if metric_name == 'itcz_width_sMean'    else metric
+        metric = itcz_calc.get_fraction_descent(da, dims)       if metric_name == 'area_pos'            else metric
         metric_name =f'{var_name}{region}_{metric_name}' 
         yield metric, metric_name
 
@@ -62,8 +62,8 @@ def run_ls_metrics(switch_var, switchM, switch):
 if __name__ == '__main__':
     switch_var = {                                                                                              # Choose variable (can choose multiple)
         'pr':       False,  'clwvi':        False,   'pe':          False,                                      # Precipitation
-        'wap':      True,                                                                                       # Circulation
-        'hur':      False,  'hus':          False,                                                              # Humidity                             
+        'wap':      False,                                                                                       # Circulation
+        'hur':      True,  'hus':          False,                                                              # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                      # Temperature
         'rlut':     False,  'rlds':         False,  'rlus':         False,  'netlw':    False,                  # Longwave radiation
         'rsut':     False,  'rsdt':         False,  'rsds':         False,  'rsus':     False, 'netsw': False,  # Shortwave radiation
@@ -75,14 +75,14 @@ if __name__ == '__main__':
     
     switchM = {                                                                                                 # choose metric type (can choose multiple)
         'snapshot':     False,                                                                                  # visualization
-        'tMean':        False,  'sMean':            False,                                                      # means 
+        'tMean':        False,  'sMean':            True,                                                      # means 
         'eof':          False,                                                                                  # ENSO
-        'itcz_width':   True,   'itcz_width_sMean': True,   'area_pos': False,   'area_pos': False,            # ITCZ width (+ fraction of descent)
+        'itcz_width':   False,   'itcz_width_sMean': False,   'area_pos': False,   'area_neg': False,            # ITCZ width (+ fraction of descent)
         }
 
     switch = {                                                                                                  # choose data to use and mask
         'constructed_fields':   False,  'test_sample':      False,                                              # data to use (test_sample uses first file (usually first year))
-        '700hpa':               False,  '500hpa':           True,   '250hpa':   False,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
+        '700hpa':               False,  '500hpa':           False,   '250hpa':   True,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
         'ocean_mask':           False,                                                                          # horizontal mask
         'ascent_fixed':         False,  'descent_fixed':    False,  'ascent':   False,  'descent':  False,      # horizontal mask
         'save_folder_desktop':  False,   'save_scratch':    True,  'save':     False                            # Save

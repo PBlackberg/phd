@@ -180,7 +180,6 @@ def convert_units(model, da, var_name):
             da = da * 1000
     return da
 
-
 @mF.timing_decorator(show_time = True)
 def process_data(model, experiment, var_name):
     print(f'Processing {model} {mV.resolutions[0]} {mV.timescales[0]} {var_name} data from {experiment} experiment')
@@ -212,11 +211,11 @@ def request_process(model, experiment, var_name, path):
     return da
 
 def pick_ocean_region(da):
-    mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util/ocean.nc')['ocean']
+    mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util-data/get_data/ocean_mask.nc')['ocean_mask']
     da = da * mask
     return da
 
-def get_cmip_data(switch_var = {'pr': True}, switch = {'test_sample': False}, model = mV.datasets[0], experiment = mV.experiments[0]):
+def get_cmip_data(switch_var = {'pr': True}, switch = {'test_sample': False}, model = '', experiment = ''):
     source = mF.find_source(model)
     var_name = next((key for key, value in switch_var.items() if value), None)
     folder = f'{mV.folder_scratch}/sample_data/{var_name}/{source}'
@@ -270,7 +269,7 @@ if __name__ == '__main__':
                 process_data(model, experiment, var_name)
     else:
         var_name = next((key for key, value in switch_var.items() if value), None)
-        da = get_cmip_data(switch_var, switch)
+        da = get_cmip_data(switch_var, switch, model = mV.datasets[0], experiment = mV.experiments[0])
         print(da)
         # if 'plev' in da.dims:
         #     da = da.sel(plev = 500e2)

@@ -137,7 +137,7 @@ if __name__ == '__main__':
                     ds_new[dataset] = get_d_squared(da_model = ds[dataset], da_obs = ds[mV.observations[0]])
             fig, axes = mP.plot_dsScenes(ds_new, label = f'[{units}]', title = f'(model - obs)^2 {var_name} tMean (obs: {mV.obs_years[0]})', vmin = vmin, vmax = vmax, cmap = 'Reds', variable_list = ds_new.data_vars)
             mFp.show_plot(fig, show_type = 'save_cwd', filename = f'd2_{var_name}_tMean.png')
-        plot = False                                                                        # RMSE (model - obs)
+        plot = False                                                                        # MAE (model - obs)
         if plot:
             print('plotting: MAE')
             ds_new = xr.Dataset()

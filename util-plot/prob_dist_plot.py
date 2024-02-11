@@ -120,8 +120,8 @@ def get_plot_metric(switchM, metric_class, dataset, source, bin_width):
 #      Plot
 # ----------------
 # ---------------------------------------------------------------------------------------- plot axis plot ----------------------------------------------------------------------------------------------------- #
-def plot_ax_line(ax, x, y, color):
-    h = ax.plot(x, y, color)
+def plot_ax_line(ax, x, y, color, linewidth = None):
+    h = ax.plot(x, y, color, linewidth = linewidth)
     return h
 
 
@@ -173,28 +173,53 @@ def plot_bins(switchM, metric_class, xmin, xmax):
 
 
 
-def plot_dsBins(ds, x_bins, bin_width, variable_list = mV.datasets, title = '', x_label = '', y_label = ''):
-    fig, ax = mFp.create_figure(width = 9, height = 6)
-    x_bins = x_bins + 0.5 * bin_width       # place the points at the centre of each histogram # for plotting
-    for dataset in variable_list:
-        y_bins = ds[dataset]
-        if dataset == mV.observations[0]:   # plot observations as histogram bars
-            for i, y in enumerate(y_bins):
-                x0 = x_bins[i] - 0.5 * bin_width
-                x1 = x_bins[i] + 0.5 * bin_width
-                color = 'r'
-                plt.plot([x0, x0], [0, y], color=color, linestyle='--')
-                plt.plot([x1, x1], [0, y], color=color, linestyle='--')
-                plt.plot([x0, x1], [y, y], color=color, linestyle='--')
-                color= 'r'
-        else:
-            plot_ax_line(ax, x_bins[0:-1], y_bins, 'k')
+def plot_dsBins(ds, variable_list = mV.datasets, title = '', x_label = '', y_label = '', bins_middle = '', bins_given = False, shade = False, fig = '', ax = '', fig_ax_given = False):
+    if not fig_ax_given:
+        fig, ax = mFp.create_figure(width = 9, height = 6)
+    
+    bin_width = ds.bins[1] - ds.bins[0]
+    if not bins_given:
+        bins_middle = ds['bins_middle']
+
+    if shade:
+        data_arrays = [ds[var] for var in ds.data_vars if var != 'GPCP' and var != 'bins_middle']
+        combined = xr.concat(data_arrays, dim='model')
+        min_vals = combined.min(dim='model')
+        max_vals = combined.max(dim='model')
+        plt.fill_between(bins_middle, min_vals, max_vals, color='blue', alpha=0.5)
+        mean_vals = combined.mean(dim='model')
+        # plot_ax_line(ax, bins_middle, mean_vals, 'k', linewidth = 2)
+
+        for i, y in enumerate(ds['GPCP']):
+            x0 = bins_middle[i] - 0.5 * bin_width
+            x1 = bins_middle[i] + 0.5 * bin_width
+            color = 'r'
+            plt.plot([x0, x0], [0, y], color=color, linestyle='--')
+            plt.plot([x1, x1], [0, y], color=color, linestyle='--')
+            plt.plot([x0, x1], [y, y], color=color, linestyle='--')
+            color= 'r'
+    else:
+        for dataset in variable_list:
+            if dataset == 'bins_middle':
+                continue
+            y_bins = ds[dataset]
+            if dataset in mV.observations:   # plot observations as histogram bars
+                for i, y in enumerate(y_bins):
+                    x0 = bins_middle[i] - 0.5 * bin_width
+                    x1 = bins_middle[i] + 0.5 * bin_width
+                    color = 'r'
+                    plt.plot([x0, x0], [0, y], color=color, linestyle='--')
+                    plt.plot([x1, x1], [0, y], color=color, linestyle='--')
+                    plt.plot([x0, x1], [y, y], color=color, linestyle='--')
+                    color= 'r'
+            else:
+                plot_ax_line(ax, bins_middle, y_bins, 'k')
     plt.xlim([None, None])
     plt.ylim([None, None])
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.axhline(y=0, color='k', linestyle='--') if np.min(y_bins)<0 and np.max(y_bins)>0 else None
+    # plt.axhline(y=0, color='k', linestyle='--') if np.min(y_bins)<0 and np.max(y_bins)>0 else None
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     return fig, ax

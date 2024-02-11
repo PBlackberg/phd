@@ -55,6 +55,7 @@ def show_plot(fig, show_type = 'cycle', cycle_time = 0.5, filename = 'test'):
         plt.ioff()
     elif show_type == 'save_cwd':
         save_figure(figure = fig, folder = f'{os.getcwd()}/zome_plots', filename = filename)
+        plt.close(fig)
         return True
     elif show_type == 'show':
         plt.show()
@@ -213,7 +214,7 @@ def plot_axMapScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
     pcm = ax.pcolormesh(lonm,latm, scene, transform=ccrs.PlateCarree(),zorder=zorder, cmap=cmap, vmin=vmin, vmax=vmax)
     return pcm
 
-def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', ax_title= 'test', vmin = None, vmax = None):
+def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_title= 'test', vmin = None, vmax = None):
     fig, ax = create_map_figure(width = 12, height = 4)
     pcm = plot_axMapScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
     move_col(ax, moveby = -0.055)
@@ -222,7 +223,7 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', figure_title = 'test', 
     cbar_below_axis(fig, ax, pcm, cbar_height = 0.05, pad = 0.15, numbersize = 12, cbar_label = label, text_pad = 0.125)
     plot_xlabel(fig, ax, 'Lon', pad = 0.1, fontsize = 12)
     plot_ylabel(fig, ax, 'Lat', pad = 0.055, fontsize = 12)
-    ax.text(0.5, 0.925, figure_title, ha = 'center', fontsize = 15, transform=fig.transFigure)
+    ax.text(0.5, 0.925, fig_title, ha = 'center', fontsize = 15, transform=fig.transFigure)
     plot_axtitle(fig, ax, ax_title, xpad = 0.005, ypad = 0.025, fontsize = 15)
     format_ticks(ax, labelsize = 11)
     return fig, ax

@@ -14,10 +14,10 @@ def open_test_plots_window(figures_path=f'{os.getcwd()}/zome_plots/*.png'):
         for figure in figures[1:]:
             subprocess.run(["code", "-r", figure])
 
-tab = True
+tab = False
 if tab:
     open_test_plots_tab()
 
-window = False
+window = True
 if window:
     open_test_plots_window()

@@ -2,6 +2,7 @@
 # ------------------------
 #  Getting base variable
 # ------------------------
+These variables are at times saved in scratch for quicker access
 '''
 
 
@@ -21,7 +22,7 @@ import myFuncs          as mF
 
 
 
-def load_variable(switch_var = {'pr': True}, switch = {'constructed_fields': False}, dataset = 'TaiESM1', experiment = 'historical'):
+def load_variable(switch_var = {'': True}, switch = {'constructed_fields': False}, dataset = '', experiment = ''):
     ''' Loading variable data.
         Sometimes sections of years of a dataset will be used instead of the full data ex: if dataset = GPCP_1998-2010 (for obsservations) 
         (There is a double trend in high percentile precipitation rate for the first 12 years of the data (that affects the area picked out by the time-mean percentile threshold)'''
