@@ -12,6 +12,7 @@ from scipy import stats
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.colors as mcolors
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
@@ -56,6 +57,7 @@ def show_plot(fig, show_type = 'cycle', cycle_time = 0.5, filename = 'test'):
     elif show_type == 'save_cwd':
         save_figure(figure = fig, folder = f'{os.getcwd()}/zome_plots', filename = filename)
         plt.close(fig)
+        print(f'saved {filename}')
         return True
     elif show_type == 'show':
         plt.show()
@@ -100,6 +102,10 @@ def create_figure(width = 12, height = 4, nrows = 1, ncols = 1):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height))
     return fig, axes
 
+def delete_remaining_axes(fig, axes, num_subplots, nrows, ncols):
+    for i in range(num_subplots, nrows * ncols):
+        fig.delaxes(axes.flatten()[i])
+        
 def move_col(ax, moveby):
     ax_position = ax.get_position()
     _, bottom, width, height = ax_position.bounds
@@ -151,10 +157,6 @@ def plot_axtitle(fig, ax, title, xpad, ypad, fontsize):
     title_text_y = ax_position.y1 + ypad
     ax.text(title_text_x, title_text_y, title, fontsize = fontsize, transform=fig.transFigure)
 
-def delete_remaining_axes(fig, axes, num_subplots, nrows, ncols):
-    for i in range(num_subplots, nrows * ncols):
-        fig.delaxes(axes.flatten()[i])
-
 def cbar_below_axis(fig, ax, pcm, cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1):
     # colorbar position
     ax_position = ax.get_position()
@@ -185,6 +187,11 @@ def cbar_right_of_axis(fig, ax, pcm, width_frac, height_frac, pad, numbersize = 
     cbar_text_x = cbar_left + cbar_width + text_pad
     ax.text(cbar_text_x, cbar_text_y, cbar_label, rotation = 'vertical', va = 'center', fontsize = fontsize, transform=fig.transFigure)
     return cbar
+
+def generate_distinct_colors(n):
+    hsv_colors = [(i / n, 1, 1) for i in range(n)]  # Hue varies, saturation and value are maxed
+    rgb_colors = [mcolors.hsv_to_rgb(color) for color in hsv_colors]
+    return rgb_colors
 
 
 # ------------------------------------------------------------------------------------------ With cartopy --------------------------------------------------------------------------------------------------- #
@@ -230,8 +237,6 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_
     # scene = conv_regions.isel(time=1)
     # mF.plot_one_scene(scene)
 
-
-    
 def get_snapshot(da, plot = False, show_type = 'cycle', vmin = -80, vmax = 80, cmap = 'RdBu', cycle_time = 0.5):
     if plot:
         for timestep in np.arange(0, len(da.time.data)):

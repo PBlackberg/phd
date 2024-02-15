@@ -2,69 +2,82 @@
 # ----------------
 #   Bar plot
 # ----------------
-This script plots a bar plot of each model's resolution 
+This script plots a bar plot from a dataset with each variable corresponding to one number
 '''
 
+
+
+# --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------- #
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-import os
-import sys
-sys.path.insert(0, f'{os.getcwd()}/util-core/myFuncs_plots')
-import myFuncs_plots        as mFp
 
 
-def plot_dsBar(ds, dim = 'model', title = 'test', ylabel = '', highlight_given = False, models_highlight = ['a', 'b']):
-    datasets, alist = [], []
-    for dataset in ds.data_vars:
-        datasets.append(dataset)
-        alist.append(ds[dataset])
+# ------------------------
+#     Plot functions
+# ------------------------
+# ---------------------------------------------------------------------------------------- General --------------------------------------------------------------------------------------------------- #
+def move_row(ax, moveby):
+    ax_position = ax.get_position()
+    left, _, width, height = ax_position.bounds
+    new_bottom = _ + moveby
+    ax.set_position([left, new_bottom, width, height])
 
-    sorted_indices = np.argsort(alist)
-    sorted_datasets = [datasets[i] for i in sorted_indices]
-    sorted_alist = [alist[i] for i in sorted_indices]
+def scale_ax_y(ax, scaleby):
+    ax_position = ax.get_position()
+    left, bottom, _1, _2 = ax_position.bounds
+    new_width = _1 
+    new_height = _2 * scaleby
+    ax.set_position([left, bottom, new_width, new_height])
 
-    da = xr.DataArray(data = sorted_alist, dims = [dim], coords={dim: sorted_datasets})
+
+# ---------------------------------------------------------------------------------------- specific --------------------------------------------------------------------------------------------------- #
+def bar_highlight(variables_sorted, highlight_color, vars_highlight, nb_highlight):
+    default_color = 'k'
+    colors = [default_color] * len(variables_sorted) 
+    if isinstance(vars_highlight, list):
+        colors = [highlight_color if variable in vars_highlight else default_color for variable in variables_sorted]
+    if isinstance(nb_highlight, int):
+        colors = [highlight_color if i < nb_highlight else default_color for i in range(len(variables_sorted))]
+    for variable in variables_sorted:
+        if variable in mV.observations:
+            index = variables_sorted.index(variable)
+            colors[index] = 'green'
+    return colors
+
+def plot_legend(highlight_bars, label, label_highlight, color_highlight):
+    patches = []
+    patches.append(mpatches.Patch(color='k', label=label))
+    if highlight_bars:
+        patches.append(mpatches.Patch(color=color_highlight, label=label_highlight))
+    plt.legend(handles=patches)
+
+def plot_dsBar(ds, title = 'test', x_label = 'test', y_label = 'test', label = 'test', 
+               highlight_bars = False, color_highlight = 'blue', vars_highlight = ['a', 'b'], nb_highlight = '', label_highlight = 'test'):
+    variables, alist = [], []
+    for variable in ds.data_vars:   # variable is a string
+        variables.append(variable)
+        alist.append(ds[variable])
+    idx_sorted = np.argsort(alist)  # ascending order
+    variables_sorted = [variables[i] for i in idx_sorted]
+    alist_sorted = [alist[i] for i in idx_sorted]
+    da = xr.DataArray(data = alist_sorted, dims = [x_label], coords={x_label: variables_sorted})
     fig = plt.figure(figsize = (10, 5))
     ax = fig.add_subplot()
-
-    if highlight_given:
-        # highlight_color = 'blue'
-        highlight_color = 'green'
-    else:
-        highlight_color = 'C0'  # This is orange, but you can use any color you like
-
-    default_color = 'k'  # This is blue, the default color matplotlib uses
-    if highlight_given:
-        colors = [highlight_color if dataset in models_highlight else default_color for dataset in sorted_datasets]
-    else:
-        colors = [highlight_color if i < 14 else default_color for i in range(len(sorted_datasets))]
-
+    colors = bar_highlight(variables_sorted, color_highlight, vars_highlight, nb_highlight)
     da.to_series().plot.bar(ax=ax, color = colors, rot=0)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     plt.title(title)
-    plt.ylabel(ylabel)
-    mFp.scale_ax_y(ax, scaleby=0.8)
-    mFp.move_row(ax, moveby = 0.1)
-    mFp.move_row(ax, moveby = 0.065)
-
-    if highlight_given:
-        label = 'pwad and hur close to obs'
-    else:
-        label='pwad close to obs'
-
-    close_patch = mpatches.Patch(color=highlight_color, label=label)
-    plt.legend(handles=[close_patch])
+    plt.ylabel(y_label)
+    scale_ax_y(ax, scaleby=0.8)
+    move_row(ax, moveby = 0.1)
+    move_row(ax, moveby = 0.065)
+    plot_legend(highlight_bars, label, label_highlight, color_highlight)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     return fig, ax
-
-
-
-
-
 
 
 
@@ -72,82 +85,74 @@ def plot_dsBar(ds, dim = 'model', title = 'test', ylabel = '', highlight_given =
 #         Test
 # ------------------------
 if __name__ == '__main__':
-    import numpy as np
+# ------------------------------------------------------------------------------------ imported scripts --------------------------------------------------------------------------------------------------- #
     import os
     import sys
     home = os.path.expanduser("~")
-    sys.path.insert(0, f'{os.getcwd()}/switch')
-    import myVars as mV
-    import myFuncs as mF
+    sys.path.insert(0, f'{os.getcwd()}/util-core')
+    import myVars               as mV
+    import myFuncs_plots        as mFp
+    sys.path.insert(0, f'{os.getcwd()}/util-data')
+    import get_data.metric_data as mD
 
 
-    switch = {'show': False, 'save_to_desktop': True}
-    # --------------------------------------------------------------------------------------- Get resolution ----------------------------------------------------------------------------------------------------- #
-    dlats, dlons, res, model_list = [], [], [], []
-    for model in mV.datasets:
-        # print(model)
-        source = mV.find_source(model, mV.models_cmip5, mV.models_cmip6, mV.observations)
-        da = xr.open_dataset(f'{mV.folder_save[0]}/sample_data/pr/{source}/{model}_pr_{mV.timescales[0]}_{mV.experiments[0]}_orig.nc')['pr']
-        dlat = da['lat'][2] - da['lat'][1]
-        dlon = da['lon'][2] - da['lon'][1]
-        
-        dlats = np.append(dlats, dlat)
-        dlons = np.append(dlons, dlon)
-        res = np.append(res, dlat * dlon)
-        model_list = np.append(model_list, model)
-    dlats = xr.DataArray(data = dlats, dims = ['model'], coords={'model': model_list})
-    dlons = xr.DataArray(data = dlons, dims = ['model'], coords={'model': model_list})
-    res = xr.DataArray(data = res, dims = ['model'], coords={'model': model_list})
+# --------------------------------------------------------------------------------------- get data --------------------------------------------------------------------------------------------------- #
+    metric_type = 'conv_org'
+    metric_name = f'rome_{mV.conv_percentiles[0]}thprctile'
+    ds = xr.Dataset()
+    for dataset in mV.datasets:
+        da = mD.load_metric(metric_type, metric_name, dataset, mV.experiments[0]).mean(dim = 'time')
+        ds[dataset] = da
+    # print(ds)
 
 
-    # ------------------------------------------------------------------------------------------- bar plot ----------------------------------------------------------------------------------------------------- #
-    plot_lon = False
-    if plot_lon:
-        fig = plt.figure(figsize = (10, 5))
-        ax = fig.add_subplot()
-        dlons.to_series().plot.bar(ax=ax, rot=0)
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-        plt.title('dlon from cmip6 models')
-        plt.ylabel('dlon')
-        mF.scale_ax_y(ax, scaleby=0.8)
-        mF.move_row(ax, moveby = 0.1)
-        mF.move_row(ax, moveby = 0.065)
+# --------------------------------------------------------------------------------------- test plot --------------------------------------------------------------------------------------------------- #
+    switch = {
+        'delete_previous_plots':    True,
+        'basic':                    True,
+        'subset highlighted':       False,
+        'number_highligted':        False
+        }
 
-        plt.show() if switch['show'] else None
-        mF.save_figure(fig, f'{home}/Desktop', 'test.pdf') if switch['save_to_desktop'] else None
-        print('finished')
+    mFp.remove_test_plots() if switch['delete_previous_plots'] else None
+    # exit()
 
-    plot_lat = False
-    if plot_lat:
-        fig = plt.figure(figsize = (10, 5))
-        ax = fig.add_subplot()
-        dlats.to_series().plot.bar(ax=ax, rot=0)
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-        plt.title('dlat from cmip6 models')
-        plt.ylabel('dlat')
-        mF.scale_ax_y(ax, scaleby=0.8)
-        mF.move_row(ax, moveby = 0.1)
-        mF.move_row(ax, moveby = 0.065)
+    if switch['basic']:
+        filename = 'basic.png'
+        fig, ax = plot_dsBar(ds, title = 'test', x_label = 'test', y_label = 'test', label = 'test', 
+               highlight_bars = False, color_highlight = 'blue', vars_highlight = ['a', 'b'], nb_highlight = '', label_highlight = 'test')
+        mFp.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
-        plt.show() if switch['show'] else None
-        mF.save_figure(fig, f'{home}/Desktop', 'test.pdf') if switch['save_to_desktop'] else None
-        print('finished')
+    if switch['subset highlighted']:
+        filename = 'models_highligted.png'
+        models_highlight = [    
+            'INM-CM5-0',         # 1
+            'IITM-ESM',          # 2
+            'FGOALS-g3',         # 3    
+            'INM-CM4-8',         # 4        
+            ]
+        fig, ax = plot_dsBar(ds, title = 'test', x_label = 'test', y_label = 'test', label = 'test', 
+               highlight_bars = True, color_highlight = 'blue', vars_highlight = models_highlight, nb_highlight = '', label_highlight = 'test1')
+        mFp.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
-    plot_res = True
-    if plot_res:
-        fig = plt.figure(figsize = (10, 5))
-        ax = fig.add_subplot()
-        res.to_series().plot.bar(ax=ax, rot=0)
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-        plt.title('Resolution of cmip6 models')
-        plt.ylabel(r'dlat x dlon [$\degree$]')
-        mF.scale_ax_y(ax, scaleby=0.8)
-        mF.move_row(ax, moveby = 0.1)
-        mF.move_row(ax, moveby = 0.065)
+    if switch['number_highligted']:
+        filename = 'number_highligted.png'
+        nb_highlight = 10
+        fig, ax = plot_dsBar(ds, title = 'test', x_label = 'test', y_label = 'test', label = 'test', 
+               highlight_bars = True, color_highlight = 'blue', vars_highlight = '', nb_highlight = nb_highlight, label_highlight = 'test1')
+        mFp.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
-        plt.axhline(y=2.5, color='k', linestyle='--')
 
-        plt.show() if switch['show'] else None
-        mF.save_figure(fig, f'{home}/Desktop', 'test.pdf') if switch['save_to_desktop'] else None
-        print('finished')
+
+
+
+
+
+
+
+
+
+
+
+
 

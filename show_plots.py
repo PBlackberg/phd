@@ -14,10 +14,18 @@ def open_test_plots_window(figures_path=f'{os.getcwd()}/zome_plots/*.png'):
         for figure in figures[1:]:
             subprocess.run(["code", "-r", figure])
 
-tab = False
-if tab:
-    open_test_plots_tab()
+switch = {'tab': True, 'window': False}
 
-window = True
-if window:
+if switch['tab']:
+    open_test_plots_tab()
+if switch['window']:
     open_test_plots_window()
+
+
+
+
+# plot_object = da.plot()
+# fig = plot_object[0].figure
+# fig.savefig(f'{os.getcwd()}/test.png')
+# plt.show()
+

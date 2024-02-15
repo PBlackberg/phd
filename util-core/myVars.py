@@ -40,35 +40,35 @@ models_cmip5 = [
 
 # -------------------------------------------------------------------------  CMIP6 ----------------------------------------------------------------------------------------------------- #
 models_cmip6 = [         # Models ordered by change in temperature with warming
-    'INM-CM5-0',         # 1
-    'IITM-ESM',          # 2
-    'FGOALS-g3',         # 3    
-    'INM-CM4-8',         # 4                                
-    'MIROC6',            # 5                                      
-    'MPI-ESM1-2-LR',     # 6                         
-    'KIOST-ESM',         # 7    
-    'BCC-CSM2-MR',       # 8              
-    'GFDL-ESM4',         # 9         
-    'MIROC-ES2L',        # 10   
-    'NorESM2-LM',        # 11      
-    'NorESM2-MM',        # 12            # missing variables on gadi at the moment                          
-    'MRI-ESM2-0',        # 13                # up to here                  
-    'GFDL-CM4',          # 14      
-    'CMCC-CM2-SR5',      # 15                
-    'CMCC-ESM2',         # 16                                    
-    'NESM3',             # 17     
-    'ACCESS-ESM1-5',     # 18   
-    'CNRM-ESM2-1',       # 19   
-    'EC-Earth3',         # 20 # pe test
-    'CNRM-CM6-1',        # 21  
-    'CNRM-CM6-1-HR',     # 22   
-    'KACE-1-0-G',        # 23            
-    'IPSL-CM6A-LR',      # 24
-    'ACCESS-CM2',        # 25   
-    'TaiESM1',           # 26 # test                           
-    'CESM2-WACCM',       # 27   
-    'CanESM5',           # 28  
-    'UKESM1-0-LL',       # 29  
+    # 'INM-CM5-0',         # 1
+    # 'IITM-ESM',          # 2
+    # 'FGOALS-g3',         # 3    
+    # 'INM-CM4-8',         # 4                                
+    # 'MIROC6',            # 5                                      
+    # 'MPI-ESM1-2-LR',     # 6                         
+    # 'KIOST-ESM',         # 7    
+    # 'BCC-CSM2-MR',       # 8              
+    # 'GFDL-ESM4',         # 9         
+    # 'MIROC-ES2L',        # 10   
+    # 'NorESM2-LM',        # 11      
+    # 'NorESM2-MM',        # 12            # missing variables on gadi at the moment                          
+    # 'MRI-ESM2-0',        # 13                            
+    # 'GFDL-CM4',          # 14      
+    # 'CMCC-CM2-SR5',      # 15                
+    # 'CMCC-ESM2',         # 16                                    
+    # 'NESM3',             # 17     
+    # 'ACCESS-ESM1-5',     # 18   
+    # 'CNRM-ESM2-1',       # 19   
+    # 'EC-Earth3',         # 20 # pe test
+    # 'CNRM-CM6-1',        # 21  
+    # 'CNRM-CM6-1-HR',     # 22   
+    # 'KACE-1-0-G',        # 23            
+    # 'IPSL-CM6A-LR',      # 24
+    # 'ACCESS-CM2',        # 25   
+    # 'TaiESM1',           # 26 # test                           
+    # 'CESM2-WACCM',       # 27   
+    # 'CanESM5',           # 28  
+    # 'UKESM1-0-LL',       # 29  
     ]
 
 
@@ -86,14 +86,14 @@ models_nextgems = [
 
 # -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
 observations = [
-    # 'GPCP',                # for precipitation and organization index (from project al33 on gadi)
+    'GPCP',                # for precipitation and organization index (from project al33 on gadi)
     # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
     # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
     # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
     # 'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
     ]
 obs_years = [
-    # '1998-2022',          # Full GPCP data
+    '1998-2022',          # Full GPCP data
     # '1998-2009',          # high offset in high percentile precipitation (GPCP, affects organization indices)
     # '2010-2022'           # low offset in high percentile precipitation (GPCP, affects organization indices)
     ]
@@ -104,14 +104,14 @@ obs_years = [
 #    General settings
 # ------------------------
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
     ]
 
 experiments = [
     'historical',       # current climate conditions simulation        
     # 'rcp85',            # warm scenario for cmip5
-    'ssp585',           # warm scenario for cmip6
+    # 'ssp585',           # warm scenario for cmip6
     # 'obs',              # observations
     ]
 
