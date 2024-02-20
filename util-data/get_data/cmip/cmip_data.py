@@ -82,7 +82,7 @@ def folder_var(var, model, experiment, ensemble, project, timeInterval):
 # ------------------------
 # --------------------------------------------------------------------------------- remap ----------------------------------------------------------------------------------------------------------#
 def regrid_hor(ds, da): 
-    ''' Regrid to common horizontal grid '''
+    ''' Regrid to common horizontal grid (ds and da from the same model)'''
     regridder = rGh.regrid_conserv_xesmf(ds) # define regridder based of grid from other model (FGOALS-g2 from cmip5 currently)
     da = regridder(da)
     return da
@@ -238,7 +238,7 @@ def request_process(var_name, model, experiment, resolution, timescale, source, 
 
 def check_scratch(var_name, model, experiment, resolution, timescale, source):
     folder = f'{sF.folder_scratch}/sample_data/{var_name}/{source}'
-    filename = f'{model}_{var_name}_{timescale}_*_{experiment}_{resolution}.nc'
+    filename = f'{model}_{var_name}_{timescale}_{experiment}_{resolution}.nc'
     if resolution == 'regridded':
         filename = f'{model}_{var_name}_{timescale}_{experiment}_{resolution}_{int(360/cD.x_res)}x{int(180/cD.y_res)}.nc'
     path = f'{folder}/{filename}'
