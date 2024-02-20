@@ -16,12 +16,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning, module="xarray")
 import os
 import sys
-home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/switch')
-import myFuncs as mF
-import myVars as mV
-sys.path.insert(0, f'{os.getcwd()}/util')
-import get_data as gD
+# home = os.path.expanduser("~")
+# sys.path.insert(0, f'{os.getcwd()}/switch')
+# import myFuncs as mF
+# import myVars as mV
+# sys.path.insert(0, f'{os.getcwd()}/util')
+# import get_data as gD
 
 
 

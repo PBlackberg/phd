@@ -57,13 +57,15 @@ def run_ls_metrics(switch_var, switchM, switch):
                 # print(metric)      
                 path = mD.save_metric(switch, var_name, dataset, experiment, metric, metric_name)
                 print(f'Metric saved at: {path}')
+    return metric
+
 
 # ------------------------------------------------------------------------------------------- Choose metric ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_var = {                                                                                              # Choose variable (can choose multiple)
-        'pr':       False,  'clwvi':        False,   'pe':          False,                                      # Precipitation
+        'pr':       False,  'clwvi':        False,   'pe':          True,                                      # Precipitation
         'wap':      False,                                                                                       # Circulation
-        'hur':      True,  'hus':          False,                                                              # Humidity                             
+        'hur':      False,  'hus':          False,                                                              # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                      # Temperature
         'rlut':     False,  'rlds':         False,  'rlus':         False,  'netlw':    False,                  # Longwave radiation
         'rsut':     False,  'rsdt':         False,  'rsds':         False,  'rsus':     False, 'netsw': False,  # Shortwave radiation
@@ -74,8 +76,8 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                                                 # choose metric type (can choose multiple)
-        'snapshot':     False,                                                                                  # visualization
-        'tMean':        False,  'sMean':            True,                                                      # means 
+        'snapshot':     True,                                                                                  # visualization
+        'tMean':        True,  'sMean':            True,                                                      # means 
         'eof':          False,                                                                                  # ENSO
         'itcz_width':   False,   'itcz_width_sMean': False,   'area_pos': False,   'area_neg': False,            # ITCZ width (+ fraction of descent)
         }
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         'save_folder_desktop':  False,   'save_scratch':    True,  'save':     False                            # Save
         }
     
-    run_ls_metrics(switch_var, switchM, switch)
+    metric = run_ls_metrics(switch_var, switchM, switch)                                                        # If one metric from one dataset is to be tested
 
 
 

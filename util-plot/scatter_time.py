@@ -3,6 +3,10 @@
 #     Scatter plot
 # ------------------------
 This script plots scatter plots with trend line and correlation coefficient
+
+to use:
+sys.path.insert(0, f'{os.getcwd()}/util-plot')
+import scatter_time as sT
 '''
 
 
@@ -156,7 +160,7 @@ def format_axes(fig, ax, nrows, ncols, subplot, num_subplots, xmin, xmax, ymin, 
     plot_axtitle(fig, ax, variable, xpad = 0.035, ypad = 0.0075, fontsize = 10)
     ax.set_xticklabels([]) if not subplot >= num_subplots-ncols else None
     highlight_subplot_frame(ax, color = 'b') if variable in models_highlight else None
-    highlight_subplot_frame(ax, color = 'g') if variable in mV.observations  else None
+    # highlight_subplot_frame(ax, color = 'g') if variable in mV.observations  else None
 
 def plot_axScatter(x, y, ax, color, xmin, xmax, ymin, ymax):
     hs = ax.scatter(x, y, facecolors='none', edgecolor= color) 
@@ -176,8 +180,8 @@ def plot_slope(x, y, ax, color):
 
 def add_density_map(x, y, fig, ax, cmap, subplot, ncols, vmin, vmax, individual_cmap):
     row, col = subplot // ncols, subplot % ncols    # determine row and col index
-    vmin = 0
-    vmax = 150
+    # vmin = 0
+    # vmax = 150
     norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
     hm = ax.hist2d(x,y,[20,20], range=[[np.nanmin(x), np.nanmax(x)], [np.nanmin(y), np.nanmax(y)]], cmap = cmap, norm = norm) 
     cbar_label = 'months [Nb]' if col == 3 else ''
@@ -215,14 +219,15 @@ def plot_scatter(x, y, variable, fig_title, label_x, label_y, colors_scatter, co
     plot_ylabel(fig, ax, label_y, pad = 0.075, fontsize = 12)
     plot_axtitle(fig, ax, variable, xpad = 0.005, ypad = 0.01, fontsize = 12)
     fig.text(0.5, 0.95, fig_title, ha = 'center', fontsize = 15.5, transform=fig.transFigure)
-    # cbar_right_of_axis(fig, ax, hm[3], width_frac= 0.05, height_frac=1, pad=0.035, numbersize = 12, cbar_label = 'months [Nb]', text_pad = 0.05, fontsize = 12)
+    cbar_right_of_axis(fig, ax, hm[3], width_frac= 0.05, height_frac=1, pad=0.035, numbersize = 12, cbar_label = 'months [Nb]', text_pad = 0.05, fontsize = 12)
     return fig, ax
 
-def plot_dsScatter(ds_x, ds_y, variable_list = ['a', 'b'], fig_title = '', label_x = '', label_y = '', colors_scatter = 'k', colors_slope = 'k', cmap = 'Blues',
-                xmin = None, xmax = None, ymin = None, ymax = None, vmin = 0, vmax = 150,
-                density_map = False, models_highlight = ['a', 'b'],
-                fig_given = False, ax = '',
-                individual_cmap = False):
+def plot_dsScatter(ds_x, ds_y, variable_list = ['a', 'b'], fig_title = '', label_x = '', label_y = '', label_cmap = '',
+                    colors_scatter = 'k', colors_slope = 'k', cmap = 'Blues',
+                    xmin = None, xmax = None, ymin = None, ymax = None, vmin = 0, vmax = 150,
+                    density_map = False, models_highlight = ['a', 'b'],
+                    fig_given = False, ax = '',
+                    individual_cmap = False):
     
     if len(variable_list) == 1:
         for variable in variable_list:
@@ -234,12 +239,12 @@ def plot_dsScatter(ds_x, ds_y, variable_list = ['a', 'b'], fig_title = '', label
         ax = axes.flatten()[subplot]
         h = plot_axScatter(x, y, ax, colors_scatter[subplot], xmin = None, xmax = None, ymin = None, ymax = None)
         hs = plot_slope(x, y, ax, colors_slope[subplot]) 
-        format_axes(fig, ax, nrows, ncols, subplot, len(variable_list), xmin, xmax, ymin, ymax, density_map, label_x, label_y, variable, models_highlight)
         hm = add_density_map(x, y, fig, ax, cmap, subplot, ncols, vmin, vmax, individual_cmap)
+        format_axes(fig, ax, nrows, ncols, subplot, len(variable_list), xmin, xmax, ymin, ymax, density_map, label_x, label_y, variable, models_highlight)
         add_correlation_coeff(x, y, ax)
         # cbar_height  = 0.1
         # pad = 0.1
-    cbar_below_axis(fig, ax, hm[3]) if not individual_cmap else None # cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1
+    cbar_below_axis(fig, ax, hm[3], cbar_label = label_cmap) if not individual_cmap else None # cbar_height, pad, numbersize = 8, cbar_label = '', text_pad = 0.1
     return fig, axes
 
 

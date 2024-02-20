@@ -3,6 +3,16 @@
 #       Map plot
 # ------------------------
 This script plot scenes with coastlines in the background
+
+To import script:
+sys.path.insert(0, f'{os.getcwd()}/util-data')
+import map_plot as mP
+
+use:
+filename = 'separate_subplots.png'
+fig, ax = plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = list(ds.data_vars.keys()))
+show_plot(fig, show_type = 'save_cwd', filename = filename)
+
 '''
 
 
@@ -14,13 +24,15 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import os
+home = os.path.expanduser("~")
 
 
 
 # ------------------------
 #    Plot functions
 # ------------------------
-# ---------------------------------------------------------------------------------------- General --------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------------------------------ General (from myFuncs_plots) --------------------------------------------------------------------------------------------------- #
 def create_map_figure(width = 12, height = 4, nrows = 1, ncols = 1, projection = ccrs.PlateCarree(central_longitude=180)):
     fig, axes = plt.subplots(nrows, ncols, figsize=(width,height), subplot_kw=dict(projection=projection))
     return fig, axes
@@ -117,6 +129,45 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_
     format_ticks(ax, labelsize = 11)
     return fig, ax
 
+def save_figure(figure, folder =f'{home}/Documents/phd', filename = 'test.pdf', path = ''):
+    ''' Basic plot saving function '''
+    if folder and filename:
+        path = os.path.join(folder, filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    os.remove(path) if os.path.exists(path) else None
+    figure.savefig(path)
+
+def show_plot(fig, show_type = 'cycle', cycle_time = 0.5, filename = 'test'):
+    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
+    if show_type == 'cycle':
+        plt.ion()
+        plt.show()
+        plt.pause(cycle_time)
+        plt.close(fig)
+        plt.ioff()
+    elif show_type == 'save_cwd':
+        save_figure(figure = fig, folder = f'{os.getcwd()}/zome_plots', filename = filename)
+        plt.close(fig)
+        print(f'saved {filename}')
+        return True
+    elif show_type == 'show':
+        plt.show()
+        return True
+    
+def remove_test_plots(directory = f'{os.getcwd()}/zome_plots'):
+    if os.path.exists(directory) and os.path.isdir(directory):
+        png_files = [f for f in os.listdir(directory) if f.endswith('.png')]
+        if png_files:
+            print(f'From folder: {directory}')
+            for filename in png_files:
+                file_path = os.path.join(directory, filename)
+                os.remove(file_path)
+                print(f"File {file_path} has been removed")
+        else:
+            print(f"No .png files found in {directory}")
+    else:
+        print(f"Directory {directory} does not exist or is not a directory")
+        
 
 # ---------------------------------------------------------------------------------------- specific --------------------------------------------------------------------------------------------------- #
 def format_fig(num_subplots):
@@ -175,7 +226,7 @@ def plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, 
         fig.text(0.5, top_text, title, ha = 'center', fontsize = 15, transform=fig.transFigure)  # fig title
         ax = axes.flatten()[subplot]
         pcm = plot_axMapScene(ax, da, cmap, vmin = vmin, vmax = vmax)
-        format_axes(fig, ax, subplot, len(mV.datasets), nrows, ncols, axtitle = dataset)
+        format_axes(fig, ax, subplot, len(variable_list), nrows, ncols, axtitle = dataset)
     plot_colobar(fig, ax, pcm, label, variable_list)
     return fig, axes
 
@@ -190,18 +241,17 @@ if __name__ == '__main__':
     import sys
     home = os.path.expanduser("~")
     sys.path.insert(0, f'{os.getcwd()}/util-core')
-    import myVars               as mV
-    import myFuncs_plots        as mFp
+    import choose_datasets as cD           
     sys.path.insert(0, f'{os.getcwd()}/util-data')
     import get_data.metric_data as mD
 
 
 # --------------------------------------------------------------------------------------- get data --------------------------------------------------------------------------------------------------- #
     metric_type = 'conv_org'
-    metric_name = f'obj_snapshot_{mV.conv_percentiles[0]}thprctile'
+    metric_name = f'obj_snapshot_{cD.conv_percentiles[0]}thprctile'
     ds = xr.Dataset()
-    for dataset in mV.datasets:
-        da = mD.load_metric(metric_type, metric_name, dataset, mV.experiments[0])
+    for dataset in cD.datasets:
+        da = mD.load_metric(metric_type, metric_name, dataset, cD.experiments[0])
         ds[dataset] = da>0
     # print(ds)
         
@@ -213,20 +263,20 @@ if __name__ == '__main__':
         'one_plot':                 True,
         }
 
-    mFp.remove_test_plots() if switch['delete_previous_plots'] else None
+    remove_test_plots() if switch['delete_previous_plots'] else None
     # exit()
 
     if switch['separate_subplots']:
         filename = 'separate_subplots.png'
         fig, ax = plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = list(ds.data_vars.keys()))
-        mFp.show_plot(fig, show_type = 'save_cwd', filename = filename)
+        show_plot(fig, show_type = 'save_cwd', filename = filename)
 
     if switch['one_plot']:
         filename = 'one_plot.png'
         first_variable = list(ds.data_vars)[0]
         ds_one = xr.Dataset(data_vars = {first_variable : ds[first_variable]})
         fig, ax = plot_dsScenes(ds_one, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = list(ds_one.data_vars.keys()))
-        mFp.show_plot(fig, show_type = 'save_cwd', filename = filename)
+        show_plot(fig, show_type = 'save_cwd', filename = filename)
 
 
 

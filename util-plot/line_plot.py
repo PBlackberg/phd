@@ -3,6 +3,11 @@
 #   Line plot
 # ----------------
 This script plots line plots (like time-series plots)
+
+To use:
+sys.path.insert(0, f'{os.getcwd()}/util-plot')
+import line_plot as lP
+
 '''
 
 
@@ -123,28 +128,33 @@ def format_ax(fig, ax, label_x, label_y, xmin, xmax, ymin, ymax, title):
     plot_ylabel(fig, ax, label_y, pad = 0.0475, fontsize = 10)
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
-    fig.text(0.5, 0.985, title, ha = 'center', fontsize = 9, transform=fig.transFigure)
+    fig.text(0.5, 0.9, title, ha = 'center', fontsize = 12, transform=fig.transFigure)
 
 
-def plot_ax_line(ax, x = None, y = None, color = 'k', linewidth = None):
+def plot_ax_line(ax, x = None, y = None, color = 'k', linewidth = None, label=None):
     if x is None:
-        h = ax.plot(y, color = color, linewidth = linewidth)
+        h = ax.plot(y, color = color, linewidth = linewidth, label = label)
     else:
-        h = ax.plot(x, y, color = color, linewidth = linewidth)
+        h = ax.plot(x, y, color = color, linewidth = linewidth, label = label)
     return h
 
-def plot_dsLine(ds, x = None, variable_list = ['a', 'b'], title = '', label_x = '', label_y = '', colors = 'k', 
+def plot_dsLine(ds, x = None, variable_list = ['a', 'b'], title = '', label_x = '', label_y = '', colors = ['k', 'r'], 
                 xmin = None, xmax = None, ymin = None, ymax = None,
                 fig_given = False, one_ax = False, fig = '', axes = ''):
     if not fig_given:  
-            [fig, axes, nrows, ncols] = format_fig(len(ds.data_vars)) if not one_ax else format_fig(1)
-    for subplot, variable in enumerate(ds.data_vars):
+            [fig, axes, nrows, ncols] = format_fig(len(variable_list)) if not one_ax else format_fig(1)
+    for subplot, variable in enumerate(variable_list):
         y = ds[variable]
         ax = axes.flatten()[subplot] if not one_ax else axes
-        h = plot_ax_line(ax, x, y, color = colors[subplot], linewidth = None)
+        h = plot_ax_line(ax, x, y, color = colors[subplot], linewidth = None, label = variable_list[subplot])
         if not fig_given:  
-            format_axes(fig, ax, subplot, len(ds.data_vars), nrows, ncols, variable_list, label_x, label_y, xmin, xmax, ymin, ymax, title) if not one_ax else format_ax(fig, ax, label_x, label_y, xmin, xmax, ymin, ymax, title)
+            format_axes(fig, ax, subplot, len(variable_list), nrows, ncols, variable_list, label_x, label_y, xmin, xmax, ymin, ymax, title) if not one_ax else format_ax(fig, ax, label_x, label_y, xmin, xmax, ymin, ymax, title)
         # plt.grid(True)
+    if not one_ax:
+        for ax in axes.flatten():
+            ax.legend()
+    else:
+        axes.legend()
     return fig, axes
 
 

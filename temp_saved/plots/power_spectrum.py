@@ -7,7 +7,7 @@ import os
 import sys
 home = os.path.expanduser("~")                           
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                                 
+import temp_saved.myVars_saved as mV                                 
 import myFuncs as mF     
 import myClasses as mC
 
@@ -245,7 +245,7 @@ if __name__ == '__main__':
     home = os.path.expanduser("~")
 
     sys.path.insert(0, f'{os.getcwd()}/util-core')
-    import myVars as mV
+    import temp_saved.myVars_saved as mV
     sys.path.insert(0, f'{os.getcwd()}/util-data')
     import get_data.metric_data as mD
 

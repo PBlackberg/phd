@@ -37,15 +37,43 @@
 
 
 
+# import numpy as np
+# import matplotlib.colors as mcolors
+
+# def generate_distinct_colors(n):
+#     hsv_colors = [(i / n, 1, 1) for i in range(n)]  # Hue varies, saturation and value are maxed
+#     rgb_colors = [mcolors.hsv_to_rgb(color) for color in hsv_colors]
+#     return rgb_colors
+
+# # Example: Generate 5 distinct colors
+# n_colors = 5
+# colors = generate_distinct_colors(n_colors)
+# print(colors)
+
+
+
+    # file_pattern = "/Users/cbla0002/Desktop/pr/ICON-ESM_ngc2013/ICON-ESM_ngc2013_pr_daily_*.nc" 
+    # paths = sorted(glob.glob(file_pattern))
+    # da = xr.open_mfdataset(paths, combine='by_coords', parallel=True) # chunks="auto"
+
+
+
+
+# switch = {'b' : False}
+# if switch.get('b', False):
+#     if switch['b']:
+#         print('executes')
+
+
+import xarray as xr
 import numpy as np
-import matplotlib.colors as mcolors
 
-def generate_distinct_colors(n):
-    hsv_colors = [(i / n, 1, 1) for i in range(n)]  # Hue varies, saturation and value are maxed
-    rgb_colors = [mcolors.hsv_to_rgb(color) for color in hsv_colors]
-    return rgb_colors
+a = np.array([1, 4, 3])
+a = xr.DataArray(a)
 
-# Example: Generate 5 distinct colors
-n_colors = 5
-colors = generate_distinct_colors(n_colors)
-print(colors)
+b = np.array([1, 2, np.nan])
+b = xr.DataArray(b)
+
+
+print((a/b).data)
+

@@ -7,7 +7,7 @@ from getpass import getuser
 # ------------------------
 #    Choose datasets
 # ------------------------
-# ---------------------------------------------------------------- Constructed / Random fields ----------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------ Constructed / Random fields for testing calc ----------------------------------------------------------------------------------------------------- #
 test_fields = [
     # 'random'             # 1
     # 'constructed'        # 2
@@ -49,7 +49,7 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'KIOST-ESM',         # 7    
     # 'BCC-CSM2-MR',       # 8              
     # 'GFDL-ESM4',         # 9         
-    # 'MIROC-ES2L',        # 10   
+    # 'MIROC-ES2L',        # 10   # no pr
     # 'NorESM2-LM',        # 11      
     # 'NorESM2-MM',        # 12            # missing variables on gadi at the moment                          
     # 'MRI-ESM2-0',        # 13                            
@@ -57,18 +57,18 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'CMCC-CM2-SR5',      # 15                
     # 'CMCC-ESM2',         # 16                                    
     # 'NESM3',             # 17     
-    # 'ACCESS-ESM1-5',     # 18   
-    # 'CNRM-ESM2-1',       # 19   
+    # 'ACCESS-ESM1-5',     # 18   # no pe
+    # 'CNRM-ESM2-1',       # 19   # no pe
     # 'EC-Earth3',         # 20 # pe test
-    # 'CNRM-CM6-1',        # 21  
-    # 'CNRM-CM6-1-HR',     # 22   
+    # 'CNRM-CM6-1',        # 21  # no pe
+    # 'CNRM-CM6-1-HR',     # 22   # no pe
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
-    # 'ACCESS-CM2',        # 25   
+    # 'ACCESS-CM2',        # 25   # no pe
     # 'TaiESM1',           # 26 # test                           
     # 'CESM2-WACCM',       # 27   
     # 'CanESM5',           # 28  
-    # 'UKESM1-0-LL',       # 29  
+    # 'UKESM1-0-LL',       # 29  # no pe
     ]
 
 
@@ -86,16 +86,16 @@ models_nextgems = [
 
 # -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
 observations = [
-    'GPCP',                # for precipitation and organization index (from project al33 on gadi)
-    # 'ISCCP',              # clouds (weather states) (https://isccp.giss.nasa.gov/wstates/hggws.html) (2000-01 2017-12)
-    # 'CERES',              # radiation (https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#) (2000-03-2023-04)
-    # 'ERA5',               # humidity (from project rt52 on gadi) (1998-01 - 2021-12)
-    # 'NOAA'                # surface temperature (https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)
+    # 'GPCP',               # Precipitation (and organization index)    - project al33 on nci                                                       (1998-01 2022-12)
+    # 'ISCCP',              # Clouds (weather states)                   - https://isccp.giss.nasa.gov/wstates/hggws.html                            (2000-01 2017-12)
+    # 'CERES',              # Radiation                                 - https://ceres-tool.larc.nasa.gov/ord-tool/jsp/EBAFTOA42Selection.jsp#     (2000-03 2023-04)
+    # 'ERA5',               # Humidity                                  - project rt52 on gadi                                                      (1998-01 2021-12)
+    # 'NOAA'                # surface temperature                       - https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html
     ]
 obs_years = [
-    '1998-2022',          # Full GPCP data
-    # '1998-2009',          # high offset in high percentile precipitation (GPCP, affects organization indices)
-    # '2010-2022'           # low offset in high percentile precipitation (GPCP, affects organization indices)
+    # '1998-2022',          # Full GPCP data
+    # '1998-2009',          # High offset in high percentile precipitation from GPCP    (affects organization indices)
+    # '2010-2022'           # Low offset in high percentile precipitation from GPCP     (affects organization indices)
     ]
 
 
@@ -104,14 +104,14 @@ obs_years = [
 #    General settings
 # ------------------------
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 experiments = [
     'historical',       # current climate conditions simulation        
     # 'rcp85',            # warm scenario for cmip5
-    # 'ssp585',           # warm scenario for cmip6
+    'ssp585',           # warm scenario for cmip6
     # 'obs',              # observations
     ]
 
@@ -125,7 +125,7 @@ x_res, y_res = [
 
 conv_percentiles = [    # threshold for precipitation rate considered to be assocaited with convection
     # '90',
-    '95',             # default
+    '95',               # default
     # '97'
     ]
 
@@ -144,42 +144,8 @@ folder_scratch = (Path("/scratch") / getuser()[0] / getuser())  if os.path.expan
 
 
 
-# ------------------------
-# Other dataset variables
-# ------------------------
-# ---------------------------------------------------------------------------------------- Institute list ----------------------------------------------------------------------------------------------------- #
-institutes_cmip5 = {'IPSL-CM5A-MR': 'IPSL', 'GFDL-CM3': 'NOAA-GFDL', 'GISS-E2-H': 'NASA-GISS', 'bcc-csm1-1': 'BCC',
-                    'CNRM-CM5': 'CNRM-CERFACS', 'CCSM4': 'NCAR', 'HadGEM2-AO': 'NIMR-KMA', 'BNU-ESM': 'BNU',
-                    'EC-EARTH': 'ICHEC', 'FGOALS-g2': 'LASG-CESS', 'MPI-ESM-MR': 'MPI-M', 'CMCC-CM': 'CMCC',
-                    'inmcm4': 'INM', 'NorESM1-M':'NCC','CanESM2': 'CCCma', 'MIROC5': 'MIROC', 'HadGEM2-CC': 'MOHC',
-                    'MRI-CGCM3': 'MRI', 'CESM1-BGC': 'NSF-DOE-NCAR'}
-
-institutes_cmip6 = {'TaiESM1': 'AS-RCEC', 'BCC-CSM2-MR': 'BCC', 'FGOALS-g3': 'CAS', 'FGOALS-f3-L': 'CAS',
-                    'CanESM5': 'CCCma', 'CMCC-ESM2': 'CMCC', 'CMCC-CM2-SR5': 'CMCC', 'CNRM-CM6-1': 'CNRM-CERFACS',
-                    'CNRM-CM6-1-HR': 'CNRM-CERFACS', 'CNRM-ESM2-1': 'CNRM-CERFACS', 'MIROC6': 'MIROC', 'MIROC-ES2L': 'MIROC',
-                    'MPI-ESM1-2-LR': 'MPI-M', 'GISS-E2-1-H': 'NASA-GISS', 'GISS-E2-1-G': 'NASA-GISS', 'NorESM2-MM': 'NCC',
-                    'NorESM2-LM': 'NCC', 'GFDL-CM4': 'NOAA-GFDL', 'GFDL-ESM4': 'NOAA-GFDL', 'UKESM1-0-LL': 'MOHC', 
-                    'KACE-1-0-G': 'NIMS-KMA', 'MRI-ESM2-0': 'MRI', 'CESM2': 'NCAR', 'CESM2-WACCM': 'NCAR', 'NESM3': 'NUIST',
-                    'IITM-ESM': 'CCCR-IITM', 'EC-Earth3': 'EC-Earth-Consortium', 'INM-CM5-0': 'INM', 'INM-CM4-8': 'INM',
-                    'IPSL-CM6A-LR': 'IPSL', 'KIOST-ESM': 'KIOST', 'ACCESS-ESM1-5': 'CSIRO', 'ACCESS-CM2': 'CSIRO-ARCCSS'}
-institutes = {**institutes_cmip5, **institutes_cmip6}
 
 
-# ---------------------------------------------------------------------------------------- ECS ----------------------------------------------------------------------------------------------------- #
-# ECS taken from supplementary information from:
-# https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019GL085782#pane-pcw-figures
-# https://www.nature.com/articles/d41586-022-01192-2 # most taken from here (used the column which had the same value for models existing in both sets)
-
-ecs_cmip5 = {'IPSL-CM5A-MR': 0, 'GFDL-CM3': 0, 'GISS-E2-H': 0, 'bcc-csm1-1': 0, 'CNRM-CM5': 0, 'CCSM4': 0, 'HadGEM2-AO': 0,        
-            'BNU-ESM': 0, 'EC-EARTH': 0, 'FGOALS-g2': 0, 'MPI-ESM-MR': 0, 'CMCC-CM': 0, 'inmcm4': 0, 'NorESM1-M': 0, 'CanESM2': 0,           
-            'MIROC5':  0, 'HadGEM2-CC': 0, 'MRI-CGCM3': 0, 'CESM1-BGC': 0}
-
-ecs_cmip6 = {'INM-CM4-8': 1.83, 'INM-CM5-0': 1.92, 'IITM-ESM': 2.37, 'NorESM2-MM': 2.49, 'NorESM2-LM': 2.56, 'MIROC6': 2.6,
-            'GFDL-ESM4': 2.65, 'MIROC-ES2L': 2.66, 'FGOALS-g3': 2.87, 'MPI-ESM1-2-LR': 3.02,'BCC-CSM2-MR': 3.02, 'MRI-ESM2-0': 3.13,  
-            'KIOST-ESM': 3.36, 'CMCC-CM2-SR5': 3.56, 'CMCC-ESM2': 3.58, 'CMCC-ESM2': 3.58, 'ACCESS-ESM1-5': 3.88, 'GFDL-CM4': 3.89, 
-            'EC-Earth3': 4.26, 'CNRM-CM6-1-HR': 4.34, 'TaiESM1': 4.36, 'ACCESS-CM2': 4.66, 'CESM2-WACCM': 4.68, 'IPSL-CM6A-LR': 4.70,   
-            'NESM3': 4.72, 'KACE-1-0-G': 4.75, 'CNRM-ESM2-1': 4.79, 'CNRM-CM6-1': 4.90, 'CESM2': 5.15, 'UKESM1-0-LL': 5.36, 'CanESM5': 5.64}
-ecs_list = {**ecs_cmip5, **ecs_cmip6}
 
 
 

@@ -2,12 +2,9 @@
 # ------------------------
 #       myFuncs
 # ------------------------
-This script has functions that are communly used in other scripts, including
-
-Operations -    (ex: looping through datasets/experiments, load/save data, time functions)
-Calculation -   (ex: connect lon boundary, calculate spherical distance)
-Plots -         (ex: plot figure / subplots, move column and rows)
+This script has functions that are communly used in other scripts
 '''
+
 
 
 # --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------- #

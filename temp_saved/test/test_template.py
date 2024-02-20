@@ -20,7 +20,7 @@ import os
 import sys
 home = os.path.expanduser("~")               
 sys.path.insert(0, f'{os.getcwd()}/switch')
-import myVars as mV                                 
+import temp_saved.myVars_saved as mV                                 
 import myClasses as mC
 import myFuncs as mF     
 

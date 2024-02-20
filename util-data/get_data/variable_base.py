@@ -3,41 +3,60 @@
 #  Getting base variable
 # ------------------------
 These variables are at times saved in scratch for quicker access
+
+To use:
+sys.path.insert(0, f'{os.getcwd()}/util-data')
+import get_data.variable_base as vB
+da = vB.load_variable({'pr': True}, switch, dataset, experiment, resolution, timescale = 'daily')
+
 '''
 
+
+
+# ---------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------------- #
+import numpy as np
 
 
 # ------------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
 home = os.path.expanduser("~")
-sys.path.insert(0, f'{os.getcwd()}/util-data')
-import get_data.test_data   as gD_test
-import get_data.cmip_data   as gD_cmip
-import get_data.obs_data    as gD_obs
-import get_data.icon_data   as gD_icon
-
 sys.path.insert(0, f'{os.getcwd()}/util-core')
-import myFuncs          as mF
+import choose_datasets as cD  
+
+sys.path.insert(0, f'{os.getcwd()}/util-data')
+# import get_data.constructed_fields      as constF
+import get_data.cmip.cmip_data          as cmipD
+# import get_data.observations.obs_data   as obsD
+# import get_data.icon.icon_data          as iconD
 
 
 
-def load_variable(switch_var = {'': True}, switch = {'constructed_fields': False}, dataset = '', experiment = ''):
-    ''' Loading variable data.
-        Sometimes sections of years of a dataset will be used instead of the full data ex: if dataset = GPCP_1998-2010 (for obsservations) 
-        (There is a double trend in high percentile precipitation rate for the first 12 years of the data (that affects the area picked out by the time-mean percentile threshold)'''
-    source = mF.find_source(dataset)
-    if source in ['test']:
-        da = gD_test.get_cF_var(switch_var, dataset)    
+# ------------------------
+#       Get data
+# ------------------------
+# ------------------------------------------------------------------------------------- get model / obs data --------------------------------------------------------------------------------------------------- #
+def find_source(dataset):
+    '''Determining source of dataset '''
+    source = 'test'     if np.isin(cD.test_fields, dataset).any()      else None     
+    source = 'cmip5'    if np.isin(cD.models_cmip5, dataset).any()     else source      
+    source = 'cmip6'    if np.isin(cD.models_cmip6, dataset).any()     else source         
+    source = 'dyamond'  if np.isin(cD.models_dyamond, dataset).any()   else source        
+    source = 'nextgems' if np.isin(cD.models_nextgems, dataset).any()  else source   
+    source = 'obs'      if np.isin(cD.observations, dataset).any()     else source
+    return source
+
+def load_variable(switch_var = {'pr': True}, switch = {'test_sample': False, 'ocean_mask': False}, dataset = '', experiment = '', 
+                  resolution = cD.resolutions[0], timescale = cD.timescales[0]):
+    source = find_source(dataset)
+    # if source in ['test']:
+    #     da = constF.get_cF_var(switch_var, dataset)    
     if source in ['cmip5', 'cmip6']:
-        da = gD_cmip.get_cmip_data(switch_var, switch, dataset, experiment)   
-    if source in ['obs']: 
-        da = gD_obs.get_obs_data(switch_var, switch, dataset, experiment)         
-    if source in ['nextgems'] and dataset == 'ICON-ESM_ngc2013': 
-        da = gD_icon.get_icon_data(switch_var, switch, dataset)
-    # file_pattern = "/Users/cbla0002/Desktop/pr/ICON-ESM_ngc2013/ICON-ESM_ngc2013_pr_daily_*.nc" 
-    # paths = sorted(glob.glob(file_pattern))
-    # da = xr.open_mfdataset(paths, combine='by_coords', parallel=True) # chunks="auto"
+        da = cmipD.get_cmip_data(switch_var, switch, model = dataset, experiment = experiment, resolution = resolution, timescale = timescale)
+    # if source in ['obs']: 
+    #     da = obsD.get_obs_data(switch_var, switch, dataset, experiment)         
+    # if source in ['nextgems'] and dataset == 'ICON-ESM_ngc2013': 
+    #     da = iconD.get_icon_data(switch_var, switch, dataset)
     return da
 
 
@@ -47,9 +66,6 @@ def load_variable(switch_var = {'': True}, switch = {'constructed_fields': False
 # ------------------------
 # ------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
-    sys.path.insert(0, f'{os.getcwd()}/util-core')
-    import myVars          as mV
-    import myFuncs_plots    as mFp     
 
     switch_var = {
         'pr':       False,                                                                                       # Precipitation
@@ -69,9 +85,9 @@ if __name__ == '__main__':
         'test_sample':   False  # save
         }
     
-    da = load_variable(switch_var = switch_var, switch = switch, dataset = mV.datasets[0], experiment = mV.experiments[0])
+    da = load_variable(switch_var = {'pr': True}, switch = {'test_sample': False, 'ocean_mask': False}, dataset = cD.datasets[0], experiment = cD.experiments[0], 
+                  resolution = cD.resolutions[0], timescale = cD.timescales[0])
     print(da)
-    # mFp.get_snapshot(da, plot = True, show_type = 'cycle') # show_type = [show, save_cwd, cycle] 
 
 
 

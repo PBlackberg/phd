@@ -109,7 +109,7 @@ def plot_letters(ax, x, y, variable_list, color, models_highlight=[''], color_hi
         label_text = f'{label_text}-E'  if variable in ['CNRM-ESM2-1', 'CMCC-ESM2', 'GFDL-ESM4']    else label_text 
         label_text = f'{label_text}-H'  if variable[-2] == 'H'                                      else label_text
         text_color = color_highlight    if variable in models_highlight                             else color
-        text_color = 'g'                if variable in mV.observations                              else text_color
+        # text_color = 'g'                if variable in mV.observations                              else text_color
         ax.text(x[dataset_idx], y[dataset_idx], label_text, color=text_color, ha='center', va='center')
         legend_handles.append(Patch(facecolor=text_color, edgecolor='none'))
         legend_labels.append(f"{label_text} - {variable}")
@@ -119,7 +119,7 @@ def plot_dsScatter(ds_x, ds_y, variable_list = ['a', 'b'], fig_title = '', x_lab
                     xmin = None, xmax = None, ymin = None, ymax = None,
                     fig_given = False, fig = '', ax = '', 
                     color = 'k', models_highlight = [''], color_highlight = 'b', 
-                    add_correlation = True, put_point = True):
+                    add_correlation = True, put_point = True, observations = ['a', 'b']):
     if not fig_given:
         fig, ax = create_figure(width = 11, height = 6.5)
         scale_ax_x(ax, scaleby=0.75)

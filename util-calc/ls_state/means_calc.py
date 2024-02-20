@@ -1,5 +1,8 @@
 '''
 Mean calculation of different dimensions
+
+to use:
+
 '''
 
 
