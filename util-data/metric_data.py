@@ -21,8 +21,8 @@ home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util-core')
 import choose_datasets as cD
 
-sys.path.insert(0, f'{os.getcwd()}/util-data')
-import organize_files.save_folders as sF
+sys.path.insert(0, f'{os.getcwd()}/util-files')
+import save_folders as sF
 
 
 # -----------------------
@@ -45,7 +45,7 @@ def get_folder(folder_parent, met_type, metric_name, source):
     # print(folder)
     return folder
 
-def get_filename(dataset, experiment, metric_name, source, timescale = cD.timescales[0]):
+def get_filename(dataset, experiment, metric_name, source, timescale):
     # print(metric_name)
     filename = f'{dataset}_{metric_name}_{timescale}_{experiment}_{cD.resolutions[0]}'
     if source in ['obs']:  
@@ -88,17 +88,17 @@ def try_opening(file_paths, metric_name):
         except:
             continue
 
-def load_metric(metric_type, metric_name, dataset, experiment, dataset_org = 'GPCP'):
+def load_metric(metric_type, metric_name, dataset, experiment, dataset_org = 'GPCP', timescale = cD.timescales[0]):
     source = find_source(dataset)
     if metric_type in ['pr', 'conv_org'] and source in ['obs']: # GPCP observations used for precipitation based metrics
         dataset = dataset_org 
-    filename = get_filename(dataset, experiment, metric_name, source)
+    filename = get_filename(dataset, experiment, metric_name, source, timescale)
     paths_file = []
     for folder_parent in [sF.folder_scratch, sF.folder_save, f'{home}/Desktop/']:    # check both folders                       
         folder = get_folder(folder_parent, met_type = metric_type, metric_name = metric_name, source = source)   
-        for timescale in cD.timescales:                          # check other timescales                     
-            filename = get_filename(dataset, experiment, metric_name, source, timescale)            
-            paths_file.append(f'{folder}/{filename}.nc')
+        # for timescale in cD.timescales:                          # check other timescales                     
+        filename = get_filename(dataset, experiment, metric_name, source, timescale)            
+        paths_file.append(f'{folder}/{filename}.nc')
     da = try_opening(paths_file, metric_name)
     if da is None:
         print('\n'.join(path for path in paths_file))
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     getit = True
     if getit:
         da = load_metric(metric_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', 
-                         dataset = dataset, experiment = experiment)
+                         dataset = dataset, experiment = experiment, timescale = 'daily')
         print(da)
 
 

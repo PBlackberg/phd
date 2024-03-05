@@ -27,8 +27,5 @@ if switch['window']:
 
 
 
-# plot_object = da.plot()
-# fig = plot_object[0].figure
-# fig.savefig(f'{os.getcwd()}/test.png')
-# plt.show()
+
 

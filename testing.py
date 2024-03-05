@@ -141,10 +141,157 @@
 # function_that_may_fail()
 
 
-
-
 # import xarray as xr
 # a = xr.open_dataset('/scratch/b/b382628/sample_data/pr/nextgems/ICON-ESM_ngc2013/ICON-ESM_ngc2013_pr_daily_historical_2024_regridded_144x72.nc')
 # print(a)
+
+
+# fractional frequency of occurence
+# def calc_freq_occur(y):
+#     ymin = np.nanmin(y)
+#     ymax = np.nanmax(y)
+#     edges = np.linspace(ymin, ymax, 101)
+#     y_bins = []
+#     for i in range(len(edges)-1):
+#         if i == len(edges)-2:
+#             y_value = (xr.where((y>=edges[i]) & (y<=edges[i+1]), 1, 0).sum() / len(y))*100
+#         else:
+#             y_value = (xr.where((y>=edges[i]) & (y<edges[i+1]), 1, 0).sum() / len(y))*100
+#         y_bins.append(y_value)
+#     bins_middle = edges[0:-1] + (edges[1] - edges[0])/2
+#     return bins_middle, y_bins
+
+# if switch_test['freq_occur']:
+#     da = clwvi
+#     _, y_bins = calc_freq_occur(da.values.flatten())
+#     bins = np.arange(1,101)
+#     ds[dataset] = xr.DataArray(y_bins)
+#     ymin_foc.append(np.min(y_bins))
+#     ymax_foc.append(np.max(y_bins))
+
+# if switch_test['freq_occur']:
+#     ymin = np.min(ymin_foc_list)
+#     ymax = np.max(ymax_foc_list)
+#     label_x = 'fraction of total range [%]'
+#     label_y = 'Freq. occur [%]'
+#     title = 'pe'
+#     filename = f'{title}_value_distribution_fractional_values.png'
+#     colors = lP.generate_distinct_colors(len(ds.data_vars))
+#     fig, axes = lP.plot_dsLine(ds, x = bins, variable_list = list(ds.data_vars.keys()), title = filename, label_x = label_x, label_y = label_y, colors = colors, 
+#                 ymin = ymin, ymax = ymax,
+#                 fig_given = False, one_ax = True)
+#     mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
+
+
+
+
+# import xarray as xr
+# ds = xr.open_dataset('/scratch/w40/cb4968/sample_data/pr/cmip6/INM-CM5-0_pr_monthly_ssp585_regridded_144x72.nc')
+# print(ds)
+
+
+
+
+
+# # print(np.unique(conv_obj))
+# # print(I)
+# # print(J)
+# # print(da)
+# # exit()
+# # print(labeli)
+# mask = conv_obj == 1
+# da = np.where(mask, 1, 0)
+# print(da)
+# print(np.unique(da))
+# fig = plt.figure()
+# plt.imshow(da, cmap='viridis')
+# # plt.show()
+# plt.savefig("zome_plots/convex_polygtope_solution.png")
+# exit()
+
+
+
+# print(result)
+# exit()
+# for i in range(14):
+#     print(f'lat1{np.unique(lat1[:,:,i])}')
+#     print(f'lon1{np.unique(lon1[:,:,i])}')
+# exit()
+
+
+# import warnings
+# with warnings.catch_warnings():
+#     warnings.filterwarnings('error', 'invalid value encountered in arcsin')
+#     try:
+#         result = 2 * R * np.arcsin(np.sqrt(h))
+#     except RuntimeWarning:
+#         print("Warning caught: invalid value encountered in arcsin")
+#         print(np.min(h))
+#         print(np.max(h))
+#         exit()
+
+
+
+#[None] * int(np.math.factorial(len(labels)) / (2 * np.math.factorial((len(labels)-2))))
+
+
+            #     print(f'label_i:{label_i.data}')
+            #     print(f'label_j:{label_j.data}')
+            #     ds_obj_dist = xr.Dataset()
+            #     distance_from_obj_i = distance_from_obj_i.where(distance_from_obj_i > 0)
+            #     ds_obj_dist['object'] = distance_from_obj_i
+            #     ds = ds_obj_dist
+            #     label = 'convection [0,1]'
+            #     vmin = None
+            #     vmax = None
+            #     cmap = 'Blues_r'
+            #     filename = f'distance_from_{i}.png'
+            #     fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
+            #     mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
+
+            #     ds_obj_dist = xr.Dataset()
+            #     distance_from_obj_i = distance_from_obj_i.where(distance_from_obj_i > 0)
+            #     scene_j_nan = xr.where(scene_j>0, np.nan, 0)
+            #     ds_obj_dist['object'] = distance_from_obj_i + scene_j_nan
+            #     ds = ds_obj_dist
+            #     label = 'convection [0,1]'
+            #     vmin = None
+            #     vmax = None
+            #     cmap = 'Blues_r'
+            #     filename = f'obj_{j}.png'
+            #     fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
+            #     mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
+            #     exit()
+
+            # if i == 8 and j == 0:
+            #     ds_obj_dist = xr.Dataset()
+            #     distance_from_obj_i = distance_from_obj_i.where(distance_from_obj_i > 0, np.nan)
+            #     ds_obj_dist['object'] = distance_from_obj_i
+            #     ds = ds_obj_dist
+            #     label = 'convection [0,1]'
+            #     vmin = None
+            #     vmax = None
+            #     cmap = 'Blues_r'
+            #     filename = f'distance_from_{i}.png'
+            #     fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
+            #     mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
+
+            #     ds_obj_dist = xr.Dataset()
+            #     distance_from_obj_i = distance_from_obj_i.where(distance_from_obj_i > 0, np.nan)
+            #     scene_j_nan = xr.where(scene_j>0, np.nan, 0)
+            #     ds_obj_dist['object'] = distance_from_obj_i + scene_j_nan
+            #     ds = ds_obj_dist
+            #     label = 'convection [0,1]'
+            #     vmin = None
+            #     vmax = None
+            #     cmap = 'Blues_r'
+            #     filename = f'obj_{j}.png'
+            #     fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
+            #     mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
+
+            #     print(A_a.data)
+            #     print(A_b.data)
+            #     print(np.sqrt(A_d.data))
+            #     exit()
 
 

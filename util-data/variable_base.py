@@ -26,7 +26,7 @@ import choose_datasets as cD
 
 sys.path.insert(0, f'{os.getcwd()}/util-data')
 # import get_data.constructed_fields      as constF
-import get_data.cmip.cmip_data          as cmipD
+import cmip.cmip_data          as cmipD
 # import get_data.observations.obs_data   as obsD
 # import get_data.icon.icon_data          as iconD
 
@@ -66,6 +66,9 @@ def load_variable(switch_var = {'pr': True}, switch = {'test_sample': False, 'oc
 # ------------------------
 # ------------------------------------------------------------------------------------- Choose what to run ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
+    import xarray as xr
+    sys.path.insert(0, f'{os.getcwd()}/util-data')
+    import missing_data             as mD
 
     switch_var = {
         'pr':       False,                                                                                       # Precipitation
@@ -82,12 +85,39 @@ if __name__ == '__main__':
 
     switch = {
         'ocean_mask':    False, # mask
-        'test_sample':   False  # save
+        'test_sample':   True  # save
         }
     
-    da = load_variable(switch_var = {'pr': True}, switch = {'test_sample': False, 'ocean_mask': False}, dataset = cD.datasets[0], experiment = cD.experiments[0], 
-                  resolution = cD.resolutions[0], timescale = cD.timescales[0])
-    print(da)
+    switch_test = {
+        'delete_previous_plots': True,
+        'plot_scene':            True
+        }
+    
+    for var_name in [k for k, v in switch_var.items() if v]:
+        # ----------------------------------------------------------------------------------- Get data --------------------------------------------------------------------------------------------------- #
+        print(f'variable: {var_name}')
+        for experiment in cD.experiments:
+            print(f'experiment: {experiment}')
+            for dataset in mD.run_dataset_only(var_name, cD.datasets):
+                da = load_variable(switch_var = {var_name: True}, switch = switch, dataset = cD.datasets[0], experiment = cD.experiments[0], resolution = cD.resolutions[0], timescale = cD.timescales[0])
+                print(da)
+                break
+            break
+
+    ds = xr.Dataset()
+    # -------------------------------------------------------------------------------------- Plot --------------------------------------------------------------------------------------------------- #
+    if switch_test['plot_scene']:
+        sys.path.insert(0, f'{os.getcwd()}/util-plot')
+        import get_plot.map_plot         as mP
+        mP.remove_test_plots() if switch_test['delete_previous_plots'] else None
+        ds[dataset] = da.isel(time = 0).sel(plev = 500e2)
+        label = '[units]'
+        vmin = None
+        vmax = None
+        cmap = 'Blues'
+        filename = f'{var_name}_{dataset}_{experiment}.png'
+        fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()), cat_cmap = False)
+        mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
 
 

@@ -3,6 +3,13 @@
 #    Dimensions data
 # ------------------------
 Dimensions of spatial data variables, and commonly used constants
+
+to use:
+import os
+import sys
+sys.path.insert(0, f'{os.getcwd()}/util-data')
+import dimensions_data as dD
+
 '''
 
 

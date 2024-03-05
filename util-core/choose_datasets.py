@@ -66,7 +66,7 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'KACE-1-0-G',        # 23            
     # 'IPSL-CM6A-LR',      # 24
     # 'ACCESS-CM2',        # 25 
-    # 'TaiESM1',           # 26 # test                           
+    'TaiESM1',           # 26 # test                           
     # 'CESM2-WACCM',       # 27   
     # 'CanESM5',           # 28  
     # 'UKESM1-0-LL',       # 29
@@ -85,7 +85,7 @@ models_dyamond = [
 
 # -------------------------------------------------------------------------- NextGEMS ----------------------------------------------------------------------------------------------------- #
 models_nextgems = [
-    'ICON-ESM_ngc2013',
+    # 'ICON-ESM_ngc2013',
 ]
 years_range = [
     ['2020-2050']
@@ -129,8 +129,8 @@ x_res, y_res = [
     ]
 
 timescales = [
-    'daily',
-    # 'monthly',
+    # 'daily',
+    'monthly',
     ]
 
 conv_percentiles = [    # threshold for precipitation rate considered to be assocaited with convection

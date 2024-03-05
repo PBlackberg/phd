@@ -72,10 +72,10 @@ def data_available(var = '', source = '', dataset = '', experiment = ''):
         print(f'{dataset} - {experiment} is invalud combination (skipped)')
         return False
     if not has_cl_data(var, dataset):
-        print(f'No {var} data for this dataset (skipped)')
+        print(f'No {var} data for dataset: {dataset}  (skipped)')
         return False
     if not has_pe_data(var, dataset):
-        print(f'No {var} data for this dataset (skipped)')
+        print(f'No {var} data for dataset: {dataset} (skipped)')
         return False
     return True
 

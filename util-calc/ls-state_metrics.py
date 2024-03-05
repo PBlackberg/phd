@@ -6,65 +6,70 @@ This script calculates metrics describing the large scale state of key variables
 '''
 
 
-
 # ----------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
 import os
 import sys
-home = os.path.expanduser("~")                                        
+home = os.path.expanduser("~")                
+sys.path.insert(0, f'{os.getcwd()}/util-core')
+import choose_datasets as cD  
+
 sys.path.insert(0, f'{os.getcwd()}/util-data')
-import get_data.variable_data as vD
+import variable_base    as vB
+import variable_calc    as vC
+import metric_data      as metD
+import dimensions_data  as dD
+import missing_data     as mD
 
 sys.path.insert(0, f'{os.getcwd()}/util-calc')
 import ls_state.means_calc      as mean_calc
 import ls_state.itcz_width_calc as itcz_calc
-
-sys.path.insert(0, f'{os.getcwd()}/util-core')
-import myVars               as mV                                 
-import myFuncs              as mF     
-import myFuncs_plots        as mFp     
-import get_data.metric_data as mD
+import ls_state.in_obj          as in_obj
 
 
-# ------------------------
-#   Run / save metric
-# ------------------------
-# ------------------------------------------------------------------------------------ Get metric and metric name ----------------------------------------------------------------------------------------------------- #
+
+# -------------
+#   Calculate
+# -------------
+# -------------------------------------------------------------------------------- Get metric and metric name ----------------------------------------------------------------------------------------------------- #
 def calc_metric(switchM, var_name, da, region):
-    dims = mF.dims_class(da)
+    dims = dD.dims_class(da)
     for metric_name in [k for k, v in switchM.items() if v]:
         metric = None
-        metric = mFp.get_snapshot(da)                           if metric_name == 'snapshot'            else metric
         metric = mean_calc.get_tMean(da)                        if metric_name == 'tMean'               else metric
         metric = mean_calc.get_sMean(da)                        if metric_name == 'sMean'               else metric
         metric = itcz_calc.itcz_width(da)                       if metric_name == 'itcz_width'          else metric
-        metric = itcz_calc.itcz_width_sMean(da)                 if metric_name == 'itcz_width_sMean'    else metric
-        metric = itcz_calc.get_fraction_descent(da, dims)       if metric_name == 'area_pos'            else metric
+        metric = itcz_calc.wap_itcz_width(da)                 if metric_name == 'itcz_width_sMean'    else metric
+        metric = itcz_calc.get_fraction_descent(da, dims)       if metric_name == 'area_positive'       else metric
+        metric = in_obj.get_in_obj(da, dims)                    if metric_name == 'in_obj'              else metric
         metric_name =f'{var_name}{region}_{metric_name}' 
         yield metric, metric_name
 
 
 # ------------------------------------------------------------------------------------ Get dataset and save metric ----------------------------------------------------------------------------------------------------- #
-@mF.timing_decorator(show_time = True)
-def run_ls_metrics(switch_var, switchM, switch):
-    print(f'variable: {mV.resolutions[0]} {mV.timescales[0]} data \n {[key for key, value in switch_var.items() if value]}')
+def run_ls_metrics(switch_var, switchM, switch, resolution = cD.resolutions[0], timescale = cD.timescales[0]):
+    print(f'variable: {resolution} {timescale} data \n {[key for key, value in switch_var.items() if value]}')
     print(f'metric: {[key for key, value in switchM.items() if value]}')
     print(f'settings: {[key for key, value in switch.items() if value]}')
     for var_name in [k for k, v in switch_var.items() if v]:
-        for dataset, experiment in mF.run_dataset(var_name):
-            da, region = vD.get_variable_data(switch, var_name, dataset, experiment)
+        for dataset, experiment in mD.run_dataset(var = var_name, datasets = cD.datasets, experiments = cD.experiments):
+            da, region = vC.get_variable_data(switch, var_name, dataset, experiment, resolution, timescale)
             for metric, metric_name in calc_metric(switchM, var_name, da, region):      
                 # print(metric_name)      
                 # print(metric)      
-                path = mD.save_metric(switch, var_name, dataset, experiment, metric, metric_name)
+                path = metD.save_metric(switch, var_name, dataset, experiment, metric, metric_name)
                 print(f'Metric saved at: {path}')
-    return metric
+    return metric # returns last metric (for testing one metric)
 
 
+
+# -------------
+#     Run
+# -------------
 # ------------------------------------------------------------------------------------------- Choose metric ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_var = {                                                                                              # Choose variable (can choose multiple)
-        'pr':       False,  'clwvi':        False,   'pe':          True,                                      # Precipitation
-        'wap':      False,                                                                                       # Circulation
+        'pr':       False,  'clwvi':        False,   'pe':          True,                                       # Precipitation
+        'wap':      False,                                                                                      # Circulation
         'hur':      False,  'hus':          False,                                                              # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                      # Temperature
         'rlut':     False,  'rlds':         False,  'rlus':         False,  'netlw':    False,                  # Longwave radiation
@@ -76,18 +81,18 @@ if __name__ == '__main__':
         }
     
     switchM = {                                                                                                 # choose metric type (can choose multiple)
-        'snapshot':     True,                                                                                  # visualization
-        'tMean':        True,  'sMean':            True,                                                      # means 
+        'tMean':        False,  'sMean':            False,                                                      # means 
         'eof':          False,                                                                                  # ENSO
-        'itcz_width':   False,   'itcz_width_sMean': False,   'area_pos': False,   'area_neg': False,            # ITCZ width (+ fraction of descent)
+        'itcz_width':   False,   'itcz_width_sMean': False,   'area_positive': False,                           # ITCZ width (+ fraction of descent)
+        'in_obj':       True                                                                                    # precipitation efficiency in objects
         }
 
     switch = {                                                                                                  # choose data to use and mask
         'constructed_fields':   False,  'test_sample':      False,                                              # data to use (test_sample uses first file (usually first year))
-        '700hpa':               False,  '500hpa':           False,   '250hpa':   True,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
+        '700hpa':               False,  '500hpa':           False,  '250hpa':   False,  'vMean':    False,     # vertical mask (3D variables are: wap, hur, ta, zg, hus)
         'ocean_mask':           False,                                                                          # horizontal mask
         'ascent_fixed':         False,  'descent_fixed':    False,  'ascent':   False,  'descent':  False,      # horizontal mask
-        'save_folder_desktop':  False,   'save_scratch':    True,  'save':     False                            # Save
+        'save_folder_desktop':  False,   'save_scratch':    True,   'save':     False                           # Save
         }
     
     metric = run_ls_metrics(switch_var, switchM, switch)                                                        # If one metric from one dataset is to be tested

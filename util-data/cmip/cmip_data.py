@@ -20,13 +20,14 @@ import os
 import sys
 home = os.path.expanduser("~")
 sys.path.insert(0, f'{os.getcwd()}/util-core')
-import choose_datasets as cD                                   # chosen datasets
+import choose_datasets as cD                          # chosen datasets
 sys.path.insert(0, f'{os.getcwd()}/util-data')
-import get_data.cmip.xesmf_regrid as rGh                       # regridding
-# import cmip.cl_cmip_regridVert as rGh                        # regridding hybrid sigma coordinates
-import get_data.cmip.model_institutes as mI
-import get_data.missing_data as mD
-import organize_files.save_folders as sF
+import cmip.xesmf_regrid as rGh                       # regridding
+# import cmip.cl_cmip_regridVert as rGh               # regridding hybrid sigma coordinates
+import cmip.model_institutes as mI
+import missing_data as mD
+sys.path.insert(0, f'{os.getcwd()}/util-files')
+import save_folders as sF
 
 
 # ------------------------
@@ -221,8 +222,8 @@ def process_data(var_name, model, experiment, resolution, timescale, source):
 # --------------------------------------------------------------------------------- request variable ----------------------------------------------------------------------------------------------------- #
 def request_process(var_name, model, experiment, resolution, timescale, source, path):
     print(f'no {model} {experiment} {resolution} {timescale} {var_name} data at {cD.x_res}x{cD.y_res} deg in \n {path}')
-    # response = input(f"Do you want to process {var_name} from {model}? (y/n/y_all) (check folder first): ").lower()
-    response = 'y'
+    response = input(f"Do you want to process {var_name} from {model}? (y/n/y_all) (check folder first): ").lower()
+    # response = 'y'
     if response == 'y':
         da = process_data(var_name, model, experiment, resolution, timescale, source)
         print('requested dataset is processed and saved in scratch')
@@ -245,7 +246,7 @@ def check_scratch(var_name, model, experiment, resolution, timescale, source):
     return path, os.path.exists(path)
 
 def pick_ocean_region(da):
-    mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util-data/get_data/cmip/ocean_mask.nc')['ocean_mask']
+    mask = xr.open_dataset('/home/565/cb4968/Documents/code/phd/util-data/cmip/ocean_mask.nc')['ocean_mask']
     da = da * mask
     return da
 

@@ -125,17 +125,6 @@ def timing_decorator(show_time = False):
 #      Calculations
 # ------------------------
 # ----------------------------------------------------------------- For objects (contiguous convective regions) --------------------------------------------------------------------------------------------------- #
-def connect_boundary(da):
-    ''' Connect objects across boundary 
-    Objects that touch across lon=0, lon=360 boundary are the same object.
-    Takes array(lat, lon)) '''
-    s = np.shape(da)
-    for row in np.arange(0,s[0]):
-        if da[row,0]>0 and da[row,-1]>0:
-            da[da==da[row,0]] = min(da[row,0],da[row,-1])
-            da[da==da[row,-1]] = min(da[row,0],da[row,-1])
-    return da
-
 def haversine_dist(lat1, lon1, lat2, lon2):
     '''Great circle distance (from Haversine formula) (used for distance between objects)
     h = sin^2(phi_1 - phi_2) + (cos(phi_1)cos(phi_2))sin^2(lambda_1 - lambda_2)

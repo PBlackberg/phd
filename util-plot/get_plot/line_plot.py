@@ -5,6 +5,8 @@
 This script plots line plots (like time-series plots)
 
 To use:
+import os
+import sys
 sys.path.insert(0, f'{os.getcwd()}/util-plot')
 import line_plot as lP
 
@@ -80,6 +82,15 @@ def generate_distinct_colors(n):
     rgb_colors = [mcolors.hsv_to_rgb(color) for color in hsv_colors]
     return rgb_colors
     
+def pad_length_difference(da, max_length = 2): # max_length = 11000
+    ''' When creating time series metrics, differnet dataset will have different lenghts.
+        To put metrics from all datasets into one xarray Dataset the metric is padded with nan '''
+    current_length = da.sizes['time']
+    da = xr.DataArray(da.data, dims=['time'], coords={'time': np.arange(0, current_length)})
+    if current_length < max_length:
+        padding = xr.DataArray(np.full((max_length - current_length,), np.nan), dims=['time'], coords={'time': np.arange(current_length, max_length)})
+        da = xr.concat([da, padding], dim='time')
+    return da
 
 # ---------------------------------------------------------------------------------------- specific --------------------------------------------------------------------------------------------------- #
 def format_fig(num_subplots):
@@ -140,16 +151,17 @@ def plot_ax_line(ax, x = None, y = None, color = 'k', linewidth = None, label=No
 
 def plot_dsLine(ds, x = None, variable_list = ['a', 'b'], title = '', label_x = '', label_y = '', colors = ['k', 'r'], 
                 xmin = None, xmax = None, ymin = None, ymax = None,
-                fig_given = False, one_ax = False, fig = '', axes = ''):
+                fig_given = False, one_ax = False, fig = '', axes = '',
+                distinct_colors = False):
     if not fig_given:  
             [fig, axes, nrows, ncols] = format_fig(len(variable_list)) if not one_ax else format_fig(1)
     for subplot, variable in enumerate(variable_list):
         y = ds[variable]
         ax = axes.flatten()[subplot] if not one_ax else axes
+        colors = generate_distinct_colors(len(ds.data_vars)) if distinct_colors else colors
         h = plot_ax_line(ax, x, y, color = colors[subplot], linewidth = None, label = variable_list[subplot])
         if not fig_given:  
             format_axes(fig, ax, subplot, len(variable_list), nrows, ncols, variable_list, label_x, label_y, xmin, xmax, ymin, ymax, title) if not one_ax else format_ax(fig, ax, label_x, label_y, xmin, xmax, ymin, ymax, title)
-        # plt.grid(True)
     if not one_ax:
         for ax in axes.flatten():
             ax.legend()

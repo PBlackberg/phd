@@ -4,15 +4,15 @@
 # ------------------------
 This script plot scenes with coastlines in the background
 
-To import script:
-sys.path.insert(0, f'{os.getcwd()}/util-data')
+To use:
+import os
+import sys
+sys.path.insert(0, f'{os.getcwd()}/util-plot')
 import map_plot as mP
 
-use:
-filename = 'separate_subplots.png'
-fig, ax = plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = list(ds.data_vars.keys()))
-show_plot(fig, show_type = 'save_cwd', filename = filename)
-
+filename = 'map_plot.png'
+fig, ax = mP.plot_dsScenes(ds, label = label, title = '', vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
+mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 '''
 
 
@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import matplotlib.colors as mcolors
 import os
 home = os.path.expanduser("~")
 
@@ -115,8 +116,10 @@ def format_ticks(ax, i = 0, num_subplots = 1, ncols = 1, col = 0, labelsize = 8,
         ax.yaxis.set_tick_params(labelsize=labelsize)
         ax.yaxis.set_ticks_position('both')
 
-def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_title= 'test', vmin = None, vmax = None):
+def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_title= 'test', vmin = None, vmax = None, cat_cmap = False):
     fig, ax = create_map_figure(width = 12, height = 4)
+    if cat_cmap:
+        cmap = get_cat_colormap()
     pcm = plot_axMapScene(ax, scene, cmap, vmin = vmin, vmax = vmax)
     move_col(ax, moveby = -0.055)
     move_row(ax, moveby = 0.075)
@@ -168,6 +171,23 @@ def remove_test_plots(directory = f'{os.getcwd()}/zome_plots'):
     else:
         print(f"Directory {directory} does not exist or is not a directory")
         
+def blend_with_white(color, blend_factor):
+    # Convert hex to RGB if necessary
+    if isinstance(color, str):
+        color = mcolors.hex2color(color)
+    white = np.array([1, 1, 1])
+    blended_color = (1 - blend_factor) * np.array(color) + blend_factor * white
+    return blended_color
+
+def get_cat_colormap():
+    original_colors = ['#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', 
+                    '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 
+                    '#000000'] + ["#"+''.join([np.random.choice(list('0123456789ABCDEF')) for j in range(6)]) for i in range(30-22)]
+    blend_factor = 0.6  # Adjust this to make colors more or less dim
+    dim_colors = ['#ffffff']  # Start with white for the background
+    dim_colors += [blend_with_white(color, blend_factor) for color in original_colors]
+    cmap = mcolors.ListedColormap(dim_colors, name='custom_dim')
+    return cmap
 
 # ---------------------------------------------------------------------------------------- specific --------------------------------------------------------------------------------------------------- #
 def format_fig(num_subplots):
@@ -205,28 +225,31 @@ def format_axes(fig, ax, subplot, num_subplots, nrows, ncols, axtitle):
     format_ticks(ax, subplot, num_subplots, ncols, col, labelsize = 9)
     plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095, fontsize = 9) if nrows < 6 else plot_axtitle(fig, ax, axtitle, xpad = 0.002, ypad = 0.0095/2, fontsize = 9) 
 
-def plot_axMapScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0):
+def plot_axMapScene(ax, scene, cmap, vmin = None, vmax = None, zorder = 0, cat_cmap = False):
     lat = scene.lat
     lon = scene.lon
     lonm,latm = np.meshgrid(lon,lat)
-    ax.add_feature(cfeat.COASTLINE)
+    ax.add_feature(cfeat.COASTLINE, edgecolor = 'limegreen')
     ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())    
+    if cat_cmap:
+        cmap = get_cat_colormap()
     pcm = ax.pcolormesh(lonm,latm, scene, transform=ccrs.PlateCarree(),zorder=zorder, cmap=cmap, vmin=vmin, vmax=vmax)
     return pcm
 
-def plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = ['a', 'b']):
+def plot_dsScenes(ds, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = ['a', 'b'],
+                  cat_cmap = False):
     ''' Plotting multiple scenes based on daatset with scenes '''
     if len(variable_list) == 1:
         for dataset in variable_list:
-            return plot_scene(ds[dataset], cmap = cmap, label = label, fig_title = title, ax_title= dataset, vmin = vmin, vmax = vmax)
+            return plot_scene(ds[dataset], cmap = cmap, label = label, fig_title = title, ax_title= dataset, vmin = vmin, vmax = vmax, cat_cmap = cat_cmap)
     fig, axes, nrows, ncols = format_fig(len(variable_list))
     for subplot, dataset in enumerate(variable_list):
         da = ds[dataset]
         top_text = 0.95 if len(variable_list) > 4 else 0.85
-        fig.text(0.5, top_text, title, ha = 'center', fontsize = 15, transform=fig.transFigure)  # fig title
         ax = axes.flatten()[subplot]
-        pcm = plot_axMapScene(ax, da, cmap, vmin = vmin, vmax = vmax)
+        pcm = plot_axMapScene(ax, da, cmap, vmin = vmin, vmax = vmax, cat_cmap = cat_cmap)
         format_axes(fig, ax, subplot, len(variable_list), nrows, ncols, axtitle = dataset)
+    fig.text(0.5, top_text, title, ha = 'center', fontsize = 15, transform=fig.transFigure)  # fig title
     plot_colobar(fig, ax, pcm, label, variable_list)
     return fig, axes
 

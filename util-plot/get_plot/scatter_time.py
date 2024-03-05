@@ -122,6 +122,15 @@ def xy_align(x, y):
     x, y = xr.align(x, y, join='inner')
     return x, y
 
+def pad_length_difference(da, max_length = 2): # max_length = 11000
+    ''' When creating time series metrics, differnet dataset will have different lenghts.
+        To put metrics from all datasets into one xarray Dataset the metric is padded with nan '''
+    current_length = da.sizes['time']
+    da = xr.DataArray(da.data, dims=['time'], coords={'time': np.arange(0, current_length)})
+    if current_length < max_length:
+        padding = xr.DataArray(np.full((max_length - current_length,), np.nan), dims=['time'], coords={'time': np.arange(current_length, max_length)})
+        da = xr.concat([da, padding], dim='time')
+    return da
 
 # ---------------------------------------------------------------------------------------- specific --------------------------------------------------------------------------------------------------- #
 def format_fig(num_subplots, fig_title):
