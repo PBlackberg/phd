@@ -47,7 +47,7 @@ def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
         if 'SLURM_JOB_ID' in os.environ:
             ncpus = int(os.environ.get('SLURM_CPUS_ON_NODE', multiprocessing.cpu_count()))
         else:
-            ncpus = multiprocessing.cpu_count()
+            ncpus = int(os.getenv('PBS_NCPUS', multiprocessing.cpu_count()))
     total_memory = psutil.virtual_memory().total
     ncpu = multiprocessing.cpu_count() if ncpus == 'all' else ncpus
     threads_per_worker = ncpu // nworkers
@@ -58,7 +58,7 @@ def create_client(ncpus = 'all', nworkers = 2, switch = {'dashboard': False}):
     print(f'\tCluster: {nworkers} workers, {threads_per_worker} cpus/worker, {mem_per_worker} GiB/worker, processes: {processes}')
     client = Client(n_workers = nworkers, memory_limit = f"{mem_per_worker}GB", threads_per_worker = threads_per_worker, processes = processes)         
     if switch['dashboard']:         # tunnel IP to local by: ssh -L 8787:localhost:8787 b382628@136.172.124.4 (on local terminal)
-        import webbrowser
+        import webbrowser           # to get IP: ssh -L 8787:localhost:8787 cb4968@136.172.124.4 (on local terminal)
         webbrowser.open('http://localhost:8787/status') 
     return client
 
@@ -94,40 +94,6 @@ def get_target_grid():
     path_targetGrid = '/pool/data/ICON/grids/public/mpim/0033/icon_grid_0033_R02B08_G.nc'
     ds_grid = xr.open_dataset(path_targetGrid, chunks="auto", engine="netcdf4").rename({"cell": "ncells"})    # ~ 18 GB
     return ds_grid, path_targetGrid 
-
-def retry(exception_to_check, tries=4, delay=3, backoff=2, logger=None):
-    """
-    A retry decorator that allows a function to retry if a specific exception is caught.
-
-    Parameters:
-    - exception_to_check: Exception to check for retry.
-    - tries: Maximum number of attempts.
-    - delay: Initial delay between retries in seconds.
-    - backoff: Multiplier applied to delay each retry.
-    - logger: Logging.Logger instance for logging retries.
-
-    Usage:
-    @retry(ValueError, tries=5, delay=2, backoff=3)
-    # @retry(ValueError, tries=5, delay=1, backoff=2)
-    def some_function_that_might_fail():
-        ...
-    """
-    def decorator_retry(func):
-        @functools.wraps(func)
-        def wrapper_retry(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 1:
-                try:
-                    return func(*args, **kwargs)
-                except exception_to_check as e:
-                    if logger:
-                        logger.warning(f"Retry {tries-mtries+1}, waiting {mdelay} seconds: {e}")
-                    time.sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
-            return func(*args, **kwargs)  # Last attempt
-        return wrapper_retry
-    return decorator_retry
 
 
 

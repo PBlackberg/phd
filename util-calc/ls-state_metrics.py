@@ -14,16 +14,15 @@ sys.path.insert(0, f'{os.getcwd()}/util-core')
 import choose_datasets as cD  
 
 sys.path.insert(0, f'{os.getcwd()}/util-data')
-import variable_base    as vB
-import variable_calc    as vC
-import metric_data      as metD
-import dimensions_data  as dD
 import missing_data     as mD
+import dimensions_data  as dD
+import variable_calc    as vC       # for loading variable to calculate metric from
+import metric_data      as metD     # for saving metric
+
 
 sys.path.insert(0, f'{os.getcwd()}/util-calc')
 import ls_state.means_calc      as mean_calc
-import ls_state.itcz_width_calc as itcz_calc
-import ls_state.in_obj          as in_obj
+import ls_state.itcz_width_wap  as itcz_wap
 
 
 
@@ -35,12 +34,11 @@ def calc_metric(switchM, var_name, da, region):
     dims = dD.dims_class(da)
     for metric_name in [k for k, v in switchM.items() if v]:
         metric = None
-        metric = mean_calc.get_tMean(da)                        if metric_name == 'tMean'               else metric
-        metric = mean_calc.get_sMean(da)                        if metric_name == 'sMean'               else metric
-        metric = itcz_calc.itcz_width(da)                       if metric_name == 'itcz_width'          else metric
-        metric = itcz_calc.wap_itcz_width(da)                 if metric_name == 'itcz_width_sMean'    else metric
-        metric = itcz_calc.get_fraction_descent(da, dims)       if metric_name == 'area_positive'       else metric
-        metric = in_obj.get_in_obj(da, dims)                    if metric_name == 'in_obj'              else metric
+        metric = mean_calc.get_tMean(da)                        if metric_name == 'tMean'                                       else metric
+        metric = mean_calc.get_sMean(da)                        if metric_name == 'sMean'                                       else metric
+        metric = itcz_wap.itcz_width(da)                        if metric_name == 'itcz_width'          and var_name == 'wap'   else metric
+        metric = itcz_wap.itcz_width_sMean(da)                  if metric_name == 'itcz_width_sMean'    and var_name == 'wap'   else metric
+        metric = itcz_wap.get_fraction_descent(da, dims)        if metric_name == 'decent_fraction'     and var_name == 'wap'   else metric
         metric_name =f'{var_name}{region}_{metric_name}' 
         yield metric, metric_name
 
@@ -68,7 +66,7 @@ def run_ls_metrics(switch_var, switchM, switch, resolution = cD.resolutions[0], 
 # ------------------------------------------------------------------------------------------- Choose metric ----------------------------------------------------------------------------------------------------- #
 if __name__ == '__main__':
     switch_var = {                                                                                              # Choose variable (can choose multiple)
-        'pr':       False,  'clwvi':        False,   'pe':          True,                                       # Precipitation
+        'pr':       False,  'clwvi':        False,   'pe':          False,                                       # Precipitation
         'wap':      False,                                                                                      # Circulation
         'hur':      False,  'hus':          False,                                                              # Humidity                             
         'tas':      False,  'ta':           False,  'stability':    False,                                      # Temperature
@@ -83,19 +81,19 @@ if __name__ == '__main__':
     switchM = {                                                                                                 # choose metric type (can choose multiple)
         'tMean':        False,  'sMean':            False,                                                      # means 
         'eof':          False,                                                                                  # ENSO
-        'itcz_width':   False,   'itcz_width_sMean': False,   'area_positive': False,                           # ITCZ width (+ fraction of descent)
+        'itcz_width':   False,   'itcz_width_tMean': False,   'descent_fraction': False,                        # ITCZ width (+ fraction of descent)
         'in_obj':       True                                                                                    # precipitation efficiency in objects
         }
 
     switch = {                                                                                                  # choose data to use and mask
         'constructed_fields':   False,  'test_sample':      False,                                              # data to use (test_sample uses first file (usually first year))
-        '700hpa':               False,  '500hpa':           False,  '250hpa':   False,  'vMean':    False,     # vertical mask (3D variables are: wap, hur, ta, zg, hus)
+        '700hpa':               False,  '500hpa':           False,  '250hpa':   False,  'vMean':    False,      # vertical mask (3D variables are: wap, hur, ta, zg, hus)
         'ocean_mask':           False,                                                                          # horizontal mask
         'ascent_fixed':         False,  'descent_fixed':    False,  'ascent':   False,  'descent':  False,      # horizontal mask
-        'save_folder_desktop':  False,   'save_scratch':    True,   'save':     False                           # Save
+        'save_folder_desktop':  False,  'save_scratch':     True,    'save':     False                           # Save
         }
     
-    metric = run_ls_metrics(switch_var, switchM, switch)                                                        # If one metric from one dataset is to be tested
+    metric = run_ls_metrics(switch_var, switchM, switch)                                                        # metric here shows last metric calc
 
 
 

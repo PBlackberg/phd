@@ -286,4 +286,37 @@ if __name__ == '__main__':
 # logging.error(f"Error processing model {model}: {e}")
 
 
+def retry(exception_to_check, tries=4, delay=3, backoff=2, logger=None):
+    """
+    A retry decorator that allows a function to retry if a specific exception is caught.
+
+    Parameters:
+    - exception_to_check: Exception to check for retry.
+    - tries: Maximum number of attempts.
+    - delay: Initial delay between retries in seconds.
+    - backoff: Multiplier applied to delay each retry.
+    - logger: Logging.Logger instance for logging retries.
+
+    Usage:
+    @retry(ValueError, tries=5, delay=2, backoff=3)
+    # @retry(ValueError, tries=5, delay=1, backoff=2)
+    def some_function_that_might_fail():
+        ...
+    """
+    def decorator_retry(func):
+        @functools.wraps(func)
+        def wrapper_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return func(*args, **kwargs)
+                except exception_to_check as e:
+                    if logger:
+                        logger.warning(f"Retry {tries-mtries+1}, waiting {mdelay} seconds: {e}")
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return func(*args, **kwargs)  # Last attempt
+        return wrapper_retry
+    return decorator_retry
 

@@ -80,7 +80,7 @@ def add_correlation_coeff(x, y, ax, color):
         ax.annotate('R$^2$: '+ str(round(res[0]**2,3)), xy=(0.2, 0.1), xycoords='axes fraction', 
                     xytext=(0.86, 0.95), textcoords='axes fraction', fontsize = 12, color = color)
         
-
+        
 # ---------------------------------------------------------------------------------------- plot figure ----------------------------------------------------------------------------------------------------- #
 def format_ax(x_label, y_label, fig, ax, xmin, xmax, ymin, ymax, x, y, fig_title):
     ax.set_xlim(xmin, xmax)

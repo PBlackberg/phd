@@ -1,0 +1,72 @@
+? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1/png/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.png
+: ancestors:
+  - /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+  authors:
+  - andela_bouwe
+  - righi_mattia
+  caption: 'Global map of Near-Surface Air Temperature in January 2000 according to
+    bcc-csm1-1.
+
+    '
+  domains:
+  - global
+  plot_types:
+  - zonal
+  references:
+  - acknow_project
+  statistics:
+  - mean
+? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1/png/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.png
+: ancestors:
+  - /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+  authors:
+  - andela_bouwe
+  - righi_mattia
+  caption: 'Global map of Near-Surface Air Temperature in January 2000 according to
+    BCC-ESM1.
+
+    '
+  domains:
+  - global
+  plot_types:
+  - zonal
+  references:
+  - acknow_project
+  statistics:
+  - mean
+? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+: ancestors:
+  - /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+  authors:
+  - andela_bouwe
+  - righi_mattia
+  caption: 'Global map of Near-Surface Air Temperature in January 2000 according to
+    bcc-csm1-1.
+
+    '
+  domains:
+  - global
+  plot_types:
+  - zonal
+  references:
+  - acknow_project
+  statistics:
+  - mean
+? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+: ancestors:
+  - /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+  authors:
+  - andela_bouwe
+  - righi_mattia
+  caption: 'Global map of Near-Surface Air Temperature in January 2000 according to
+    BCC-ESM1.
+
+    '
+  domains:
+  - global
+  plot_types:
+  - zonal
+  references:
+  - acknow_project
+  statistics:
+  - mean

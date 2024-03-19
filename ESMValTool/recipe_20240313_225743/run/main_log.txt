@@ -1,0 +1,136 @@
+INFO    [2656899] 
+______________________________________________________________________
+          _____ ____  __  ____     __    _ _____           _
+         | ____/ ___||  \/  \ \   / /_ _| |_   _|__   ___ | |
+         |  _| \___ \| |\/| |\ \ / / _` | | | |/ _ \ / _ \| |
+         | |___ ___) | |  | | \ V / (_| | | | | (_) | (_) | |
+         |_____|____/|_|  |_|  \_/ \__,_|_| |_|\___/ \___/|_|
+______________________________________________________________________
+
+ESMValTool - Earth System Model Evaluation Tool.
+
+http://www.esmvaltool.org
+
+CORE DEVELOPMENT TEAM AND CONTACTS:
+  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
+  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
+  Bouwe Andela (Netherlands eScience Center, The Netherlands - b.andela@esciencecenter.nl)
+  Lee de Mora (PML, UK - ledm@pml.ac.uk)
+  Niels Drost (Netherlands eScience Center, The Netherlands - n.drost@esciencecenter.nl)
+  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
+  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
+  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
+  Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
+  Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
+  Saskia Loosveldt-Tomas (BSC, Spain - saskia.loosveldt@bsc.es)
+  Ruth Lorenz (ETH Zurich, Switzerland - ruth.lorenz@env.ethz.ch)
+  Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
+  Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
+  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
+  Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
+  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
+  Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
+  Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
+
+For further help, please read the documentation at
+http://docs.esmvaltool.org. Have fun!
+
+INFO    [2656899] Package versions
+INFO    [2656899] ----------------
+INFO    [2656899] ESMValCore: 2.10.0
+INFO    [2656899] ESMValTool: 2.10.0
+INFO    [2656899] ----------------
+INFO    [2656899] Using config file /home/565/cb4968/.esmvaltool/config-user.yml
+INFO    [2656899] Writing program log files to:
+/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/main_log.txt
+/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/main_log_debug.txt
+INFO    [2656899] Starting the Earth System Model Evaluation Tool at time: 2024-03-13 22:57:43 UTC
+INFO    [2656899] ----------------------------------------------------------------------
+INFO    [2656899] RECIPE   = /home/565/cb4968/Documents/code/phd/ESMValTool/recipe.yml
+INFO    [2656899] RUNDIR     = /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run
+INFO    [2656899] WORKDIR    = /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work
+INFO    [2656899] PREPROCDIR = /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc
+INFO    [2656899] PLOTDIR    = /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots
+INFO    [2656899] ----------------------------------------------------------------------
+INFO    [2656899] Running tasks using at most 48 processes
+INFO    [2656899] If your system hangs during execution, it may not have enough memory for keeping this number of tasks in memory.
+INFO    [2656899] If you experience memory problems, try reducing 'max_parallel_tasks' in your user configuration file.
+WARNING [2656899] Using the Dask basic scheduler. This may lead to slow computations and out-of-memory errors. Note that the basic scheduler may still be the best choice for preprocessor functions that are not lazy. In that case, you can safely ignore this warning. See https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#dask-distributed-configuration for more information. 
+WARNING [2656899] 'CMIP6' rootpaths '/g/data/nf33/public/data/APP4/CMIP6' set in config-user.yml do not exist
+WARNING [2656899] 'CMIP5' rootpaths '/g/data/r87/DRSv3/CMIP5' set in config-user.yml do not exist
+INFO    [2656899] Creating tasks from recipe
+INFO    [2656899] Creating tasks for diagnostic map
+INFO    [2656899] Creating diagnostic task map/script1
+INFO    [2656899] Creating preprocessor task map/tas
+INFO    [2656899] Creating preprocessor 'to_degrees_c' task for variable 'tas'
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP6, BCC-ESM1, CMIP, historical, r1i1p1f1, gn, v20181214
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP5, bcc-csm1-1, historical, r1i1p1, v1
+INFO    [2656899] PreprocessingTask map/tas created.
+INFO    [2656899] Creating tasks for diagnostic timeseries
+INFO    [2656899] Creating diagnostic task timeseries/script1
+INFO    [2656899] Creating preprocessor task timeseries/tas_amsterdam
+INFO    [2656899] Creating preprocessor 'annual_mean_amsterdam' task for variable 'tas_amsterdam'
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP6, BCC-ESM1, CMIP, historical, r1i1p1f1, gn, v20181214
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP5, bcc-csm1-1, historical, r1i1p1, v1
+INFO    [2656899] PreprocessingTask timeseries/tas_amsterdam created.
+INFO    [2656899] Creating preprocessor task timeseries/tas_global
+INFO    [2656899] Creating preprocessor 'annual_mean_global' task for variable 'tas_global'
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP6, BCC-ESM1, CMIP, historical, r1i1p1f1, gn, v20181214, supplementaries: areacella, fx, 1pctCO2, v20190613
+INFO    [2656899] Found input files for Dataset: tas, Amon, CMIP5, bcc-csm1-1, historical, r1i1p1, v1, supplementaries: areacella, fx, r0i0p0
+INFO    [2656899] PreprocessingTask timeseries/tas_global created.
+INFO    [2656899] These tasks will be executed: timeseries/tas_amsterdam, timeseries/script1, map/script1, timeseries/tas_global, map/tas
+INFO    [2656899] Wrote recipe with version numbers and wildcards to:
+file:///scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/recipe_filled.yml
+INFO    [2656899] Using the Dask basic scheduler.
+INFO    [2656899] Running 5 tasks using 5 processes
+INFO    [2656951] Starting task map/tas in process [2656951]
+INFO    [2656952] Starting task timeseries/tas_amsterdam in process [2656952]
+INFO    [2656954] Starting task timeseries/tas_global in process [2656954]
+INFO    [2656899] Progress: 3 tasks running, 2 tasks waiting for ancestors, 0/5 done
+WARNING [2656954] Long name changed from 'Grid-Cell Area for Atmospheric Variables' to 'Grid-Cell Area for Atmospheric Grid Variables'
+(for file /g/data/oi10/replicas/CMIP6/CMIP/BCC/BCC-ESM1/1pctCO2/r1i1p1f1/fx/areacella/gn/v20190613/areacella_fx_BCC-ESM1_1pctCO2_r1i1p1f1_gn.nc)
+INFO    [2656952] Extracting data for Amsterdam, Noord-Holland, Nederland (52.3730796 °N, 4.8924534 °E)
+INFO    [2656951] Successfully completed task map/tas (priority 1) in 0:00:04.566505
+INFO    [2656899] Progress: 2 tasks running, 2 tasks waiting for ancestors, 1/5 done
+INFO    [2656955] Starting task map/script1 in process [2656955]
+INFO    [2656955] Running command ['/g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/bin/python', '/g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/lib/python3.11/site-packages/esmvaltool/diag_scripts/examples/diagnostic.py', '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/map/script1/settings.yml']
+INFO    [2656955] Writing output to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1
+INFO    [2656955] Writing plots to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1
+INFO    [2656955] Writing log to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/map/script1/log.txt
+INFO    [2656955] To re-run this diagnostic script, run:
+cd /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/map/script1; MPLBACKEND="Agg" /g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/bin/python /g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/lib/python3.11/site-packages/esmvaltool/diag_scripts/examples/diagnostic.py /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/map/script1/settings.yml
+INFO    [2656899] Progress: 3 tasks running, 1 tasks waiting for ancestors, 1/5 done
+INFO    [2656954] Successfully completed task timeseries/tas_global (priority 4) in 0:00:04.959148
+INFO    [2656899] Progress: 2 tasks running, 1 tasks waiting for ancestors, 2/5 done
+INFO    [2656952] Extracting data for Amsterdam, Noord-Holland, Nederland (52.3730796 °N, 4.8924534 °E)
+INFO    [2656952] Generated PreprocessorFile: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_amsterdam/MultiModelMean_historical_Amon_tas_1850-2000.nc
+INFO    [2656952] Successfully completed task timeseries/tas_amsterdam (priority 3) in 0:00:06.341855
+INFO    [2656899] Progress: 1 tasks running, 1 tasks waiting for ancestors, 3/5 done
+INFO    [2656956] Starting task timeseries/script1 in process [2656956]
+INFO    [2656956] Running command ['/g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/bin/python', '/g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/lib/python3.11/site-packages/esmvaltool/diag_scripts/examples/diagnostic.py', '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/timeseries/script1/settings.yml']
+INFO    [2656956] Writing output to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/timeseries/script1
+INFO    [2656956] Writing plots to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/timeseries/script1
+INFO    [2656956] Writing log to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/timeseries/script1/log.txt
+INFO    [2656956] To re-run this diagnostic script, run:
+cd /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/timeseries/script1; MPLBACKEND="Agg" /g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/bin/python /g/data/xp65/public/apps/med_conda/envs/esmvaltool-0.3/lib/python3.11/site-packages/esmvaltool/diag_scripts/examples/diagnostic.py /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/timeseries/script1/settings.yml
+INFO    [2656899] Progress: 2 tasks running, 0 tasks waiting for ancestors, 3/5 done
+INFO    [2656955] Maximum memory used (estimate): 0.4 GB
+INFO    [2656955] Sampled every second. It may be inaccurate if short but high spikes in memory consumption occur.
+INFO    [2656956] Maximum memory used (estimate): 0.4 GB
+INFO    [2656956] Sampled every second. It may be inaccurate if short but high spikes in memory consumption occur.
+INFO    [2656955] Successfully completed task map/script1 (priority 0) in 0:00:16.027280
+INFO    [2656899] Progress: 1 tasks running, 0 tasks waiting for ancestors, 4/5 done
+INFO    [2656956] Successfully completed task timeseries/script1 (priority 2) in 0:00:17.723918
+INFO    [2656899] Progress: 0 tasks running, 0 tasks waiting for ancestors, 5/5 done
+INFO    [2656899] Successfully completed all tasks.
+INFO    [2656899] Wrote recipe with version numbers and wildcards to:
+file:///scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/recipe_filled.yml
+INFO    [2656899] Wrote recipe output to:
+file:///scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/index.html
+INFO    [2656899] Ending the Earth System Model Evaluation Tool at time: 2024-03-13 22:58:08 UTC
+INFO    [2656899] Time for running the recipe was: 0:00:25.222227
+INFO    [2656899] Maximum memory used (estimate): 2.4 GB
+INFO    [2656899] Sampled every second. It may be inaccurate if short but high spikes in memory consumption occur.
+INFO    [2656899] Removing `preproc` directory containing preprocessed data
+INFO    [2656899] If this data is further needed, then set `remove_preproc_dir` to `false` in your user configuration file
+INFO    [2656899] Run was successful

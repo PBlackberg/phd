@@ -295,3 +295,21 @@
             #     exit()
 
 
+        # x = da_mean_lat.values
+        # y = da_mean_lat['lat'].values
+        # fig = plt.figure(figsize=(8, 6))
+        # plt.plot(x, y, 'k')
+        # plt.xlabel('time-lon mean wap')
+        # plt.ylabel('lat')
+        # plt.axvline(x=0, color='k', linestyle='--')
+        # plt.axhline(y=0, color='k', linestyle='--')
+        # mFp.show_plot(fig, show_type = 'save_cwd', filename = f'{dataset}_{experiment}_{mV.resolutions[0]}_wap{height}_tMean_lonMean')
+        
+        
+            
+
+
+# import xarray as xr
+# ds = xr.open_dataset('/scratch/w40/cb4968/sample_data/conv_obj/cmip6/TaiESM1_conv_obj_daily_historical_regridded_144x72.nc')
+# print(ds)
+

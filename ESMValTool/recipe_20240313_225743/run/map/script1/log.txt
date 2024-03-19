@@ -1,0 +1,196 @@
+2024-03-13 22:57:59,894 [2656970] INFO     esmvaltool.diag_scripts.shared._base,522	Starting diagnostic script script1 with configuration:
+auxiliary_data_dir: /g/data/xp65/public/apps/cartopy-data
+input_data:
+  ? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+  : alias: CMIP5
+    caption: 'Global map of {long_name} in January 2000 according to {dataset}.
+
+      '
+    dataset: bcc-csm1-1
+    diagnostic: map
+    end_year: 2000
+    ensemble: r1i1p1
+    exp: historical
+    filename: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+    frequency: mon
+    institute:
+    - BCC
+    long_name: Near-Surface Air Temperature
+    mip: Amon
+    modeling_realm:
+    - atmos
+    preprocessor: to_degrees_c
+    product:
+    - output1
+    - output2
+    project: CMIP5
+    recipe_dataset_index: 1
+    short_name: tas
+    standard_name: air_temperature
+    start_year: 2000
+    timerange: 2000/P1M
+    units: degrees_C
+    variable_group: tas
+    version: v1
+  ? /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+  : activity: CMIP
+    alias: CMIP6
+    caption: 'Global map of {long_name} in January 2000 according to {dataset}.
+
+      '
+    dataset: BCC-ESM1
+    diagnostic: map
+    end_year: 2000
+    ensemble: r1i1p1f1
+    exp: historical
+    filename: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+    frequency: mon
+    grid: gn
+    institute:
+    - BCC
+    long_name: Near-Surface Air Temperature
+    mip: Amon
+    modeling_realm:
+    - atmos
+    preprocessor: to_degrees_c
+    project: CMIP6
+    recipe_dataset_index: 0
+    short_name: tas
+    standard_name: air_temperature
+    start_year: 2000
+    timerange: 2000/P1M
+    units: degrees_C
+    variable_group: tas
+    version: v20181214
+input_files:
+- /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/metadata.yml
+log_level: info
+output_file_type: png
+plot_dir: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1
+quickplot:
+  cmap: Reds
+  plot_type: pcolormesh
+realms:
+- atmos
+recipe: recipe.yml
+run_dir: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/run/map/script1
+script: script1
+themes:
+- phys
+version: 2.10.0
+work_dir: /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1
+
+2024-03-13 22:57:59,896 [2656970] INFO     esmvaltool.diag_scripts.shared._base,561	Creating /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1
+2024-03-13 22:57:59,897 [2656970] INFO     esmvaltool.diag_scripts.shared._base,561	Creating /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1
+2024-03-13 22:57:59,899 [2656970] INFO     diagnostic,75	Example of how to select only CMIP5 temperature data:
+[{'alias': 'CMIP5',
+  'caption': 'Global map of {long_name} in January 2000 according to '
+             '{dataset}.\n',
+  'dataset': 'bcc-csm1-1',
+  'diagnostic': 'map',
+  'end_year': 2000,
+  'ensemble': 'r1i1p1',
+  'exp': 'historical',
+  'filename': '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc',
+  'frequency': 'mon',
+  'institute': ['BCC'],
+  'long_name': 'Near-Surface Air Temperature',
+  'mip': 'Amon',
+  'modeling_realm': ['atmos'],
+  'preprocessor': 'to_degrees_c',
+  'product': ['output1', 'output2'],
+  'project': 'CMIP5',
+  'recipe_dataset_index': 1,
+  'short_name': 'tas',
+  'standard_name': 'air_temperature',
+  'start_year': 2000,
+  'timerange': '2000/P1M',
+  'units': 'degrees_C',
+  'variable_group': 'tas',
+  'version': 'v1'}]
+2024-03-13 22:57:59,899 [2656970] INFO     diagnostic,79	Example of how to sort this selection by dataset:
+[{'alias': 'CMIP5',
+  'caption': 'Global map of {long_name} in January 2000 according to '
+             '{dataset}.\n',
+  'dataset': 'bcc-csm1-1',
+  'diagnostic': 'map',
+  'end_year': 2000,
+  'ensemble': 'r1i1p1',
+  'exp': 'historical',
+  'filename': '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc',
+  'frequency': 'mon',
+  'institute': ['BCC'],
+  'long_name': 'Near-Surface Air Temperature',
+  'mip': 'Amon',
+  'modeling_realm': ['atmos'],
+  'preprocessor': 'to_degrees_c',
+  'product': ['output1', 'output2'],
+  'project': 'CMIP5',
+  'recipe_dataset_index': 1,
+  'short_name': 'tas',
+  'standard_name': 'air_temperature',
+  'start_year': 2000,
+  'timerange': '2000/P1M',
+  'units': 'degrees_C',
+  'variable_group': 'tas',
+  'version': 'v1'}]
+2024-03-13 22:57:59,899 [2656970] INFO     diagnostic,85	Example of how to group and sort input data by variable groups from the recipe:
+{'tas': [{'alias': 'CMIP5',
+          'caption': 'Global map of {long_name} in January 2000 according to '
+                     '{dataset}.\n',
+          'dataset': 'bcc-csm1-1',
+          'diagnostic': 'map',
+          'end_year': 2000,
+          'ensemble': 'r1i1p1',
+          'exp': 'historical',
+          'filename': '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc',
+          'frequency': 'mon',
+          'institute': ['BCC'],
+          'long_name': 'Near-Surface Air Temperature',
+          'mip': 'Amon',
+          'modeling_realm': ['atmos'],
+          'preprocessor': 'to_degrees_c',
+          'product': ['output1', 'output2'],
+          'project': 'CMIP5',
+          'recipe_dataset_index': 1,
+          'short_name': 'tas',
+          'standard_name': 'air_temperature',
+          'start_year': 2000,
+          'timerange': '2000/P1M',
+          'units': 'degrees_C',
+          'variable_group': 'tas',
+          'version': 'v1'},
+         {'activity': 'CMIP',
+          'alias': 'CMIP6',
+          'caption': 'Global map of {long_name} in January 2000 according to '
+                     '{dataset}.\n',
+          'dataset': 'BCC-ESM1',
+          'diagnostic': 'map',
+          'end_year': 2000,
+          'ensemble': 'r1i1p1f1',
+          'exp': 'historical',
+          'filename': '/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/map/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc',
+          'frequency': 'mon',
+          'grid': 'gn',
+          'institute': ['BCC'],
+          'long_name': 'Near-Surface Air Temperature',
+          'mip': 'Amon',
+          'modeling_realm': ['atmos'],
+          'preprocessor': 'to_degrees_c',
+          'project': 'CMIP6',
+          'recipe_dataset_index': 0,
+          'short_name': 'tas',
+          'standard_name': 'air_temperature',
+          'start_year': 2000,
+          'timerange': '2000/P1M',
+          'units': 'degrees_C',
+          'variable_group': 'tas',
+          'version': 'v20181214'}]}
+2024-03-13 22:57:59,899 [2656970] INFO     diagnostic,92	Processing variable tas
+2024-03-13 22:57:59,899 [2656970] INFO     diagnostic,94	Processing dataset bcc-csm1-1
+2024-03-13 22:57:59,981 [2656970] INFO     esmvaltool.diag_scripts.shared._base,133	Saving analysis results to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.nc
+2024-03-13 22:58:00,501 [2656970] INFO     esmvaltool.diag_scripts.shared._base,97	Plotting analysis results to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1/png/CMIP5_bcc-csm1-1_Amon_historical_r1i1p1_tas_2000-P1M.png
+2024-03-13 22:58:00,692 [2656970] INFO     diagnostic,94	Processing dataset BCC-ESM1
+2024-03-13 22:58:00,728 [2656970] INFO     esmvaltool.diag_scripts.shared._base,133	Saving analysis results to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/work/map/script1/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.nc
+2024-03-13 22:58:01,082 [2656970] INFO     esmvaltool.diag_scripts.shared._base,97	Plotting analysis results to /scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/map/script1/png/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-P1M.png
+2024-03-13 22:58:01,251 [2656970] INFO     esmvaltool.diag_scripts.shared._base,584	End of diagnostic script run.

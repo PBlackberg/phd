@@ -1,0 +1,220 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<prov:document xmlns:software="https://www.esmvaltool.org/software" xmlns:task="https://www.esmvaltool.org/task" xmlns:project="https://www.esmvaltool.org/project" xmlns:preprocessor="https://www.esmvaltool.org/preprocessor" xmlns:file="https://www.esmvaltool.org/file" xmlns:attribute="https://www.esmvaltool.org/attribute" xmlns:author="https://www.esmvaltool.org/author" xmlns:recipe="https://www.esmvaltool.org/recipe" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/timeseries/script1/png/tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.png"/>
+    <prov:agent prov:ref="author:Righi, Mattia"/>
+  </prov:wasAttributedTo>
+  <prov:wasDerivedFrom>
+    <prov:generatedEntity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc"/>
+    <prov:usedEntity prov:ref="file:/g/data/oi10/replicas/CMIP6/CMIP/BCC/BCC-ESM1/1pctCO2/r1i1p1f1/fx/areacella/gn/v20190613/areacella_fx_BCC-ESM1_1pctCO2_r1i1p1f1_gn.nc"/>
+    <prov:activity prov:ref="task:timeseries/tas_global"/>
+  </prov:wasDerivedFrom>
+  <prov:agent prov:id="project:Copernicus Climate Change Service 34a Lot 2 (MAGIC) project"/>
+  <prov:activity prov:id="software:esmvaltool==2.10.0"/>
+  <prov:wasStartedBy>
+    <prov:activity prov:ref="task:timeseries/tas_global"/>
+    <prov:trigger prov:ref="recipe:recipe.yml"/>
+    <prov:starter prov:ref="software:esmvaltool==2.10.0"/>
+  </prov:wasStartedBy>
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="recipe:recipe.yml"/>
+    <prov:agent prov:ref="author:Righi, Mattia"/>
+  </prov:wasAttributedTo>
+  <prov:entity prov:id="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc">
+    <attribute:activity>CMIP</attribute:activity>
+    <attribute:alias>CMIP6</attribute:alias>
+    <attribute:caption>Annual global mean {long_name} according to {dataset}.</attribute:caption>
+    <attribute:dataset>BCC-ESM1</attribute:dataset>
+    <attribute:diagnostic>timeseries</attribute:diagnostic>
+    <attribute:end_year>2000</attribute:end_year>
+    <attribute:ensemble>r1i1p1f1</attribute:ensemble>
+    <attribute:exp>historical</attribute:exp>
+    <attribute:filename>/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc</attribute:filename>
+    <attribute:frequency>mon</attribute:frequency>
+    <attribute:grid>gn</attribute:grid>
+    <attribute:institute>['BCC']</attribute:institute>
+    <attribute:long_name>Near-Surface Air Temperature</attribute:long_name>
+    <attribute:mip>Amon</attribute:mip>
+    <attribute:modeling_realm>['atmos']</attribute:modeling_realm>
+    <attribute:original_short_name>tas</attribute:original_short_name>
+    <attribute:preprocessor>annual_mean_global</attribute:preprocessor>
+    <attribute:project>CMIP6</attribute:project>
+    <attribute:recipe_dataset_index>0</attribute:recipe_dataset_index>
+    <attribute:short_name>tas</attribute:short_name>
+    <attribute:standard_name>air_temperature</attribute:standard_name>
+    <attribute:start_year>1850</attribute:start_year>
+    <attribute:timerange>1850/2000</attribute:timerange>
+    <attribute:units>K</attribute:units>
+    <attribute:variable_group>tas_global</attribute:variable_group>
+    <attribute:version>v20181214</attribute:version>
+    <preprocessor:annual_statistics>{'operator': 'mean'}</preprocessor:annual_statistics>
+    <preprocessor:area_statistics>{'operator': 'mean'}</preprocessor:area_statistics>
+    <preprocessor:convert_units>{'units': 'degrees_C'}</preprocessor:convert_units>
+    <preprocessor:remove_supplementary_variables>{}</preprocessor:remove_supplementary_variables>
+    <preprocessor:save>{'compress': False, 'filename': PosixPath('/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc')}</preprocessor:save>
+  </prov:entity>
+  <prov:agent prov:id="project:DLR project ESMVal"/>
+  <prov:wasStartedBy>
+    <prov:activity prov:ref="task:timeseries/script1"/>
+    <prov:trigger prov:ref="recipe:recipe.yml"/>
+    <prov:starter prov:ref="software:esmvaltool==2.10.0"/>
+  </prov:wasStartedBy>
+  <prov:agent prov:id="author:Andela, Bouwe">
+    <attribute:email>b.andela@esciencecenter.nl</attribute:email>
+    <attribute:github>bouweandela</attribute:github>
+    <attribute:institute>NLeSC, Netherlands</attribute:institute>
+    <attribute:orcid>https://orcid.org/0000-0001-9005-8940</attribute:orcid>
+  </prov:agent>
+  <prov:entity prov:id="recipe:recipe.yml">
+    <attribute:description>Example recipe that plots a map and timeseries of temperature.
+</attribute:description>
+    <attribute:references>['acknow_project']</attribute:references>
+  </prov:entity>
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="recipe:recipe.yml"/>
+    <prov:agent prov:ref="project:Copernicus Climate Change Service 34a Lot 2 (MAGIC) project"/>
+  </prov:wasAttributedTo>
+  <prov:activity prov:id="task:timeseries/tas_global"/>
+  <prov:activity prov:id="task:timeseries/script1"/>
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/timeseries/script1/png/tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.png"/>
+    <prov:agent prov:ref="author:Andela, Bouwe"/>
+  </prov:wasAttributedTo>
+  <prov:entity prov:id="file:/g/data/oi10/replicas/CMIP6/CMIP/BCC/BCC-ESM1/historical/r1i1p1f1/Amon/tas/gn/v20181214/tas_Amon_BCC-ESM1_historical_r1i1p1f1_gn_185001-201412.nc">
+    <attribute:Conventions>CF-1.7 CMIP-6.2</attribute:Conventions>
+    <attribute:activity_id>CMIP</attribute:activity_id>
+    <attribute:branch_method>Standard</attribute:branch_method>
+    <attribute:branch_time_in_child>0.0</attribute:branch_time_in_child>
+    <attribute:branch_time_in_parent>2110.0</attribute:branch_time_in_parent>
+    <attribute:cmor_version>3.3.2</attribute:cmor_version>
+    <attribute:comment>The model integration starts from the piControl experiment equilibrium state (1st Jan. of the year 2110)</attribute:comment>
+    <attribute:contact>Dr. Tongwen Wu(twwu@cma.gov.cn)</attribute:contact>
+    <attribute:creation_date>2018-12-14T05:25:12Z</attribute:creation_date>
+    <attribute:data_specs_version>01.00.27</attribute:data_specs_version>
+    <attribute:description>DECK: historical</attribute:description>
+    <attribute:experiment>all-forcing simulation of the recent past</attribute:experiment>
+    <attribute:experiment_id>historical</attribute:experiment_id>
+    <attribute:external_variables>areacella</attribute:external_variables>
+    <attribute:forcing_index>1</attribute:forcing_index>
+    <attribute:frequency>mon</attribute:frequency>
+    <attribute:further_info_url>https://furtherinfo.es-doc.org/CMIP6.BCC.BCC-ESM1.historical.none.r1i1p1f1</attribute:further_info_url>
+    <attribute:grid>T42</attribute:grid>
+    <attribute:grid_label>gn</attribute:grid_label>
+    <attribute:history>2018-12-14T05:25:12Z ; CMOR rewrote data to be consistent with CMIP6, CF-1.7 CMIP-6.2 and CF standards.;
+N/A</attribute:history>
+    <attribute:initialization_index>1</attribute:initialization_index>
+    <attribute:institution>Beijing Climate Center, Beijing 100081, China</attribute:institution>
+    <attribute:institution_id>BCC</attribute:institution_id>
+    <attribute:license>CMIP6 model data produced by BCC is licensed under a Creative Commons Attribution ShareAlike 4.0 International License (https://creativecommons.org/licenses). Consult https://pcmdi.llnl.gov/CMIP6/TermsOfUse for terms of use governing CMIP6 output, including citation requirements and proper acknowledgment. Further information about this data, including some limitations, can be found via the further_info_url (recorded as a global attribute in this file) and at https:///pcmdi.llnl.gov/. The data producers and data providers make no warranty, either express or implied, including, but not limited to, warranties of merchantability and fitness for a particular purpose. All liabilities arising from the supply of the information (including any liability arising in negligence) are excluded to the fullest extent permitted by law.</attribute:license>
+    <attribute:mip_era>CMIP6</attribute:mip_era>
+    <attribute:nominal_resolution>250 km</attribute:nominal_resolution>
+    <attribute:parent_activity_id>CMIP</attribute:parent_activity_id>
+    <attribute:parent_experiment_id>piControl</attribute:parent_experiment_id>
+    <attribute:parent_mip_era>CMIP6</attribute:parent_mip_era>
+    <attribute:parent_source_id>BCC-ESM1</attribute:parent_source_id>
+    <attribute:parent_time_units>days since 1850-01-01</attribute:parent_time_units>
+    <attribute:parent_variant_label>r1i1p1f1</attribute:parent_variant_label>
+    <attribute:physics_index>1</attribute:physics_index>
+    <attribute:product>model-output</attribute:product>
+    <attribute:realization_index>1</attribute:realization_index>
+    <attribute:realm>atmos</attribute:realm>
+    <attribute:references>Model described by Tongwen Wu et al. (JGR 2013; JMR 2014; submmitted to GMD,2018). Also see http://forecast.bcccsm.ncc-cma.net/htm</attribute:references>
+    <attribute:run_variant>forcing: greenhouse gases,aerosol emission,solar constant,volcano mass,land use</attribute:run_variant>
+    <attribute:source>BCC-ESM 1 (2017):   aerosol: none  atmos: BCC_AGCM3_LR (T42; 128 x 64 longitude/latitude; 26 levels; top level 2.19 hPa)  atmosChem: BCC-AGCM3-Chem  land: BCC_AVIM2  landIce: none  ocean: MOM4 (1/3 deg 10S-10N, 1/3-1 deg 10-30 N/S, and 1 deg in high latitudes; 360 x 232 longitude/latitude; 40 levels; top grid cell 0-10 m)  ocnBgchem: none  seaIce: SIS2</attribute:source>
+    <attribute:source_id>BCC-ESM1</attribute:source_id>
+    <attribute:source_type>AER AOGCM CHEM</attribute:source_type>
+    <attribute:sub_experiment>none</attribute:sub_experiment>
+    <attribute:sub_experiment_id>none</attribute:sub_experiment_id>
+    <attribute:table_id>Amon</attribute:table_id>
+    <attribute:table_info>Creation Date:(30 July 2018) MD5:e53ff52009d0b97d9d867dc12b6096c7</attribute:table_info>
+    <attribute:title>BCC-ESM1 output prepared for CMIP6</attribute:title>
+    <attribute:tracking_id>hdl:21.14100/e6e5eb74-9e45-44db-9dbe-d6236596b068</attribute:tracking_id>
+    <attribute:variable_id>tas</attribute:variable_id>
+    <attribute:variant_label>r1i1p1f1</attribute:variant_label>
+  </prov:entity>
+  <prov:wasDerivedFrom>
+    <prov:generatedEntity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/timeseries/script1/png/tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.png"/>
+    <prov:usedEntity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc"/>
+    <prov:activity prov:ref="task:timeseries/script1"/>
+  </prov:wasDerivedFrom>
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="recipe:recipe.yml"/>
+    <prov:agent prov:ref="project:DLR project ESMVal"/>
+  </prov:wasAttributedTo>
+  <prov:wasDerivedFrom>
+    <prov:generatedEntity prov:ref="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/preproc/timeseries/tas_global/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.nc"/>
+    <prov:usedEntity prov:ref="file:/g/data/oi10/replicas/CMIP6/CMIP/BCC/BCC-ESM1/historical/r1i1p1f1/Amon/tas/gn/v20181214/tas_Amon_BCC-ESM1_historical_r1i1p1f1_gn_185001-201412.nc"/>
+    <prov:activity prov:ref="task:timeseries/tas_global"/>
+  </prov:wasDerivedFrom>
+  <prov:wasAttributedTo>
+    <prov:entity prov:ref="recipe:recipe.yml"/>
+    <prov:agent prov:ref="author:Andela, Bouwe"/>
+  </prov:wasAttributedTo>
+  <prov:agent prov:id="author:Righi, Mattia">
+    <attribute:email>mattia.righi@dlr.de</attribute:email>
+    <attribute:institute>DLR, Germany</attribute:institute>
+    <attribute:orcid>https://orcid.org/0000-0003-3827-5950</attribute:orcid>
+  </prov:agent>
+  <prov:entity prov:id="file:/g/data/oi10/replicas/CMIP6/CMIP/BCC/BCC-ESM1/1pctCO2/r1i1p1f1/fx/areacella/gn/v20190613/areacella_fx_BCC-ESM1_1pctCO2_r1i1p1f1_gn.nc">
+    <attribute:Conventions>CF-1.7 CMIP-6.2</attribute:Conventions>
+    <attribute:activity_id>CMIP</attribute:activity_id>
+    <attribute:branch_method>standard</attribute:branch_method>
+    <attribute:branch_time_in_child>0.0</attribute:branch_time_in_child>
+    <attribute:branch_time_in_parent>0.0</attribute:branch_time_in_parent>
+    <attribute:cmor_version>3.3.2</attribute:cmor_version>
+    <attribute:comment>The experiment starts from 1850 under prescribed 1%/yr concentration increase. Other forcings are fixed at the values of pre-industrial control run. The model initial state is from the year 2110 in pre-industrical control simulation.</attribute:comment>
+    <attribute:contact>Dr. Tongwen Wu (twwu@cma.gov.cn)</attribute:contact>
+    <attribute:creation_date>2019-06-13T05:28:10Z</attribute:creation_date>
+    <attribute:data_specs_version>01.00.27</attribute:data_specs_version>
+    <attribute:description>DECK: 1pctCO2</attribute:description>
+    <attribute:experiment>1 percent per year increase in CO2</attribute:experiment>
+    <attribute:experiment_id>1pctCO2</attribute:experiment_id>
+    <attribute:forcing_index>1</attribute:forcing_index>
+    <attribute:frequency>fx</attribute:frequency>
+    <attribute:further_info_url>https://furtherinfo.es-doc.org/CMIP6.BCC.BCC-ESM1.1pctCO2.none.r1i1p1f1</attribute:further_info_url>
+    <attribute:grid>T42</attribute:grid>
+    <attribute:grid_label>gn</attribute:grid_label>
+    <attribute:history>2019-06-13T05:28:10Z ; CMOR rewrote data to be consistent with CMIP6, CF-1.7 CMIP-6.2 and CF standards.</attribute:history>
+    <attribute:initialization_index>1</attribute:initialization_index>
+    <attribute:institution>Beijing Climate Center, Beijing 100081, China</attribute:institution>
+    <attribute:institution_id>BCC</attribute:institution_id>
+    <attribute:license>CMIP6 model data produced by BCC is licensed under a Creative Commons Attribution ShareAlike 4.0 International License (https://creativecommons.org/licenses). Consult https://pcmdi.llnl.gov/CMIP6/TermsOfUse for terms of use governing CMIP6 output, including citation requirements and proper acknowledgment. Further information about this data, including some limitations, can be found via the further_info_url (recorded as a global attribute in this file) and at https:///pcmdi.llnl.gov/. The data producers and data providers make no warranty, either express or implied, including, but not limited to, warranties of merchantability and fitness for a particular purpose. All liabilities arising from the supply of the information (including any liability arising in negligence) are excluded to the fullest extent permitted by law.</attribute:license>
+    <attribute:mip_era>CMIP6</attribute:mip_era>
+    <attribute:nominal_resolution>250 km</attribute:nominal_resolution>
+    <attribute:parent_activity_id>CMIP</attribute:parent_activity_id>
+    <attribute:parent_experiment_id>piControl</attribute:parent_experiment_id>
+    <attribute:parent_mip_era>CMIP6</attribute:parent_mip_era>
+    <attribute:parent_source_id>BCC-ESM1</attribute:parent_source_id>
+    <attribute:parent_time_units>days since 1850-01-01</attribute:parent_time_units>
+    <attribute:parent_variant_label>r1i1p1f1</attribute:parent_variant_label>
+    <attribute:physics_index>1</attribute:physics_index>
+    <attribute:product>model-output</attribute:product>
+    <attribute:realization_index>1</attribute:realization_index>
+    <attribute:realm>atmos</attribute:realm>
+    <attribute:references>Model described by Tongwen Wu et al. (JGR 2013; JMR 2014; GMD 2019). Also see http://forecast.bcccsm.ncc-cma.net/htm</attribute:references>
+    <attribute:run_variant>forcing: GHG</attribute:run_variant>
+    <attribute:source>BCC-ESM 1 (2017):   aerosol: none  atmos: BCC_AGCM3_LR (T42; 128 x 64 longitude/latitude; 26 levels; top level 2.19 hPa)  atmosChem: BCC-AGCM3-Chem  land: BCC_AVIM2  landIce: none  ocean: MOM4 (1/3 deg 10S-10N, 1/3-1 deg 10-30 N/S, and 1 deg in high latitudes; 360 x 232 longitude/latitude; 40 levels; top grid cell 0-10 m)  ocnBgchem: none  seaIce: SIS2</attribute:source>
+    <attribute:source_id>BCC-ESM1</attribute:source_id>
+    <attribute:source_type>AER AOGCM CHEM</attribute:source_type>
+    <attribute:sub_experiment>none</attribute:sub_experiment>
+    <attribute:sub_experiment_id>none</attribute:sub_experiment_id>
+    <attribute:table_id>fx</attribute:table_id>
+    <attribute:table_info>Creation Date:(30 July 2018) MD5:e53ff52009d0b97d9d867dc12b6096c7</attribute:table_info>
+    <attribute:title>BCC-ESM1 output prepared for CMIP6</attribute:title>
+    <attribute:tracking_id>hdl:21.14100/47c11ff6-5811-419b-b9aa-4b23bef50fbd</attribute:tracking_id>
+    <attribute:variable_id>areacella</attribute:variable_id>
+    <attribute:variant_label>r1i1p1f1</attribute:variant_label>
+  </prov:entity>
+  <prov:entity prov:id="file:/scratch/w40/cb4968/esmvaltool_output/recipe_20240313_225743/plots/timeseries/script1/png/tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_1850-2000.png">
+    <attribute:caption>Annual global mean Near-Surface Air Temperature according to BCC-ESM1.</attribute:caption>
+    <attribute:domains>('global',)</attribute:domains>
+    <attribute:plot_types>('zonal mean',)</attribute:plot_types>
+    <attribute:quickplot>{'plot_type': 'plot'}</attribute:quickplot>
+    <attribute:realms>('atmosphere',)</attribute:realms>
+    <attribute:references>['acknow_project']</attribute:references>
+    <attribute:script>script1</attribute:script>
+    <attribute:script_file>examples/diagnostic.py</attribute:script_file>
+    <attribute:statistics>('mean',)</attribute:statistics>
+    <attribute:themes>('physics',)</attribute:themes>
+  </prov:entity>
+</prov:document>

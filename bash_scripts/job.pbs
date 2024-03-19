@@ -1,0 +1,14 @@
+#!/bin/bash -l
+#PBS -S /bin/bash
+#PBS -P w40
+#PBS -l storage=gdata/xp65+gdata/fs38+gdata/oi10+gdata/ct11+scratch/tm70+gdata/hh5+gdata/al33+gdata/rr3
+#PBS -l wd
+#PBS -q copyq
+#PBS -l walltime=3:00:00
+#PBS -l mem=16GB
+#PBS -l ncpus=1
+
+
+
+
+qsub -I -qnormal  -Pw40 -lwalltime=12:00:00,ncpus=20,mem=50GB,jobfs=200GB,storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/rt52+gdata/fs38+gdata/k10+gdata/hh5,wd

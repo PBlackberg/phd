@@ -155,17 +155,17 @@ def calc_variable(switch, var_name, dataset, experiment, resolution, timescale):
     ''' Gets variable (some need to be calculated) '''
     # print(f'getting {var_name}{[key for key, value in switch.items() if value]}')    
     if var_name in ['lcf', 'hcf', 'stability', 'netlw', 'netsw', 'h', 'h_anom2', 'pe', 'conv_obj', 'obj_id', 'distance_matrix']:
-        da = get_clouds(switch, var_name, dataset, experiment, resolution, timescale)       if var_name in ['lcf', 'hcf']       else None
-        da = get_stability(switch, var_name, dataset, experiment, resolution, timescale)    if var_name == 'stability'          else da
-        da = get_netlw(switch, var_name, dataset, experiment, resolution, timescale)        if var_name == 'netlw'              else da
-        da = get_netsw(switch, var_name, dataset, experiment, resolution, timescale)        if var_name == 'netsw'              else da
-        da = get_netsw(switch, var_name, dataset, experiment, resolution, timescale)        if var_name == 'netsw'              else da
-        da = get_mse(switch, var_name, dataset, experiment, resolution, timescale)          if var_name == 'h'                  else da
-        da = get_mse_anom2(switch, var_name, dataset, experiment, resolution, timescale)    if var_name == 'h_anom2'            else da
-        da = pE.get_pe(switch, var_name, dataset, experiment, resolution, timescale)        if var_name == 'pe'                 else da
-        da, _ = cO.get_conv_obj(switch, dataset, experiment, resolution)                    if var_name == 'conv_obj'           else [da, None]
-        _, da = cO.get_conv_obj(switch, dataset, experiment, resolution)                    if var_name == 'obj_id'             else [None, da]
-        da = dM.get_distance_matrix(switch, dataset, experiment, resolution)                if var_name == 'distance_matrix'    else da
+        da = get_clouds(switch, var_name, dataset, experiment, resolution, timescale)                                       if var_name in ['lcf', 'hcf']       else None
+        da = get_stability(switch, var_name, dataset, experiment, resolution, timescale)                                    if var_name == 'stability'          else da
+        da = get_netlw(switch, var_name, dataset, experiment, resolution, timescale)                                        if var_name == 'netlw'              else da
+        da = get_netsw(switch, var_name, dataset, experiment, resolution, timescale)                                        if var_name == 'netsw'              else da
+        da = get_netsw(switch, var_name, dataset, experiment, resolution, timescale)                                        if var_name == 'netsw'              else da
+        da = get_mse(switch, var_name, dataset, experiment, resolution, timescale)                                          if var_name == 'h'                  else da
+        da = get_mse_anom2(switch, var_name, dataset, experiment, resolution, timescale)                                    if var_name == 'h_anom2'            else da
+        da = pE.get_pe(switch, var_name, dataset, experiment, resolution, timescale)                                        if var_name == 'pe'                 else da
+        da, _ = cO.get_conv_obj(switch, dataset, experiment, resolution, percentile = int(cD.conv_percentiles[0])*0.01)     if var_name == 'conv_obj'           else [da, None]
+        _, da = cO.get_conv_obj(switch, dataset, experiment, resolution, percentile = int(cD.conv_percentiles[0])*0.01)     if var_name == 'obj_id'             else [None, da]
+        da = dM.get_distance_matrix(switch, dataset, experiment, resolution)                                                if var_name == 'distance_matrix'    else da
     else:
         da = vB.load_variable({var_name: True}, switch, dataset, experiment, resolution, timescale)    # basic metrics
     return da
@@ -265,9 +265,7 @@ def get_variable(switch_var = {'pr': True}, switch = {'test_sample': False, 'oce
         if re_process:
             da = request_process(switch, var_name, dataset, experiment, resolution, timescale, source, path, region)
         elif in_scratch:
-            ds = xr.open_dataset(path, chunks= 'auto') 
-            if 'time' in ds.dims:
-                ds.chunk({'time': 'auto'})
+            ds = xr.open_dataset(path, chunks= {'time': 'auto'}) 
             da = ds[var_name]
         else:
             da = request_process(switch, var_name, dataset, experiment, resolution, timescale, source, path, region)
@@ -296,8 +294,7 @@ if __name__ == '__main__':
         'lcf':              False,  'hcf':          False,              # Cloud fraction
         'zg':               False,                                      # Height coordinates
         'h':                False,  'h_anom2':      False,              # Moist Static Energy
-        'conv_obj':         False,  'obj_id':       False,
-        'distance_matrix':  True
+        'conv_obj':         False,  'obj_id':       True,
         }
 
     switch = {                                                                                                 # choose data to use and mask
@@ -308,7 +305,7 @@ if __name__ == '__main__':
         }
     
     switch_test = {
-        'delete_previous_plots': True,
+        'delete_previous_plots': False,
         'plot_scene':            False
         }
 
@@ -319,7 +316,7 @@ if __name__ == '__main__':
         for experiment in cD.experiments:
             print(f'experiment: {experiment}')
             for dataset in mD.run_dataset_only(var_name, cD.datasets):
-                da, region = get_variable(switch_var, switch, dataset, experiment, resolution = cD.resolutions[0], timescale = cD.timescales[0], from_folder = True, re_process = False)
+                da, region = get_variable(switch_var, switch, dataset, experiment, resolution = cD.resolutions[0], timescale = cD.timescales[0], from_folder = True, re_process = True)
                 print(da)
                 break
             break

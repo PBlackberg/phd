@@ -129,8 +129,8 @@ x_res, y_res = [
     ]
 
 timescales = [
-    # 'daily',
-    'monthly',
+    'daily',
+    # 'monthly',
     ]
 
 conv_percentiles = [    # threshold for precipitation rate considered to be assocaited with convection

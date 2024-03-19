@@ -279,7 +279,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues_r'
-        filename = f'obj_distance_together_lim.png'
+        filename = f'obj_distance_together_lim.pdf'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 

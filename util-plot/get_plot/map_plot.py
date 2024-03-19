@@ -159,7 +159,7 @@ def show_plot(fig, show_type = 'cycle', cycle_time = 0.5, filename = 'test'):
     
 def remove_test_plots(directory = f'{os.getcwd()}/zome_plots'):
     if os.path.exists(directory) and os.path.isdir(directory):
-        png_files = [f for f in os.listdir(directory) if f.endswith('.png')]
+        png_files = [f for f in os.listdir(directory) if f.endswith('.png') or f.endswith('.pdf')]
         if png_files:
             print(f'From folder: {directory}')
             for filename in png_files:
@@ -167,7 +167,7 @@ def remove_test_plots(directory = f'{os.getcwd()}/zome_plots'):
                 os.remove(file_path)
                 print(f"File {file_path} has been removed")
         else:
-            print(f"No .png files found in {directory}")
+            print(f"No .png or .pdf files found in {directory}")
     else:
         print(f"Directory {directory} does not exist or is not a directory")
         
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     sys.path.insert(0, f'{os.getcwd()}/util-core')
     import choose_datasets as cD           
     sys.path.insert(0, f'{os.getcwd()}/util-data')
-    import get_data.metric_data as mD
+    import metric_data as mD
 
 
 # --------------------------------------------------------------------------------------- get data --------------------------------------------------------------------------------------------------- #
@@ -295,7 +295,7 @@ if __name__ == '__main__':
         show_plot(fig, show_type = 'save_cwd', filename = filename)
 
     if switch['one_plot']:
-        filename = 'one_plot.png'
+        filename = 'one_plot.pdf'
         first_variable = list(ds.data_vars)[0]
         ds_one = xr.Dataset(data_vars = {first_variable : ds[first_variable]})
         fig, ax = plot_dsScenes(ds_one, label = 'units []', title = '', vmin = None, vmax = None, cmap = 'Blues', variable_list = list(ds_one.data_vars.keys()))
