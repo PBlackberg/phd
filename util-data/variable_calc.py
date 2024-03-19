@@ -191,7 +191,7 @@ def save_in_scratch(var_name, dataset, experiment, resolution, timescale, source
     return path
 
 def process_data(switch, var_name, dataset, experiment, resolution, timescale, source):
-    print(f'Processing {dataset} {resolution} {timescale} {var_name} data from {experiment} experiment')
+    print(f'Processing {dataset} {resolution} {timescale} {var_name} data from {experiment} experiment with variable_calc script')
     if resolution == 'regridded':
         print(f'Regridding to {cD.x_res}x{cD.y_res} degrees')
     da, region = get_variable_data(switch, var_name, dataset, experiment, resolution, timescale)

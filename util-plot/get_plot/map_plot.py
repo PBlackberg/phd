@@ -28,6 +28,10 @@ import matplotlib.colors as mcolors
 import os
 home = os.path.expanduser("~")
 
+import warnings
+from shapely.errors import ShapelyDeprecationWarning
+warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+
 
 
 # ------------------------

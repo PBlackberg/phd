@@ -55,10 +55,13 @@ def ensure_client(func):
             client = Client(cluster)
             print(client)
             print(f"Dask Dashboard is available at {client.dashboard_link}")
-        if client_exists and initial_workers != 4:  # scale client to set number of workers
+        if client_exists and initial_workers == 4:  # scale client to set number of workers
+            print(f'Client has suitible number of workers')        
+        else:
             print(f'Changing number of workers temporarily..')
             client.cluster.scale(4)
             print(client)
+        
         result = func(*args, **kwargs)
         if client_exists:                           # scale client back to what it was
             print(f'Changing back number of workers to initial state..')
@@ -160,9 +163,10 @@ def subset_day(conv_obj, obj_id_masked, timestep):
     return subset_day
 
 @dask.delayed
-def subset_year(conv_obj, obj_id_masked, year):
-    conv_obj_year = conv_obj.sel(time = f'{year}')
-    obj_id_masked_year = obj_id_masked.sel(time = f'{year}')
+def subset_year(conv_obj, obj_id_masked, year, indices):
+    print(f'processing year: {year} ..')
+    conv_obj_year = conv_obj.isel(time = indices)
+    obj_id_masked_year = obj_id_masked.isel(time = indices).dropna(dim='obj')
     subset_year = [subset_day(conv_obj_year, obj_id_masked_year, day) for day in range(len(conv_obj_year.time))]
     return subset_year
 
@@ -174,17 +178,24 @@ def get_obj_subset(conv_obj, obj_id, metric_id_mask):
     metric_mask:   (time, obj)      ([NaN, 1])
     '''
     print('getting subset matrix')
-    client = get_client()
+    # client = get_client()
     obj_id_masked = obj_id * metric_id_mask
-    # conv_obj = conv_obj.chunk({'time':'auto'})
-    # print(conv_obj)
-    conv_obj_copies = client.scatter(conv_obj, direct=True, broadcast=True)             #.chunk({'time': 'auto'})
+    time_coords = conv_obj['time']
+    conv_obj = conv_obj.assign_coords(time=np.arange(len(time_coords)))                 # cannot be cftime coordinate when scattering
+    obj_id_masked = obj_id_masked.assign_coords(time=np.arange(len(time_coords)))
+
+    conv_obj_copies = client.scatter(conv_obj, direct=True, broadcast=True)                     #.chunk({'time': 'auto'})
     obj_id_masked_copies = client.scatter(obj_id_masked, direct=True, broadcast=True)
-    futures = [subset_year(conv_obj_copies, obj_id_masked_copies, year) for year in np.unique(conv_obj['time'].dt.year)] # list of futures
+    
+    year_list = time_coords.dt.year
+    unique_years = np.unique(year_list)
+    year_indices_dict = {year: np.where(year_list == year)[0] for year in unique_years}   # find the indices for the year
+
+    futures = [subset_year(conv_obj_copies, obj_id_masked_copies, year, indices) for year, indices in year_indices_dict.items()] # list of futures
     results = dask.compute(*futures)                        # each future becomes a list
     results = list(itertools.chain.from_iterable(results))  # flatten the list of lists into one list
     conv_obj_subset = xr.concat(results, dim='time')
-    print(conv_obj_subset)
+    conv_obj_subset = conv_obj_subset.assign_coords(time=time_coords)
     return conv_obj_subset
 
 # @dask.delayed
@@ -224,8 +235,9 @@ if __name__ == '__main__':
     print('Convective region test starting')
 
     def create_client():
-        cluster = LocalCluster(n_workers=4, threads_per_worker=10, memory_limit='8GB')
+        cluster = LocalCluster(n_workers=4, threads_per_worker=2, memory_limit='4GB')
         client = Client(cluster)
+        # client = Client()
         print(client)
         print(f"Dask Dashboard is available at {client.dashboard_link}")
         import webbrowser
@@ -247,7 +259,7 @@ if __name__ == '__main__':
         }
 
     switch_test = {
-        'delete_previous_plots':        False,
+        'delete_previous_plots':        True,
         'get_conv_obj_from_file':       True,
         'plot_conv':                    True,
         'plot_obj':                     True,
@@ -271,14 +283,13 @@ if __name__ == '__main__':
             import variable_calc as vC
             conv_obj, _ = vC.get_variable(switch_var = {'conv_obj': True}, switch = switch, dataset = dataset, experiment = experiment, resolution = resolution, timescale = 'daily', from_folder = True, re_process = False)            
             obj_id, _ = vC.get_variable(switch_var = {'obj_id': True}, switch = switch, dataset = dataset, experiment = experiment, resolution = resolution, timescale = 'daily', from_folder = True, re_process = False)
-            conv_obj = conv_obj.sel(time = slice('1970', '1975'))
-            obj_id = obj_id.sel(time = slice('1970', '1975'))
+            # conv_obj = conv_obj.sel(time = slice('1970', '1975'))
+            # obj_id = obj_id.sel(time = slice('1970', '1975'))
             conv_obj.load()
             obj_id.load()
             conv = (conv_obj > 0)*1
-            # print(conv_obj)
+            print(conv_obj)
             # print(obj_id)
-            # print(conv_obj)
             metric_id_mask = create_mock_metric_mask(obj_id)
             conv_obj_subset = get_obj_subset(conv_obj, obj_id, metric_id_mask)
             # print(conv)
@@ -318,7 +329,7 @@ if __name__ == '__main__':
         vmax = 1
         cmap = 'Greys'
         title = 'convective_regions'
-        filename = f'{title}.png'
+        filename = f'a_{title}.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -329,7 +340,7 @@ if __name__ == '__main__':
         vmax = len(obj_id.obj)
         cmap = 'Greys'
         title = 'convective_objects'
-        filename = f'{title}.png'
+        filename = f'b_{title}.png'
         cmap = 'Greys'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()), cat_cmap = True)
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
@@ -341,7 +352,7 @@ if __name__ == '__main__':
         vmax = len(obj_id.obj)
         cmap = 'Greys'
         title = 'convective_objects_subset'
-        filename = f'{title}.png'
+        filename = f'c_{title}.png'
         cmap = 'Greys'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()), cat_cmap = True)
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)

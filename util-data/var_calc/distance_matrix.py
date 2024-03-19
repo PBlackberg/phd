@@ -136,14 +136,18 @@ if __name__ == '__main__':
 
     switch_test = {
         'delete_previous_plots':                True,
+        
         'great_cricle_distance':                False,
         'distance_from_gridbox':                False,
-        'plot_pr':                              True,
-        'plot_objects':                         True,
-        'plot_objects_subset':                  True,
-        'distance_from_object':                 True,
-        'distance_from_object_together':        True,
-        'distance_from_object_together_lim':    True,
+
+        'plot_pr':                              False,
+        'plot_objects':                         False,
+        'plot_objects_subset':                  False,
+        'distance_from_object':                 False,
+        'distance_from_object_together':        False,
+        'distance_from_object_together_lim':    False,
+
+        'save_distance_matrix':                 False
         }
     mP.remove_test_plots() if switch_test['delete_previous_plots'] else None
 
@@ -158,7 +162,18 @@ if __name__ == '__main__':
     # distance_matrix = get_distance_matrix(dim = dim)
     distance_matrix = get_distance_matrix(switch, dataset, experiment, resolution, dim = '')
     # print(distance_matrix)
+    # exit()
 
+    if switch_test['save_distance_matrix']:
+        from pathlib import Path
+        sys.path.insert(0, f'{os.getcwd()}/util-files')
+        import save_folders as sF
+        folder = f'{sF.folder_scratch}/sample_data/distance_matrix'
+        if not os.path.exists(folder):
+            Path(folder).mkdir(parents=True, exist_ok=True)
+        filename = f'/distance_matrix_{int(360/cD.x_res)}x{int(180/cD.y_res)}.nc'
+        xr.Dataset({'distance_matrix': distance_matrix}).to_netcdf(f'{folder}/{filename}')
+        print(f'saved distance matrix at: {folder}/{filename}')
 
     # --------------------------------------------------------------------------- Calculate --------------------------------------------------------------------------------------------------- #
     ds_dist = xr.Dataset()
@@ -219,7 +234,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues'
-        filename = f'distance_matrix.png'
+        filename = f'a_distance_matrix.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -229,7 +244,7 @@ if __name__ == '__main__':
         vmin = 0
         vmax = 20
         cmap = 'Blues'
-        filename = f'pr_scene_{dataset}.png'
+        filename = f'b_pr_scene_{dataset}.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -239,7 +254,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues'
-        filename = f'conv.png'
+        filename = f'c_conv.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -249,7 +264,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues'
-        filename = f'obj_conv.png'
+        filename = f'd_obj_conv.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -259,7 +274,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues_r'
-        filename = f'obj_distance.png'
+        filename = f'e_obj_distance.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -269,7 +284,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues_r'
-        filename = f'obj_distance_together.png'
+        filename = f'f_obj_distance_together.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
@@ -279,7 +294,7 @@ if __name__ == '__main__':
         vmin = None
         vmax = None
         cmap = 'Blues_r'
-        filename = f'obj_distance_together_lim.pdf'
+        filename = f'g_obj_distance_together_lim.png'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()))
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 

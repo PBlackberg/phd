@@ -30,7 +30,7 @@ def my_function(x):
 
 @dask.delayed
 def process_data(data):
-    time.sleep(4)
+    time.sleep(1)
     return data.sum()
 
 
@@ -39,9 +39,9 @@ if __name__ == '__main__':
 
     switch = {
         'test_parallel_calc':   False,
-        'serial_calc':          False,
-        'parallel_calc':        False,
-        'test_client_scatter':  True
+        'serial_calc':          True,
+        'parallel_calc':        True,
+        'test_client_scatter':  False
         }
 
     # ----------------------------------------------------------------- get_data ------------------------------------------------------------------------------ #
@@ -66,9 +66,8 @@ if __name__ == '__main__':
     if switch['parallel_calc']:
         start_time = time.time()
         result = [my_function_dask_delayed(i) for i in aList_xr]
-        result = dask.compute(result)
+        result = dask.compute(*result)
         print(result)
-        print(type(result))
         parallel_time = time.time() - start_time
         print(f'parallel computation took:{np.round(parallel_time, 2)}')
 
