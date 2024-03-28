@@ -1,0 +1,17 @@
+#!/bin/bash -l
+#PBS -S /bin/bash
+#PBS -P w40
+#PBS -l storage=gdata/al33+gdata/oi10+gdata/ia39+gdata/rt52+gdata/fs38+gdata/k10+gdata/hh5
+#PBS -l wd
+#PBS -q normal
+#PBS -l walltime=3:30:00
+#PBS -l mem=16GB
+#PBS -l ncpus=20
+#PBS -l jobfs=200GB
+#PBS -j oe
+
+module use /g/data/hh5/public/modules
+module load conda/analysis3-unstable
+mkdir -p "/scratch/w40/cb4968/oe_files/$(basename ${PYTHON_SCRIPT} .py)"
+LOG_FILE="/scratch/w40/cb4968/oe_files/$(basename ${PYTHON_SCRIPT} .py)/${MODEL_IDENTIFIER}_${PBS_JOBID}.log"
+python ${PYTHON_SCRIPT} $PBS_NCPUS ${MODEL_IDENTIFIER} > ${LOG_FILE} 2>&1

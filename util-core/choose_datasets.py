@@ -7,7 +7,9 @@ Choose datasets to be used in calculation / plots
 '''
 
 
-
+# -------------
+#   Datasets
+# -------------
 # ---------------------------------------------------------- Constructed / Random fields for testing calc ----------------------------------------------------------------------------------------------------- #
 test_fields = [
     # 'constructed'        # 1
@@ -72,27 +74,20 @@ models_cmip6 = [         # Models ordered by change in temperature with warming
     # 'UKESM1-0-LL',       # 29
     ]
 
-experiment_years = [
-    ['1970-2000', '2070-2100']
-]
-
 
 # -------------------------------------------------------------------------- DYAMOND ----------------------------------------------------------------------------------------------------- #
 models_dyamond = [
     # '',
-]
+    ]
 
 
 # -------------------------------------------------------------------------- NextGEMS ----------------------------------------------------------------------------------------------------- #
 models_nextgems = [
     # 'ICON-ESM_ngc2013',
-]
-years_range = [
-    ['2020-2050']
-]
+    ]
 
 
-# -----------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------------------  Observations ----------------------------------------------------------------------------------------------------- #
 observations = [
     # 'GPCP',               # Precipitation (and organization index)    - project al33 on nci                                                       (1998-01 2022-12)
     # 'ISCCP',              # Clouds (weather states)                   - https://isccp.giss.nasa.gov/wstates/hggws.html                            (2000-01 2017-12)
@@ -100,32 +95,47 @@ observations = [
     # 'ERA5',               # Humidity                                  - project rt52 on gadi                                                      (1998-01 2021-12)
     # 'NOAA'                # surface temperature                       - https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html
     ]
-obs_years = [
-    '1998-2022',          # Full GPCP data
-    # '1998-2009',          # High offset in high percentile precipitation from GPCP    (affects organization indices)
-    # '2010-2022'           # Low offset in high percentile precipitation from GPCP     (affects organization indices)
-    ]
+
+
+# -----------------------------------------------------------------------  datasets together ----------------------------------------------------------------------------------------------------- #
+datasets = test_fields + models_cmip5 + models_cmip6 + models_nextgems + observations 
 
 
 
 # ------------------------
 #    General settings
 # ------------------------
-datasets = test_fields + models_cmip5 + models_cmip6 + models_nextgems + observations 
-
+# ---------------------------------------------------------------------------- timeperiod  ----------------------------------------------------------------------------------------------------- #
 experiments = [
-    'historical',       # current climate conditions simulation        
+    'historical',       # current climate conditions simulations        
+    # 'obs',              # observations
     # 'rcp85',            # warm scenario for cmip5
     # 'ssp585',           # warm scenario for cmip6
-    # 'obs',              # observations
+    ]
+    
+cmip_years = [
+    ['1970-1999', '2070-2099'],
+    # ['2000-2014', '2100-2114']
+    ]
+
+icon_years = [
+    ['2020-2050'],
+    # ['2000-2014', '2100-2114']
+    ]
+
+obs_years = [
+    '1998-2022',            # Full GPCP data
+    # '1998-2009',          # High offset in high percentile precipitation from GPCP    (affects organization indices)
+    # '2010-2022'           # Low offset in high percentile precipitation from GPCP     (affects organization indices)
     ]
 
 resolutions = [
     # 'orig',
     'regridded'
     ]
-x_res, y_res = [
-    2.5, 2.5
+
+x_res, y_res = [            
+    2.5, 2.5                # degrees (lat, lon)
     ]
 
 timescales = [
@@ -155,4 +165,10 @@ if __name__ == '__main__':
 
 
 
-
+    # ----------------------------
+    #  Call from different script
+    # ----------------------------
+    # import os
+    # import sys
+    # sys.path.insert(0, f'{os.getcwd()}/util-core')
+    # import choose_datasets as cD

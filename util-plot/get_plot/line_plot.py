@@ -4,14 +4,11 @@
 # ----------------
 This script plots line plots (like time-series plots)
 
-To use:
-import os
-import sys
-sys.path.insert(0, f'{os.getcwd()}/util-plot')
-import line_plot as lP
+
 
 '''
 
+ 
 
 
 # --------------------------------------------------------------------------------------- Packages --------------------------------------------------------------------------------------------------- #
@@ -262,5 +259,11 @@ if __name__ == '__main__':
 
 
 
-
+    # ----------------------------
+    #  Call from different script
+    # ----------------------------
+    # import os
+    # import sys
+    # sys.path.insert(0, f'{os.getcwd()}/util-plot')
+    # import line_plot as lP
 

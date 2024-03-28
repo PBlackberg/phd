@@ -135,45 +135,6 @@ def plot_scene(scene, cmap = 'Blues', label = '[units]', fig_title = 'test', ax_
     plot_axtitle(fig, ax, ax_title, xpad = 0.005, ypad = 0.025, fontsize = 15)
     format_ticks(ax, labelsize = 11)
     return fig, ax
-
-def save_figure(figure, folder =f'{home}/Documents/phd', filename = 'test.pdf', path = ''):
-    ''' Basic plot saving function '''
-    if folder and filename:
-        path = os.path.join(folder, filename)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    os.remove(path) if os.path.exists(path) else None
-    figure.savefig(path)
-
-def show_plot(fig, show_type = 'cycle', cycle_time = 0.5, filename = 'test'):
-    ''' If using this on supercomputer, x11 forwarding is required with XQuartz installed on your computer '''
-    if show_type == 'cycle':
-        plt.ion()
-        plt.show()
-        plt.pause(cycle_time)
-        plt.close(fig)
-        plt.ioff()
-    elif show_type == 'save_cwd':
-        save_figure(figure = fig, folder = f'{os.getcwd()}/zome_plots', filename = filename)
-        plt.close(fig)
-        print(f'saved {filename}')
-        return True
-    elif show_type == 'show':
-        plt.show()
-        return True
-    
-def remove_test_plots(directory = f'{os.getcwd()}/zome_plots'):
-    if os.path.exists(directory) and os.path.isdir(directory):
-        png_files = [f for f in os.listdir(directory) if f.endswith('.png') or f.endswith('.pdf')]
-        if png_files:
-            print(f'From folder: {directory}')
-            for filename in png_files:
-                file_path = os.path.join(directory, filename)
-                os.remove(file_path)
-                print(f"File {file_path} has been removed")
-        else:
-            print(f"No .png or .pdf files found in {directory}")
-    else:
-        print(f"Directory {directory} does not exist or is not a directory")
         
 def blend_with_white(color, blend_factor):
     # Convert hex to RGB if necessary

@@ -27,6 +27,7 @@ import skimage.measure as skm
 import dask
 from distributed import get_client, Client, LocalCluster
 import itertools
+import time
 
 
 # ------------------------------------------------------------------------------------- imported scripts --------------------------------------------------------------------------------------------------- #
@@ -37,39 +38,55 @@ import variable_base as vB
 
 
 
-# ---------------------
-#    Dask related
-# ---------------------
+# ---------------
+#  General funcs
+# ---------------
+def timing_decorator(func):
+    ''' execution time of a function '''
+    def wrapper(*args, **kwargs):
+        start_time = time.time()  # Record the start time
+        result = func(*args, **kwargs)  # Call the decorated function
+        end_time = time.time()  # Record the end time
+        time_taken = (end_time - start_time) / 60  # Calculate the time taken in minutes
+        print(f"Function {func.__name__} took {time_taken:.4f} minutes to execute.")
+        return result
+    return wrapper
+
 def ensure_client(func):
-    ''' If a function that uses dask is called from a different script, the client can temporarily be scaled 
-        and then reverted back to what it was '''
+    ''' If a function in this script that uses dask is called from a different script, the client can be created or 
+        temporarily be scaled and then reverted back to intial state '''
     def wrapper(*args, **kwargs):
         client_exists = True
         try:
+            preferred_workers = 10
+            preferred_threads = 2
+            preferred_mem = '4GB'
             client = get_client()
             initial_workers = len(client.cluster.workers)
+            print(f'initial client has {initial_workers} workers')
+            if initial_workers == preferred_workers:  # scale client to set number of workers
+                print(f'initial client has suitible number of workers')     
+            else:
+                print(f'Scaling number of client workers temporarily..')
+                client.cluster.scale(preferred_workers)
+                print(client)
         except ValueError:
             print(f'No initial client \n creating client..')
             client_exists = False
-            cluster = LocalCluster(n_workers=4, threads_per_worker=2, memory_limit='8GB')
+            cluster = LocalCluster(n_workers=preferred_workers, threads_per_worker=preferred_threads, memory_limit=preferred_mem)
             client = Client(cluster)
             print(client)
+            # import webbrowser
+            # webbrowser.open(f'{client.dashboard_link}') 
             print(f"Dask Dashboard is available at {client.dashboard_link}")
-        if client_exists and initial_workers == 4:  # scale client to set number of workers
-            print(f'Client has suitible number of workers')        
-        else:
-            print(f'Changing number of workers temporarily..')
-            client.cluster.scale(4)
-            print(client)
-        
         result = func(*args, **kwargs)
-        if client_exists:                           # scale client back to what it was
+        if client_exists and initial_workers != preferred_workers:  # scale client back to what it was
             print(f'Changing back number of workers to initial state..')
             client.cluster.scale(initial_workers)
             print(client)
-        if not client_exists:
-            print(f'closing client, as no initial client was given')
-            client.close()
+        # if not client_exists:
+        #     print(f'closing client, as no initial client was given - does not close for the moment')
+            # client.close()
         return result
     return wrapper
 
@@ -80,7 +97,6 @@ def ensure_client(func):
 # ---------------------
 # ----------------------------------------------------------------------------------- Get convective regions --------------------------------------------------------------------------------------------------- #
 def get_precipitation(switch, dataset, experiment, resolution):
-    print('executes')
     da = vB.load_variable({'pr': True}, switch, dataset, experiment, resolution, timescale = 'daily') #.isel(time = slice(0, 2))
     da.load()
     return da
@@ -121,7 +137,7 @@ def get_conv_obj(switch, dataset, experiment, resolution, percentile):
     da = get_conv_pr(switch, dataset, experiment, resolution, percentile)
     conv_obj = xr.zeros_like(da)
     obj_dim_size = (len(da.lat) * len(da.lon))/2  # Upper limit of number of objects in a timestep
-    dim_list = []
+    n_obj_list = []
     obj_id = xr.DataArray(np.nan, dims=('time', 'obj'), coords={'time': da.time, 'obj': np.arange(obj_dim_size)})
     for timestep in np.arange(0,len(da.time)):
         if timestep % 365 == 0:
@@ -131,8 +147,8 @@ def get_conv_obj(switch, dataset, experiment, resolution, percentile):
         conv_obj[timestep,:,:] = labels_np
         labels = np.unique(labels_np)[1:]  # first unique value (zero) is background
         obj_id[timestep, :len(labels)] = labels
-        dim_list.append(len(labels))
-    obj_id = obj_id.sel(obj = slice(0, max(dim_list)-1)) # remove excess nan (sel is inclusive at end, so need to subtract 1)
+        n_obj_list.append(len(labels))
+    obj_id = obj_id.sel(obj = slice(0, max(n_obj_list)-1)) # remove excess nan (sel is inclusive at end, so need to subtract 1)
     print('finished convective objects')
     return conv_obj, obj_id
 
@@ -170,7 +186,7 @@ def subset_year(conv_obj, obj_id_masked, year, indices):
     subset_year = [subset_day(conv_obj_year, obj_id_masked_year, day) for day in range(len(conv_obj_year.time))]
     return subset_year
 
-# @ensure_client
+@ensure_client
 def get_obj_subset(conv_obj, obj_id, metric_id_mask):
     ''' 
     conv_obj:      (time, lat, lon) (integer values)
@@ -183,48 +199,18 @@ def get_obj_subset(conv_obj, obj_id, metric_id_mask):
     time_coords = conv_obj['time']
     conv_obj = conv_obj.assign_coords(time=np.arange(len(time_coords)))                 # cannot be cftime coordinate when scattering
     obj_id_masked = obj_id_masked.assign_coords(time=np.arange(len(time_coords)))
-
+    client = get_client()
     conv_obj_copies = client.scatter(conv_obj, direct=True, broadcast=True)                     #.chunk({'time': 'auto'})
     obj_id_masked_copies = client.scatter(obj_id_masked, direct=True, broadcast=True)
-    
     year_list = time_coords.dt.year
     unique_years = np.unique(year_list)
     year_indices_dict = {year: np.where(year_list == year)[0] for year in unique_years}   # find the indices for the year
-
     futures = [subset_year(conv_obj_copies, obj_id_masked_copies, year, indices) for year, indices in year_indices_dict.items()] # list of futures
     results = dask.compute(*futures)                        # each future becomes a list
     results = list(itertools.chain.from_iterable(results))  # flatten the list of lists into one list
     conv_obj_subset = xr.concat(results, dim='time')
     conv_obj_subset = conv_obj_subset.assign_coords(time=time_coords)
     return conv_obj_subset
-
-# @dask.delayed
-# def subset_year(conv_obj_year, obj_id_masked_year):
-#     subset_year = [subset_day(conv_obj_year, obj_id_masked_year, day) for day in range(len(conv_obj_year.time))]
-#     return subset_year
-
-# def get_obj_subset(conv_obj, obj_id, metric_id_mask):
-#     ''' 
-#     conv_obj:      (time, lat, lon) (integer values)
-#     obj_id:        (time, obj)      (integer values and NaN)
-#     metric_mask:   (time, obj)      ([NaN, 1])
-#     '''
-#     print('getting subset matrix')
-#     obj_id_masked = obj_id * metric_id_mask
-#     futures = []
-#     for year in np.unique(conv_obj['time'].dt.year):
-#         conv_obj_year = conv_obj.sel(time = f'{year}')
-#         obj_id_masked_year = obj_id_masked.sel(time = f'{year}')
-#         futures.append(subset_year(conv_obj_year, obj_id_masked_year))
-#     print(np.shape(futures))
-#     result1 = dask.compute(*futures[0:3])
-#     result2 = dask.compute(*futures[3:])
-#     print(np.shape(result1))
-#     print(np.shape(result2))
-#     result = list(itertools.chain.from_iterable(result1)) + list(itertools.chain.from_iterable(result2))
-#     conv_obj_subset = xr.concat(result, dim='time')
-#     print(conv_obj_subset)
-#     return conv_obj_subset
 
 
 
@@ -233,18 +219,6 @@ def get_obj_subset(conv_obj, obj_id, metric_id_mask):
 # ------------------------
 if __name__ == '__main__':
     print('Convective region test starting')
-
-    def create_client():
-        cluster = LocalCluster(n_workers=4, threads_per_worker=2, memory_limit='4GB')
-        client = Client(cluster)
-        # client = Client()
-        print(client)
-        print(f"Dask Dashboard is available at {client.dashboard_link}")
-        import webbrowser
-        webbrowser.open(f'{client.dashboard_link}') 
-        # print('for dashboard, open: http://127.0.0.1:8787/status') # this is the link that is given when opening the browser from the login node
-        return client
-    client = create_client()
 
     import missing_data as mD
     sys.path.insert(0, f'{os.getcwd()}/util-core')
@@ -259,9 +233,9 @@ if __name__ == '__main__':
         }
 
     switch_test = {
-        'delete_previous_plots':        True,
-        'get_conv_obj_from_file':       True,
-        'plot_conv':                    True,
+        'delete_previous_plots':        False,
+        'get_conv_obj_from_file':       False,
+        'plot_conv':                    False,
         'plot_obj':                     True,
         'plot_obj_subset':              True,
         'plot_obj_subset_metric':       True, # haven't done yet (need to calculate area_obj_id)
@@ -356,7 +330,6 @@ if __name__ == '__main__':
         cmap = 'Greys'
         fig, ax = mP.plot_dsScenes(ds, label = label, title = filename, vmin = vmin, vmax = vmax, cmap = cmap, variable_list = list(ds.data_vars.keys()), cat_cmap = True)
         mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
-    client.close()
 
 
 

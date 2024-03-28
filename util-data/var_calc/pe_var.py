@@ -2,20 +2,16 @@
 # --------------------------------
 #  Pe - Precipitation efficiency
 # --------------------------------
-Designing precipitation efficiency metric:
-The fraction of column-integrated condensate to surface precipitation
-pe = pr / clwvi
+Calculates precipitation efficiency (pe)
+Function:
+    pe = get_pe(switch, var_name, dataset, experiment, resolution, timescale)
 
-pe      - Precipitation efficiency
-pr      - Surface precipitation                         (mm/day)    (kg/m^2)
-clwvi   - Column-integrated condensate (liquid + ice)               (kg/m^2)
+Input:
+    pr      - surface precipitation                         dim: (time, lat, lon)   get from: util-data/variable_base.py
+    clwvi   - Column-integrated condensate (liquid + ice)   dim: (time, lat, lon)   get from: util-data/variable_base.py
 
-to use:
-import os
-import sys
-sys.path.insert(0, f'{os.getcwd()}/util-data')
-import pe_var as pE
-pe = pE.get_pe(switch = switch, var_name = 'pe', dataset = dataset, experiment = experiment, resolution = cD.resolutions[0], timescale = 'monthly')  
+Output:
+    pe:     - list                                          dim: (time)
 '''
 
 
@@ -27,23 +23,23 @@ import numpy as np
 # ------------------------------------------------------------------------------------- imported scripts ---------------------------------------------------------------------------------------------- #
 import os
 import sys
-sys.path.insert(0, f'{os.getcwd()}/util-core')
-import choose_datasets as cD  
-
 sys.path.insert(0, f'{os.getcwd()}/util-data')
 import variable_base as vB
 
 sys.path.insert(0, f'{os.getcwd()}/util-calc')
-import ls_state.means_calc as mC
+import statistics_calc.means_calc as mC
 
 
 
 # ------------------------
-#     Calculate field
+#   Calculate variable
 # ------------------------
 def get_pe(switch, var_name, dataset, experiment, resolution, timescale):
-    ''' Precipitation efficiency 
-    Removes small clwvi values to avoid unrealistic pe-values'''
+    ''' Precipitation efficiency (Fraction of column-integrated condensate to surface precipitation)
+    pe = pr / clwvi
+    Where
+        pr      - Surface precipitation                         (mm/day) or equivalently (kg/m^2)
+        clwvi   - Column-integrated condensate (liquid + ice)   (kg/m^2) '''
     pr = vB.load_variable({'pr': True}, switch, dataset, experiment, resolution, timescale = 'daily').resample(time='1MS').mean(dim='time')    
     # threshold = 0.99
     # value_threshold = pr.quantile(threshold, dim=('lat', 'lon', 'time')) 
@@ -90,6 +86,9 @@ def get_pe_2(switch, var_name, dataset, experiment, resolution, timescale):
 if __name__ == '__main__':
     print('pe test starting')
     import xarray as xr
+
+    sys.path.insert(0, f'{os.getcwd()}/util-core')
+    import choose_datasets as cD  
 
     sys.path.insert(0, f'{os.getcwd()}/util-data')
     import missing_data as mD
@@ -139,8 +138,8 @@ if __name__ == '__main__':
             # ------------------------------------------------------------------------------------- Get data --------------------------------------------------------------------------------------------------- #
             pr = vB.load_variable({'pr': True}, switch, dataset, experiment, resolution = cD.resolutions[0], timescale = 'daily').resample(time='1MS').mean(dim='time')    
             clwvi = vB.load_variable({'clwvi': True}, switch, dataset, experiment, resolution = cD.resolutions[0], timescale = 'monthly').resample(time='1MS').mean(dim='time')     
-            rome = mDd.load_metric(metric_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = experiment, timescale = 'daily').resample(time='1MS').mean(dim='time')     
-            tas = mDd.load_metric(metric_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = experiment, timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')     
+            rome = mDd.load_metric(met_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = experiment, timescale = 'daily').resample(time='1MS').mean(dim='time')     
+            tas = mDd.load_metric(met_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = experiment, timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')     
             pe = get_pe(switch = switch, var_name = 'pe', dataset = dataset, experiment = experiment, resolution = cD.resolutions[0], timescale = 'monthly').resample(time='1MS').mean(dim='time')
             pe_mean_first = get_pe_mean_first(switch = switch, var_name = 'pe', dataset = dataset, experiment = experiment, resolution = cD.resolutions[0], timescale = 'monthly').resample(time='1MS').mean(dim='time')
             # print(pr)
@@ -191,7 +190,7 @@ if __name__ == '__main__':
                 ds_tas[dataset] = tas
 
                 # warm calc
-                rome_warm = mDd.load_metric(metric_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = 'ssp585', timescale = 'daily').resample(time='1MS').mean(dim='time')     
+                rome_warm = mDd.load_metric(met_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = 'ssp585', timescale = 'daily').resample(time='1MS').mean(dim='time')     
                 da = rome_warm
                 current_length = da.sizes['time']
                 da = xr.DataArray(da.data, dims=['time'], coords={'time': np.arange(0, current_length)})
@@ -205,7 +204,7 @@ if __name__ == '__main__':
                 da_sMean = xr.DataArray(da_sMean.data, dims=['time'], coords={'time': np.arange(0, current_length)})
                 ds_y_sMean_warm[dataset] = da_sMean
 
-                tas_warm = mDd.load_metric(metric_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = 'ssp585', timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')   
+                tas_warm = mDd.load_metric(met_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = 'ssp585', timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')   
 
                 ds_tas_warm[dataset] = tas_warm
 
@@ -225,7 +224,7 @@ if __name__ == '__main__':
                 ds_tas[dataset] = tas
 
                 # warm calc
-                rome_warm = mDd.load_metric(metric_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = 'ssp585', timescale = 'daily').resample(time='1MS').mean(dim='time')     
+                rome_warm = mDd.load_metric(met_type = 'conv_org', metric_name = f'rome_{cD.conv_percentiles[0]}thprctile', dataset = dataset, experiment = 'ssp585', timescale = 'daily').resample(time='1MS').mean(dim='time')     
                 da = rome_warm
                 current_length = da.sizes['time']
                 da = xr.DataArray(da.data, dims=['time'], coords={'time': np.arange(0, current_length)})
@@ -237,7 +236,7 @@ if __name__ == '__main__':
                 current_length = da_sMean.sizes['time']
                 da_sMean = xr.DataArray(da_sMean.data, dims=['time'], coords={'time': np.arange(0, current_length)})
                 ds_y_sMean_meanFirst_warm[dataset] = da_sMean
-                tas_warm = mDd.load_metric(metric_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = 'ssp585', timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')   
+                tas_warm = mDd.load_metric(met_type = 'tas', metric_name = f'tas_sMean', dataset = dataset, experiment = 'ssp585', timescale = 'monthly').resample(time='1MS').mean(dim='time').mean(dim = 'time')   
                 ds_tas_warm[dataset] = tas_warm
 
 
@@ -391,4 +390,14 @@ if __name__ == '__main__':
             mP.show_plot(fig, show_type = 'save_cwd', filename = filename)
 
 
+
+    # ----------------------------
+    #  Call from different script
+    # ----------------------------
+    # to use:
+    # import os
+    # import sys
+    # sys.path.insert(0, f'{os.getcwd()}/util-data')
+    # import pe_var as pE
+    # pe = pE.get_pe(switch = switch, var_name = 'pe', dataset = dataset, experiment = experiment, resolution = cD.resolutions[0], timescale = 'monthly')  
 

@@ -1,9 +1,0 @@
-#!/bin/bash -l
-#PBS -S /bin/bash
-#PBS -P w40
-#PBS -l storage=gdata/xp65+gdata/fs38+gdata/oi10+gdata/ct11+scratch/tm70+gdata/hh5+gdata/al33+gdata/rr3
-#PBS -l wd
-#PBS -q copyq
-#PBS -l walltime=2:00:00
-#PBS -l mem=32GB
-#PBS -l ncpus=1
